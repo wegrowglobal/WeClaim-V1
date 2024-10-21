@@ -21,6 +21,28 @@ Route::post('/login', [App\Http\Controllers\UserController::class, 'login'])->na
 
 Route::post('/logout', [App\Http\Controllers\UserController::class, 'logout'])->name('logout');
 
+Route::get('/forgot-password', function () {
+    return view('authentication.forgot_password');
+})->name('forgot-password');
+
+// Other Routes
+
+Route::get('/report', function () {
+    return view();
+})->name('reports');
+
+Route::get('/profile', function () {
+    return view();
+})->name('profile');
+
+Route::get('/notifications', function () {
+    return view();
+})->name('notifications');
+
+Route::get('/settings', function () {
+    return view();
+})->name('settings');
+
 // All Claims Routes
 
 Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');

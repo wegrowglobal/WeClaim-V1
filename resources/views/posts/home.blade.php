@@ -9,9 +9,6 @@
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Not Logged In</span>
                     </div>
                     <p class="text-gray-600 mb-6">Please log in to access your claims dashboard and submit new claims.</p>
-                    <a href="{{ route('login') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Log In
-                    </a>
                 </div>
             </div>
         @endguest

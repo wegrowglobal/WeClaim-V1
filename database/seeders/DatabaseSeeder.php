@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
         }
 
 
-        /* $this->call(ClaimSeeder::class); */
+        $this->call(ClaimSeeder::class);
 
     }
 }

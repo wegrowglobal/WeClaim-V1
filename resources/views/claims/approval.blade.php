@@ -39,7 +39,7 @@ use App\Models\Claim;
                         <div class="flex justify-end mb-4">
                             <div class="flex flex-col sm:flex-row gap-2">
                                 <select id="sortSelect" onchange="sortTable(this.value)" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 m-px">
-                                    <option value="">Sort by...</option>
+                                    <option value="">Sort By</option>
                                     <option value="status">Status</option>
                                     <option value="submitted_at">Submitted</option>
                                     <option value="user">Submitted By</option>
@@ -122,7 +122,7 @@ use App\Models\Claim;
                             </table>
                         </div>
                         @if ($claims->hasPages())
-                            <div class="mt-4">
+                            <div class="m-1">
                                 {{ $claims->links() }}
                             </div>
                         @endif

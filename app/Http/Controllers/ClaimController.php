@@ -44,10 +44,10 @@ class ClaimController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-    
+
         $user = Auth::user();
         $perPage = 30;
-    
+
         if ($view === 'claims.dashboard') {
             $claims = Claim::with('user')->where('user_id', $user->id)->paginate($perPage);
         } elseif ($view === 'claims.approval') {
@@ -55,7 +55,7 @@ class ClaimController extends Controller
         } else {
             abort(404);
         }
-    
+
         return view($view, [
             'claims' => $claims,
             'claimService' => $this->claimService
@@ -104,7 +104,7 @@ class ClaimController extends Controller
 
     //////////////////////////////////////////////////////////////////
 
-    
+
     public function approvalScreen()
     {
         Log::info('Approval screen accessed by user: ' . Auth::id());
@@ -114,7 +114,7 @@ class ClaimController extends Controller
         if ($user->role->name === 'Staff') {
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }
-        
+
         if ($user instanceof User) {
             $perPage = 30; // Define how many items per page
             $claims = $this->claimService->getClaimsBasedOnRole($user, $perPage);
@@ -134,12 +134,12 @@ class ClaimController extends Controller
     {
         $user = Auth::user();
         $claim = Claim::with('locations')->findOrFail($id);
-    
+
         if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
                 return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
             }
-    
+
             $reviews = $claim->reviews()->orderBy('department')->orderBy('review_order')->get();
             return view('claims.review', compact('claim', 'reviews'));
         } else {
@@ -154,7 +154,7 @@ class ClaimController extends Controller
     {
         $claim = Claim::findOrFail($id);
         $user = Auth::user();
-    
+
         if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
                 return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
@@ -202,7 +202,7 @@ class ClaimController extends Controller
 
     //////////////////////////////////////////////////////////////////
 
-    
+
     public function approveClaim($id)
     {
         $user = Auth::user();
@@ -225,21 +225,21 @@ class ClaimController extends Controller
     {
 
         $document = $claim->documents()->first();
-    
+
         if (!$document) {
             abort(404, 'Document not found');
         }
-    
+
         $filePath = storage_path('app/public/' . $document->{$type . '_file_path'});
-    
+
         if (!file_exists($filePath)) {
             abort(404, 'File not found');
         }
-    
+
         return response()->file($filePath);
     }
-    
-    
+
+
 
     //////////////////////////////////////////////////////////////////
 }

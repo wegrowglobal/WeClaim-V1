@@ -28,7 +28,7 @@ class ClaimSeeder extends Seeder
         ];
 
         // Create 20 staff users
-        for ($i = 0; $i < 20; $i++) {
+        for ($i = 0; $i < 10; $i++) {
             $user = User::create([
                 'first_name' => $faker->firstName,
                 'second_name' => $faker->lastName,
@@ -38,8 +38,8 @@ class ClaimSeeder extends Seeder
                 'department_id' => $faker->randomElement($departments),
             ]);
 
-            // Create 1-3 claims for each user
-            $claimCount = $faker->numberBetween(10, 20);
+            // Create 1-5 claims for each user
+            $claimCount = $faker->numberBetween(1, 5);
             for ($j = 0; $j < $claimCount; $j++) {
                 $fromCity = $faker->randomElement($malaysianCities);
                 $toCity = $faker->randomElement($malaysianCities);
