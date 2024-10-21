@@ -1,0 +1,308 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*:focus {
+    outline: none;
+}
+
+
+/* For Chrome, Safari, Edge, and Opera */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* Media Queries */
+
+@media (max-width: 1440px) {
+    .lay-left {
+        @apply hidden;
+    }
+
+    .content-container {
+        @apply ml-0 w-full;
+    }
+}
+
+@media (min-width: 1441px) {
+    .lay-left {
+        @apply block;
+    }
+}
+
+/* Navigation Bar */
+
+@layer components {
+
+    /* Button Classes */
+
+    .btn-view-doc {
+        @apply wgg-center-content font-wgg text-wgg-black-950 text-sm font-medium rounded-lg cursor-pointer gap-2 transition-all ease-in-out w-fit underline hover:text-red-400;
+    }
+
+    .btn-primary, .btn-blue, .btn-danger, .btn-green, .btn-back {
+        @apply wgg-center-content font-wgg text-white text-xs font-semibold py-3 px-5 rounded-lg cursor-pointer gap-2 transition-all ease-in-out w-fit;
+    }
+
+    .btn-back {
+        @apply bg-wgg-black-950 hover:bg-wgg-black-600;
+    }
+
+    .btn-primary {
+        @apply bg-wgg-black-950 hover:bg-wgg-black-600;
+    }
+
+    .btn-blue {
+        @apply font-wgg bg-blue-500 hover:bg-blue-700;
+    }
+
+    .btn-danger {
+        @apply font-wgg bg-red-500 hover:bg-red-700;
+    }
+
+    .btn-green {
+        @apply font-wgg bg-green-500 hover:bg-green-700;
+    }
+
+    /* Main or Utilities Classes */
+
+    .wgg-box-border-shadow {
+        @apply w-full flex flex-col gap-5 p-8 *:font-normal *:font-wgg;
+    }
+
+    .content-container {
+        @apply md:ml-64 md:px-20 w-full p-20 h-auto;
+    }
+
+    .main {
+        @apply flex flex-col w-full gap-4;
+    }
+
+    .wgg-center-content {
+        @apply flex justify-center items-center;
+    }
+
+    .wgg-flex-col {
+        @apply flex flex-col;
+    }
+
+    .wgg-flex-row {
+        @apply flex flex-row;
+    }
+
+    .wgg-flex-between {
+        @apply flex justify-between;
+    }
+
+    .error-text {
+        @apply text-red-500 text-xs;
+    }
+
+    .info-box {
+        @apply py-2 px-2 bg-yellow-400 text-xs text-wgg-black-950 rounded-lg;
+    }
+
+    .file-input-container {
+        @apply flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg py-2 px-4 hover:border-gray-600 cursor-pointer;
+    }
+
+    .file-label {
+        @apply text-center text-xs cursor-pointer;
+    }
+
+    .form-input {
+        @apply py-2 px-4 border border-gray-300 rounded-lg text-xs;
+    }
+
+    .form-label {
+        @apply text-xs text-wgg-black-300 font-wgg font-normal cursor-pointer;
+    }
+
+    .form-label-other {
+        @apply text-sm text-wgg-black-400 font-wgg font-normal;
+    }
+
+    .progress-container {
+        @apply w-full bg-gray-200 rounded-full h-2.5 mt-2;
+    }
+
+    .progress-bar {
+        @apply bg-blue-600 h-2.5 rounded-full;
+    }
+
+    /* Review Page Classes */
+
+    .claim-review-container {
+        @apply w-full flex flex-col gap-5 p-8 bg-wgg-white border border-wgg-border rounded-lg drop-shadow-md *:font-normal *:font-wgg;
+    }
+
+    .review-container {
+        @apply wgg-flex-col gap-10 w-full;
+    }
+
+    .review-dashboard-table-content {
+        @apply w-full flex flex-row gap-5 p-4 *:font-normal *:font-wgg text-left border-b border-wgg-border items-center;
+
+        th {
+            @apply text-left w-1/4 font-normal text-sm text-wgg-black-400 ;
+        }
+
+        td {
+            @apply text-left w-3/4 text-sm text-wgg-black-950 font-medium;
+        }
+    }
+
+    .review-table-title {
+        @apply font-semibold font-wgg text-wgg-black-950 text-xl pl-4;
+    }
+
+    /* Individual Claim Page Classes */
+
+    .claim-indv-container {
+        @apply w-full flex flex-col gap-5 p-8 bg-wgg-white border border-wgg-border rounded-lg drop-shadow-md *:font-normal *:font-wgg;
+    }
+
+    .claim-indv-dashboard-table-content {
+        @apply w-full flex flex-row gap-5 p-4 *:font-normal *:font-wgg text-left border-b border-wgg-border items-center;
+
+        th {
+            @apply text-left w-1/4 font-normal text-sm text-wgg-black-400 ;
+        }
+
+        td {
+            @apply text-left w-3/4 text-sm text-wgg-black-950 font-medium;
+        }
+    }
+
+    .claim-indv-table-title {
+        @apply font-semibold font-wgg text-wgg-black-950 text-xl pl-4;
+    }
+
+    /* Navigation Page Classes */
+
+    .navbar-container {
+        @apply fixed left-0 top-0 h-screen w-16 md:w-64 py-14 md:px-10 border-r border-wgg-border bg-wgg-white transition-all duration-300 ease-in-out;
+    }
+
+    .navbar-link {
+        @apply flex flex-row justify-start w-auto items-center gap-2 drop-shadow-md bg-wgg-black-950 text-wgg-white text-sm py-2 px-5 font-normal font-wgg rounded-lg transition-all ease-in-out cursor-pointer hover:bg-wgg-black-600 hover:-translate-y-0.5;
+    }
+
+    .navbar-icon {
+        @apply w-5 h-5;
+    }
+
+    .navbar-home, .navbar-logout, .navbar-new {
+        @apply wgg-center-content drop-shadow-md bg-wgg-black-950 text-wgg-white py-3 px-6 font-normal font-wgg rounded-lg transition-all ease-in-out cursor-pointer hover:bg-wgg-black-600 hover:-translate-y-0.5;
+    }
+
+    #new-claim {
+        @apply bg-green-500 hover:bg-green-600;
+    }
+
+    .profile-container {
+        @apply w-full flex flex-col gap-2 p-4 bg-wgg-white border border-wgg-border rounded-lg drop-shadow-md *:font-normal *:font-wgg;
+    }
+
+    /* Claims Approval Classes */
+
+    .claims-approval-container {
+        @apply w-full flex flex-col gap-5 p-8 bg-wgg-white border border-wgg-border rounded-lg drop-shadow-md *:font-normal *:font-wgg;
+    }
+
+    .claims-approval-table-header {
+        @apply *:text-xs *:text-wgg-black-400 *:text-left *:py-3 *:px-4 border-b border-b-wgg-border/10;
+    }
+
+    .claims-approval-table-row {
+        @apply *:text-sm *:font-normal *:font-wgg *:text-wgg-black-950 *:text-left *:py-3 *:px-4 border-b border-b-wgg-border/10 transition-all ease-in-out;
+    }
+
+    .claim-status-badge {
+        @apply inline-flex justify-start items-center w-28 px-3 py-1 gap-2 text-wgg-white rounded-lg wgg-center-content;
+    }
+
+    .claim-status-badge-admin {
+        @apply bg-orange-400;
+    }
+
+    .claim-status-badge-hr {
+        @apply bg-blue-400;
+    }
+
+    .claim-status-badge-finance {
+        @apply bg-slate-500;
+    }
+
+    .claim-status-badge-payment {
+        @apply bg-teal-500;
+    }
+
+    .claim-status-badge-done {
+        @apply bg-green-500;
+    }
+
+    .claim-status-badge-red {
+        @apply bg-red-500;
+    }
+
+    /* Claims Dashboard Classes */
+
+    .claims-dashboard-table-header {
+        @apply *:font-normal *:font-wgg *:text-xs *:text-wgg-black-400 *:text-left *:py-3 *:px-4 border-b border-b-wgg-border/10;
+    }
+
+    .claims-dashboard-table-row, .claims-approval-table-row {
+        @apply *:font-normal *:font-wgg *:text-sm *:text-wgg-black-950 *:text-left *:py-3 *:px-4 border-b border-b-wgg-border/10 transition-all ease-in-out;
+    }
+
+    .claims-dashboard-table-row {
+        @apply hover:bg-wgg-black-100;
+    }
+
+    .claims-dashboard-status-badge {
+        @apply w-fit inline-flex justify-start items-center px-3 py-1 gap-2 text-wgg-white rounded-lg;
+    }
+
+    /* Claims Approval Classes */
+
+    .claims-approval-action-button {
+        @apply wgg-center-content bg-green-500 hover:bg-green-700 text-white font-normal px-3 py-1 gap-2 rounded-lg transition-all ease-in-out;
+    }
+
+    .claims-review-action-button {
+        @apply wgg-center-content bg-orange-500 hover:bg-orange-700 text-white font-normal px-3 py-1 gap-2 rounded-lg transition-all ease-in-out;
+    }
+
+
+    /* New Claims Classes */
+
+    .distance-box {
+        @apply flex justify-center items-center h-full bg-green-200 border border-gray-300 rounded-lg w-full py-4 px-8 gap-2 text-xs;
+    }
+
+    .form-container-1 {
+        @apply grid grid-cols-3 gap-20 p-10 border border-wgg-border rounded-lg;
+    }
+
+    .form-container-2 {
+        @apply grid grid-cols-3 gap-20 p-10 border border-wgg-border rounded-lg;
+    }
+
+    .form-child-1 {
+        @apply col-span-1 w-full;
+    }
+
+    #map {
+        @apply w-full bg-wgg-black-400 rounded-lg border border-wgg-border;
+        height: 100%;
+    }
+
+}
