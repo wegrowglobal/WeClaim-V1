@@ -588,9 +588,3 @@ document.getElementById("toll_report").addEventListener("change", (event) => {
 document.getElementById("email_report").addEventListener("change", (event) => {
    handleFileUpload(event, "email_progress_container", "email_progress_bar", "email_file_label");
 });
-
-// DEBUGGING
-
-document.querySelector("form").addEventListener("submit", function (e) {
-   alert(document.getElementById("total-distance-input"));
-});

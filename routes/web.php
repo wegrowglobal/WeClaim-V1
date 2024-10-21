@@ -43,6 +43,8 @@ Route::get('/settings', function () {
     return view();
 })->name('settings');
 
+Route::get('/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('profile');
+
 // All Claims Routes
 
 Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
@@ -56,7 +58,7 @@ Route::get('claims/new', function () {
     return view('claims.new');
 })->name('claims.new');
 
-Route::post('claims/new', [ClaimController::class, 'store'])->name('claims.new');
+Route::post('claims/new', [App\Http\Controllers\ClaimController::class, 'store'])->name('claims.store');
 
 Route::get('/claims/approval', [App\Http\Controllers\ClaimController::class, 'approvalScreen'])->name('claims.approval');
 

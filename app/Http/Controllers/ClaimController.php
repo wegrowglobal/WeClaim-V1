@@ -76,6 +76,8 @@ class ClaimController extends Controller
     {
         try {
 
+            Log::info('Claim submission received', request()->all());
+
             DB::transaction(function () use ($request) {
                 Log::info('Starting claim submission process');
 

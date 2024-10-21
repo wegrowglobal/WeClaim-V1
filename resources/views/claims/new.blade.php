@@ -84,19 +84,29 @@
             </div>
 
             @else
-            <div class="max-w-full>
+            <div class="max-w-full">
             @endif
-                <form class="" action="{{ route('claims.new') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('claims.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     @if($existingClaim)
                         <input type="hidden" name="claim_id" value="{{ $existingClaim->id }}">
                     @endif
 
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="grid grid-cols-3 rounded-lg shadow-sm">
 
                         <!-- Left Side -->
-                        <div class="p-20 border border-r-0 border-wgg-border col-span-1 flex flex-col gap-4 rounded-l-lg">
+                        <div class="p-14 border border-r-0 border-wgg-border col-span-1 flex flex-col gap-4 rounded-l-lg">
 
                             <div class="relative">
                                 <input value="{{ old('date_from') }}" class="form-input text-wgg-black-950 @error('date_from') is-invalid @enderror w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out peer" type="date" name="date_from" id="date-from" placeholder=" " required onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'">
@@ -221,7 +231,7 @@
                             @enderror
 
                             <div class="flex flex-row gap-2">
-                                <button id="add-location-btn" type="button" class="w-full py-3 px-5 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out flex items-center justify-center">
+                                <button id="add-location-btn" type="button" class="w-full py-2 px-5 border border-transparent rounded-md shadow-sm text-sm font-normal text-white bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill mr-2" viewBox="0 0 16 16">
                                         <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/>
                                     </svg>
@@ -252,11 +262,9 @@
         </div>
 
     </main>
-    @section('new-claim-scripts')
     @vite([
         'resources/js/form.js',
         ])
-    @endsection
     @endauth
 
     @guest

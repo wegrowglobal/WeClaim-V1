@@ -30,16 +30,16 @@ class UserController extends Controller
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
-    
+
         if ($this->authService->attemptLogin($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            
+
             $request->session()->put('user_role', $user->role->name);
             $request->session()->put('user_department', $user->department->name);
             return redirect()->route('home');
         }
-    
+
         return back()->withErrors([
             'email' => self::LOGIN_FAILED_MESSAGE,
         ])->withInput($request->only('email'));
@@ -55,6 +55,12 @@ class UserController extends Controller
         return redirect()->route(self::LOGIN_ROUTE);
     }
 
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('user.profile', compact('user'));
+    }
+
     //////////////////////////////////////////////////////////////////
-    
+
 }
