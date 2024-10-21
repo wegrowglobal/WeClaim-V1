@@ -1,5 +1,5 @@
 <x-layout>
-    <div class="max-w-full shadow-sm rounded-lg border border-wgg-border">
+    <div class="max-w-full rounded-lg border border-wgg-border">
         @guest
             <div class="bg-white overflow-hidden">
                 <div class="px-6 py-8">
@@ -15,103 +15,87 @@
                 </div>
             </div>
         @endguest
-
         @auth
-            <div class="bg-white shadow-xl rounded-lg overflow-hidden">
-                <div class="px-6 py-8">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Welcome, {{ auth()->user()->name }}</h2>
-                    <div class="flex items-center mb-6">
-                        <span class="text-gray-600 mr-2">Status:</span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Logged In</span>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gray-50 p-6 rounded-lg">
-                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                            <ul class="space-y-3">
-                                <li>
-                                    <a href="{{ route('claims.new') }}" class="text-blue-600 hover:text-blue-800 font-medium">Submit New Claim</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('claims.dashboard') }}" class="text-blue-600 hover:text-blue-800 font-medium">View Claims Dashboard</a>
-                                </li>
-                                @if(auth()->user()->role->name === 'approver')
-                                    <li>
-                                        <a href="{{ route('claims.approval') }}" class="text-blue-600 hover:text-blue-800 font-medium">Review Pending Claims</a>
-                                    </li>
-                                @endif
-                            </ul>
-                        </div>
-                        <div class="bg-gray-50 p-6 rounded-lg">
-                            <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                            @php
-                                $recentClaims = \App\Models\Claim::where('user_id', auth()->id())
-                                    ->with('locations')
-                                    ->orderBy('created_at', 'desc')
-                                    ->take(3)
-                                    ->get();
-                            @endphp
-                            @if($recentClaims->count() > 0)
-                                <ul class="space-y-4">
-                                    @foreach($recentClaims as $claim)
-                                        <li class="bg-white p-4 rounded-md shadow  hover:bg-gray-50">
-                                            <a href="{{ route('claims.claim', $claim->id) }}" class="block">
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-sm font-semibold text-gray-900">Claim #{{ $claim->id }}</span>
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $claim->status === 'approved' ? 'bg-green-100 text-green-800' : ($claim->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
-                                                        {{ ucfirst($claim->status) }}
-                                                    </span>
-                                                </div>
-                                                <p class="mt-1 text-sm text-gray-600">By: {{ $claim->user->first_name . $claim->user->second_name }}</p>
-                                                <p class="mt-1 text-sm text-gray-600">Total Distance: {{ $claim->total_distance }} KM</p>
-                                                <p class="mt-1 text-sm text-gray-600">Locations: {{ $claim->locations->count() }}</p>
-                                                <p class="mt-1 text-sm text-gray-600">Date: {{ $claim->date_from->format('d M Y') }} - {{ $claim->date_to->format('d M Y') }}</p>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="text-gray-600">No recent claims found.</p>
-                            @endif
-                        </div>
-                    </div>
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="px-8 py-10">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Welcome, {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
 
-                    <!-- New section: Claim Statistics -->
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Claim Statistics</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Claim Statistics -->
+                    <div class="mb-10">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-6">Personal Claim Overview</h3>
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
                             @php
                                 $totalClaims = \App\Models\Claim::where('user_id', auth()->id())->count();
                                 $approvedClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'approved')->count();
                                 $pendingClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'pending')->count();
                                 $rejectedClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'rejected')->count();
                             @endphp
-                            <div class="bg-blue-100 p-4 rounded-lg">
-                                <p class="text-sm font-medium text-blue-800">Total Claims</p>
-                                <p class="text-2xl font-bold text-blue-900">{{ $totalClaims }}</p>
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Total Claims</p>
+                                <p class="text-3xl font-bold text-blue-600">{{ $totalClaims }}</p>
                             </div>
-                            <div class="bg-green-100 p-4 rounded-lg">
-                                <p class="text-sm font-medium text-green-800">Approved Claims</p>
-                                <p class="text-2xl font-bold text-green-900">{{ $approvedClaims }}</p>
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Approved</p>
+                                <p class="text-3xl font-bold text-green-600">{{ $approvedClaims }}</p>
                             </div>
-                            <div class="bg-yellow-100 p-4 rounded-lg">
-                                <p class="text-sm font-medium text-yellow-800">Pending Claims</p>
-                                <p class="text-2xl font-bold text-yellow-900">{{ $pendingClaims }}</p>
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Pending</p>
+                                <p class="text-3xl font-bold text-yellow-600">{{ $pendingClaims }}</p>
                             </div>
-                            <div class="bg-red-100 p-4 rounded-lg">
-                                <p class="text-sm font-medium text-red-800">Rejected Claims</p>
-                                <p class="text-2xl font-bold text-red-900">{{ $rejectedClaims }}</p>
+                            <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
+                                <p class="text-sm font-medium text-gray-500 mb-2">Rejected</p>
+                                <p class="text-3xl font-bold text-red-600">{{ $rejectedClaims }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- New section: Recent System Updates -->
-                    <div class="mt-8">
-                        <h3 class="text-xl font-semibold text-gray-900 mb-4">Recent System Updates</h3>
-                        <ul class="bg-gray-50 rounded-lg p-4 space-y-2">
-                            <li class="text-sm text-gray-700">• N/A</li>
-                            <li class="text-sm text-gray-700">• N/A</li>
-                            <li class="text-sm text-gray-700">• N/A</li>
-                        </ul>
+                    <!-- Quick Actions -->
+                    <div class="mb-10">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h3>
+                        <div class="flex flex-wrap gap-4">
+                            <a href="{{ route('claims.new') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
+                                <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                New Claim
+                            </a>
+                            <a href="{{ route('claims.dashboard') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-300">
+                                <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                View All Claims
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Update Changelog -->
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-6">Recent Updates</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="h-4 w-4 rounded-full bg-blue-500"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">New feature: Bulk claim submission</p>
+                                    <p class="mt-1 text-sm text-gray-500">Lorem ipsum dolor sit amet consectetur.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="h-4 w-4 rounded-full bg-green-500"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">Performance improvement</p>
+                                    <p class="mt-1 text-sm text-gray-500">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolorem nisi in facere alias, iste dolores..</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="h-4 w-4 rounded-full bg-yellow-500"></div>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">UI enhancement</p>
+                                    <p class="mt-1 text-sm text-gray-500">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Praesentium, molestias.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

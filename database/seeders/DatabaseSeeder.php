@@ -35,7 +35,20 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->call(ClaimSeeder::class);
+        $adminUser = User::where('email', 'ammar@wegrow-global.com')->first();
+        if (!$adminUser) {
+            User::create([
+                'first_name' => 'Ammar',
+                'second_name' => 'Hafiy',
+                'email' => 'ammar@wegrow-global.com',
+                'password' => bcrypt('080808'),
+                'role_id' => $staffRoleId,
+                'department_id' => $randomDepartmentId,
+            ]);
+        }
+
+
+        /* $this->call(ClaimSeeder::class); */
 
     }
 }
