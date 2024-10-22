@@ -8,7 +8,7 @@
 
 
         <!-- Content Here -->
-        <div class="content-container lay-right">
+        <div class="content-container {{ Route::currentRouteName() === 'profile' ? 'profile-content' : '' }}">
             {{ $slot }}
         </div>
     </div>

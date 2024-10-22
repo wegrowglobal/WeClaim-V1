@@ -49,7 +49,6 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('zip_code')->nullable();
             $table->string('country')->nullable();
-            $table->string('profile_picture')->nullable();
         });
 
         /////////////////////////////////////////////////////////////

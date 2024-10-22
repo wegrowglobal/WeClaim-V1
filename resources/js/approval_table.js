@@ -1,69 +1,108 @@
 document.addEventListener("DOMContentLoaded", function () {
-   const table = document.getElementById("claimsTable");
-   const sortSelect = document.getElementById("sortSelect");
-   const sortAsc = document.getElementById("sortAsc");
-   const sortDesc = document.getElementById("sortDesc");
-   let currentSortColumn = "";
-   let isAscending = true;
+   let table = document.getElementById("claimsTable");
+   let sortSelect = document.getElementById("sortSelect");
+   let sortOrderBtn = document.getElementById("sortOrderBtn");
+   let searchInput = document.getElementById("searchInput");
+   let sortOrder = "asc";
 
-   function sortTable(column, ascending) {
-      const rows = Array.from(table.querySelectorAll("tbody tr"));
+   searchInput.value = "";
+
+   const statusOrder = [
+      "SUBMITTED",
+      "APPROVED_ADMIN",
+      "APPROVED_DATUK",
+      "APPROVED_HR",
+      "APPROVED_FINANCE",
+      "REJECTED",
+      "DONE",
+   ];
+
+   // Store the original rows
+   let originalRows = Array.from(table.querySelectorAll("tbody tr"));
+
+   sortSelect.addEventListener("change", updateTable);
+   sortOrderBtn.addEventListener("click", toggleSortOrder);
+   searchInput.addEventListener("input", updateTable);
+
+   function updateTable() {
+      // Use a copy of the original rows
+      const rows = originalRows.slice();
+      const filteredRows = filterRows(rows);
+      const sortedRows = sortRows(filteredRows);
+
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
+      sortedRows.forEach((row) => tbody.appendChild(row));
+   }
+
+   function filterRows(rows) {
+      const searchTerm = searchInput.value.toLowerCase().trim();
+
+      if (searchTerm === "") {
+         return rows; // Return all rows if search is empty
+      }
+
+      return rows.filter((row) => {
+         const rowText = Array.from(row.cells)
+            .map((cell) => cell.textContent.trim().toLowerCase())
+            .join(" ");
+         return rowText.includes(searchTerm);
+      });
+   }
+
+   function sortRows(rows) {
+      const column = sortSelect.value;
+      if (!column) return rows;
+
       const columnIndex = getColumnIndex(column);
 
-      rows.sort((a, b) => {
+      const sortedRows = rows.sort((a, b) => {
          const aValue = a.cells[columnIndex].textContent.trim();
          const bValue = b.cells[columnIndex].textContent.trim();
 
-         if (column === "submitted_at" || column === "date_from" || column === "date_to") {
-            return ascending
-               ? new Date(aValue) - new Date(bValue)
-               : new Date(bValue) - new Date(aValue);
-         } else {
-            return ascending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+         if (column === "status") {
+            return compareStatus(aValue, bValue);
+         } else if (column === "submitted_at" || column === "date_from" || column === "date_to") {
+            return compareDates(aValue, bValue);
          }
+
+         return aValue.localeCompare(bValue, undefined, {
+            numeric: true,
+            sensitivity: "base",
+         });
       });
 
-      const tbody = table.querySelector("tbody");
-      rows.forEach((row) => tbody.appendChild(row));
+      return sortOrder === "desc" ? sortedRows.reverse() : sortedRows;
    }
 
-   function getColumnIndex(column) {
-      switch (column) {
-         case "status":
-            return 6;
-         case "submitted_at":
-            return 1;
-         case "user":
-            return 2;
-         case "title":
-            return 3;
-         case "date_from":
-            return 4;
-         case "date_to":
-            return 5;
-         default:
-            return 0;
-      }
+   function toggleSortOrder() {
+      sortOrder = sortOrder === "asc" ? "desc" : "asc";
+      sortOrderBtn.textContent = sortOrder === "asc" ? "Ascending" : "Descending";
+      updateTable();
    }
 
-   sortSelect.addEventListener("change", function () {
-      currentSortColumn = this.value;
-      if (currentSortColumn) {
-         sortTable(currentSortColumn, isAscending);
+   function getColumnIndex(columnName) {
+      const headers = table.querySelectorAll("th");
+      for (let i = 0; i < headers.length; i++) {
+         if (headers[i].textContent.trim().toLowerCase() === columnName.replace("_", " ")) {
+            return i;
+         }
       }
-   });
+      return -1;
+   }
 
-   sortAsc.addEventListener("click", function () {
-      isAscending = true;
-      if (currentSortColumn) {
-         sortTable(currentSortColumn, isAscending);
-      }
-   });
+   function compareDates(a, b) {
+      const dateA = new Date(a.split("-").reverse().join("-"));
+      const dateB = new Date(b.split("-").reverse().join("-"));
+      return dateA - dateB;
+   }
 
-   sortDesc.addEventListener("click", function () {
-      isAscending = false;
-      if (currentSortColumn) {
-         sortTable(currentSortColumn, isAscending);
-      }
-   });
+   function compareStatus(a, b) {
+      const aIndex = statusOrder.indexOf(a.toUpperCase().replace(" ", "_"));
+      const bIndex = statusOrder.indexOf(b.toUpperCase().replace(" ", "_"));
+      return aIndex - bIndex;
+   }
+
+   // Initial table update
+   updateTable();
 });

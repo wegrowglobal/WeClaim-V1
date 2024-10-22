@@ -139,11 +139,11 @@ class ClaimService
     }
 
     //////////////////////////////////////////////////////////////////
-
+    /*
     public function getClaimsBasedOnRole(User $user, int $perPage = 30)
     {
         $query = Claim::with('user');
-    
+
         switch ($user->role->name) {
             case 'Admin':
                 return $query->where('status', '!=', Claim::STATUS_DONE)->paginate($perPage);
@@ -157,7 +157,7 @@ class ClaimService
                 return $query->where('user_id', $user->id)->paginate($perPage);
         }
     }
-
+    */
     /////////////////////////////////////////////////////////////////
 
     public function canReviewClaim(User $user, Claim $claim)

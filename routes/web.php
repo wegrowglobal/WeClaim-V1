@@ -47,6 +47,7 @@ Route::get('/profile', [App\Http\Controllers\UserController::class, 'profile'])-
 
 // All Claims Routes
 
+
 Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
 
 

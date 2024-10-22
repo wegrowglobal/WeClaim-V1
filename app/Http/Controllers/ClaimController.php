@@ -123,7 +123,7 @@ class ClaimController extends Controller
 
         if ($user instanceof User) {
             $perPage = 30; // Define how many items per page
-            $claims = $this->claimService->getClaimsBasedOnRole($user, $perPage);
+            $claims = Claim::with('user')->paginate($perPage);
             return view('claims.approval', [
                 'claims' => $claims,
                 'claimService' => $this->claimService
@@ -226,6 +226,8 @@ class ClaimController extends Controller
             return route('login');
         }
     }
+
+    //////////////////////////////////////////////////////////////////
 
     public function viewDocument(Claim $claim, $type)
     {
