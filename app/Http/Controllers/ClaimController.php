@@ -113,6 +113,10 @@ class ClaimController extends Controller
 
         $user = Auth::user();
 
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
         if ($user->role->name === 'Staff') {
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }

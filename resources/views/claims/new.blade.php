@@ -2,7 +2,7 @@
     @auth
 
 
-    <main class="*:font-wgg">
+    <main>
 
         <div class="flex flex-col gap-2">
 
@@ -110,7 +110,7 @@
 
                             <div class="relative">
                                 <input value="{{ old('date_from') }}" class="form-input text-wgg-black-950 @error('date_from') is-invalid @enderror w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out peer" type="date" name="date_from" id="date-from" placeholder=" " required onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'">
-                                <label for="date-from" class="absolute left-2 top-2 text-xs text-wgg-black-400 font-wgg font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">From</label>
+                                <label for="date-from" class="absolute left-2 top-2 text-xs text-wgg-black-400  font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">From</label>
                             </div>
                             @error('date_from')
                                 <span class="error-text">{{ $message }}</span>
@@ -118,7 +118,7 @@
 
                             <div class="relative">
                                 <input value="{{ old('date_to') }}" class="form-input text-wgg-black-950 @error('date_to') is-invalid @enderror w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out peer" type="date" name="date_to" id="date-to" placeholder=" " required onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'">
-                                <label for="date-to" class="absolute left-2 top-2 text-xs text-wgg-black-400 font-wgg font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">To</label>
+                                <label for="date-to" class="absolute left-2 top-2 text-xs text-wgg-black-400  font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">To</label>
                             </div>
                             @error('date_to')
                                 <span class="error-text">{{ $message }}</span>
@@ -126,7 +126,7 @@
 
                             <div class="relative">
                                 <input value="{{ old('toll_amount') }}" class="form-input text-wgg-black-950 @error('toll_amount') is-invalid @enderror w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out peer" type="number" name="toll_amount" id="toll_amount" step="0.01" required min="0" placeholder=" ">
-                                <label for="toll_amount" class="absolute left-2 top-2 text-xs text-wgg-black-400 font-wgg font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">Toll Amount</label>
+                                <label for="toll_amount" class="absolute left-2 top-2 text-xs text-wgg-black-400  font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">Toll Amount</label>
                             </div>
                             @error('toll_amount')
                                 <span class="error-text">{{ $message }}</span>
@@ -135,7 +135,7 @@
                             <div class="grid grid-cols-2 space-x-2">
                                 <div class="col-span-1 flex justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
                                     <input class="hidden @error('toll_report') is-invalid @enderror" type="file" name="toll_report" id="toll_report" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                    <label for="toll_report" class="text-xs text-wgg-black-400 font-wgg font-normal">
+                                    <label for="toll_report" class="text-xs text-wgg-black-400  font-normal">
                                         <span id="toll_file_label" class="cursor-pointer">Toll Report</span>
                                     </label>
                                     <!-- Progress Bar -->
@@ -149,7 +149,7 @@
 
                                 <div class="col-span-1 flex justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
                                     <input class="hidden @error('email_report') is-invalid @enderror" type="file" name="email_report" id="email_report" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
-                                    <label for="email_report" class="text-xs text-wgg-black-400 font-wgg font-normal">
+                                    <label for="email_report" class="text-xs text-wgg-black-400  font-normal">
                                         <span id="email_file_label" class="cursor-pointer">Email Approval</span>
                                     </label>
                                     <!-- Progress Bar -->
@@ -184,7 +184,7 @@
 
                                 <label
                                     for="remarks"
-                                    class="absolute text-sm text-wgg-black-400 font-wgg font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3"
+                                    class="absolute text-sm text-wgg-black-400  font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3"
                                 >
                                     Remarks
                                 </label>
@@ -200,7 +200,7 @@
                                     <option value="wgg" {{ old('claim_company') == 'wgg' ? 'selected' : '' }}>WGG</option>
                                     <option value="wgg & wge" {{ old('claim_company') == 'wgg & wge' ? 'selected' : '' }}>WGG & WGE</option>
                                 </select>
-                                <label for="claim_company" class="absolute text-sm text-wgg-black-400 font-wgg font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
+                                <label for="claim_company" class="absolute text-sm text-wgg-black-400  font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
                                     Claim Company
                                 </label>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -218,7 +218,7 @@
                                     <div class="relative">
                                         <input type="text" name="location[]" id="location-1" class="form-input location-input text-wgg-black-950 w-full px-4 py-2 pt-6 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out" placeholder=" " required>
 
-                                        <label for="location-1" class="absolute text-sm text-wgg-black-400 font-wgg font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
+                                        <label for="location-1" class="absolute text-sm text-wgg-black-400  font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
                                             Location 1
                                         </label>
                                     </div>
@@ -244,7 +244,7 @@
                                 </button>
                             </div>
 
-                            <button type="submit" class="w-full gap-2 py-4 px-7 border border-transparent rounded-md shadow-sm text-sm font-semibold text-white bg-green-500 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out flex items-center justify-center">
+                            <button type="submit" class="btn btn-success py-4">
                                 {{ $existingClaim ? 'Update Claim' : 'Submit Claim' }}
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill mr-2" viewBox="0 0 16 16">
                                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>

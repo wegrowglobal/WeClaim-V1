@@ -73,20 +73,20 @@ class FormManager {
 
       this.clearRouteBtn = document.createElement("button");
       this.clearRouteBtn.textContent = "Clear Route";
-      this.clearRouteBtn.className = "btn-primary";
+      this.clearRouteBtn.className = "btn btn-primary w-fit text-xs";
       this.clearRouteBtn.type = "button";
       this.clearRouteBtn.disabled = true;
       this.clearRouteBtn.addEventListener("click", () => this.clearRoute());
 
       this.reverseRouteBtn = document.createElement("button");
       this.reverseRouteBtn.textContent = "Reverse Route";
-      this.reverseRouteBtn.className = "btn-primary";
+      this.reverseRouteBtn.className = "btn btn-primary w-fit text-xs";
       this.reverseRouteBtn.type = "button";
       this.reverseRouteBtn.addEventListener("click", () => this.reverseRoute());
 
       this.trafficToggleBtn = document.createElement("button");
       this.trafficToggleBtn.textContent = "Toggle Traffic";
-      this.trafficToggleBtn.className = "btn-primary";
+      this.trafficToggleBtn.className = "btn btn-primary w-fit text-xs";
       this.trafficToggleBtn.type = "button";
       this.trafficToggleBtn.addEventListener("click", () => this.toggleTrafficLayer());
 
