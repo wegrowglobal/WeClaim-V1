@@ -19,7 +19,7 @@
                         @if(auth()->user()->profile_picture && Storage::disk('public')->exists(auth()->user()->profile_picture))
                             <img src="{{ Storage::url('public/' . auth()->user()->profile_picture) }}" alt="Profile Picture" class="h-20 w-20 rounded-full object-cover">
                         @else
-                            <div class="w-full h-full flex items-center justify-center text-4xl font-bold text-white" style="background-color: {{ '#' . substr(md5(auth()->user()->id), 0, 6) }}">
+                            <div class="h-20 w-20 rounded-full flex items-center justify-center text-2xl font-bold text-white" style="background-color: {{ '#' . substr(md5(auth()->user()->id), 0, 6) }}">
                                 {{ strtoupper(substr(auth()->user()->first_name, 0, 1)) }}
                             </div>
                         @endif

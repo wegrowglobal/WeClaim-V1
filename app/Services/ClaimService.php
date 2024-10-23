@@ -22,6 +22,10 @@ class ClaimService
     private const CLAIM_TYPE_PETTY_CASH = 'Petty Cash';
     private const CLAIM_TYPE_OTHERS = 'Others';
     private const STATUS_SUBMITTED = 'Submitted';
+    private const ROLE_ID_ADMIN = 2;
+    private const ROLE_ID_DATUK = 3;
+    private const ROLE_ID_HR = 4;
+    private const ROLE_ID_FINANCE = 5;
 
     //////////////////////////////////////////////////////////////////
 
@@ -40,6 +44,10 @@ class ClaimService
             $claim->status = $this->getPreviousNonRejectedStatus($claim) ?? Claim::STATUS_SUBMITTED;
         } else {
             $claim = new Claim($this->prepareClaim($data, $user));
+            $initialReviewer = User::whereHas('role', function($query) {
+                $query->where('id', self::ROLE_ID_ADMIN);
+            })->first();
+            $claim->reviewer_id = $initialReviewer ? $initialReviewer->id : null;
         }
 
         $claim->save();
@@ -197,16 +205,28 @@ class ClaimService
 
     public function approveClaim(User $user, Claim $claim)
     {
+        $nextReviewer = null;
+    
         switch ($user->role->name) {
             case 'Admin':
                 if ($claim->status === Claim::STATUS_SUBMITTED) {
                     $claim->status = Claim::STATUS_APPROVED_ADMIN;
-                } elseif ($claim->status === Claim::STATUS_APPROVED_ADMIN) {
-                    $claim->status = Claim::STATUS_APPROVED_DATUK;
+                    $nextReviewer = User::whereHas('role', function($query) {
+                        $query->where('id', self::ROLE_ID_DATUK);
+                    })->first();
                 }
+                break;
+            case 'Datuk':
+                $claim->status = Claim::STATUS_APPROVED_DATUK;
+                $nextReviewer = User::whereHas('role', function($query) {
+                    $query->where('id', self::ROLE_ID_HR);
+                })->first();
                 break;
             case 'HR':
                 $claim->status = Claim::STATUS_APPROVED_HR;
+                $nextReviewer = User::whereHas('role', function($query) {
+                    $query->where('id', self::ROLE_ID_FINANCE);
+                })->first();
                 break;
             case 'Finance':
                 if ($claim->status === Claim::STATUS_APPROVED_HR) {
@@ -216,7 +236,10 @@ class ClaimService
                 }
                 break;
         }
+    
+        $claim->reviewer_id = $nextReviewer ? $nextReviewer->id : null;
         $claim->save();
+    
         return $claim;
     }
 

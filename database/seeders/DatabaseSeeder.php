@@ -26,8 +26,8 @@ class DatabaseSeeder extends Seeder
         $adminUser = User::where('email', 'admin@localhost')->first();
         if (!$adminUser) {
             User::create([
-                'first_name' => 'Ammar',
-                'second_name' => 'Hafiy',
+                'first_name' => 'Admin',
+                'second_name' => 'Admin',
                 'email' => 'admin@localhost',
                 'password' => bcrypt('iCt@123./'),
                 'role_id' => $adminRoleId,
@@ -48,7 +48,7 @@ class DatabaseSeeder extends Seeder
         }
 
 
-        $this->call(ClaimSeeder::class);
+        /* $this->call(ClaimSeeder::class); */
 
     }
 }

@@ -35,22 +35,33 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
     {
         $statusFormatted = str_replace('_', ' ', $this->status);
 
-        // Log the reviewer_id
-        Log::info('Claim reviewer_id:', ['reviewer_id' => $this->claim->reviewer_id]);
-
         // Get the reviewer user
-        $reviewer = User::find($this->claim->reviewer_id);
+        $reviewer = $this->claim->reviewer;
 
-        // Ensure the reviewer exists and has a role
-        $reviewer = User::with('role')->find($this->claim->reviewer_id);
+        // Add more detailed logging
+        Log::info('Claim Details:', [
+            'claim_id' => $this->claim->id,
+            'reviewer_id' => $this->claim->reviewer_id,
+            'status' => $this->claim->status,
+        ]);
 
         $reviewerRole = 'Reviewer'; // Default value
-        if ($reviewer && $reviewer->role) {
-            $reviewerRole = $reviewer->role->name;
+        if ($reviewer) {
+            Log::info('Reviewer Details:', [
+                'reviewer_id' => $reviewer->id,
+                'reviewer_name' => $reviewer->name,
+                'role_id' => $reviewer->role_id,
+            ]);
+            
+            if ($reviewer->role) {
+                $reviewerRole = $reviewer->role->name;
+                Log::info('Reviewer Role:', ['role_name' => $reviewerRole]);
+            } else {
+                Log::info('Reviewer has no role');
+            }
+        } else {
+            Log::info('No reviewer assigned to this claim');
         }
-
-        Log::info('Reviewer:', ['reviewer' => $reviewer]);
-        Log::info('Reviewer Role:', ['role' => $reviewer ? $reviewer->role : null]);
 
         if ($this->isForClaimOwner) {
             // Messages for the claim owner

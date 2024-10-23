@@ -3,6 +3,7 @@
 namespace App\Models;
 use App\Models\ClaimReview;
 
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -64,5 +65,10 @@ class Claim extends Model
     public function reviews()
     {
         return $this->hasMany(ClaimReview::class);
+    }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewer_id');
     }
 }
