@@ -130,36 +130,34 @@
                         @enderror
 
                         <div class="grid grid-cols-2 space-x-2">
-                            <div class="col-span-1 flex justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
+                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
                                 <input class="hidden @error('toll_report') is-invalid @enderror" type="file" name="toll_report" id="toll_report" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                                 <label for="toll_report" class="text-xs text-wgg-black-400  font-normal">
                                     <span id="toll_file_label" class="cursor-pointer">Toll Report</span>
                                 </label>
-                                <!-- Progress Bar -->
-                                <div id="toll_progress_container" class="progress-container hidden">
-                                    <div id="toll_progress_bar" class="progress-bar" style="width: 0%"></div>
-                                </div>
                                 @error('toll_report')
                                     <span class="error-text">{{ $message }}</span>
                                 @enderror
+                                <!-- Spinner Animation -->
+                                <div id="toll_progress_container" class="hidden mt-2">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-wgg-black-950"></div>
+                                </div>
                             </div>
 
-                            <div class="col-span-1 flex justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
+                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
                                 <input class="hidden @error('email_report') is-invalid @enderror" type="file" name="email_report" id="email_report" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
                                 <label for="email_report" class="text-xs text-wgg-black-400  font-normal">
                                     <span id="email_file_label" class="cursor-pointer">Email Approval</span>
                                 </label>
-                                <!-- Progress Bar -->
-                                <div id="email_progress_container" class="progress-container hidden">
-                                    <div id="email_progress_bar" class="progress-bar" style="width: 0%"></div>
-                                </div>
                                 @error('email_report')
                                     <span class="error-text">{{ $message }}</span>
                                 @enderror
+                                <!-- Spinner Animation -->
+                                <div id="email_progress_container" class="hidden mt-2">
+                                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-wgg-black-950"></div>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="w-full py-2 px-2 bg-yellow-400 text-xs text-wgg-black-950 rounded-lg">
+                        </div>                        <div class="w-full py-2 px-2 bg-yellow-400 text-xs text-wgg-black-950 rounded-lg">
                             <span class="wgg-center-content gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-arrow-down-fill" viewBox="0 0 16 16">
                                     <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
@@ -241,11 +239,20 @@
                             </button>
                         </div>
 
-                        <button type="submit" class="btn btn-success py-4">
-                            {{ $existingClaim ? 'Update Claim' : 'Submit Claim' }}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill mr-2" viewBox="0 0 16 16">
-                                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                            </svg>
+                        <button type="submit" class="btn btn-success py-4 relative" onclick="this.querySelector('.default-content').classList.add('hidden'); this.querySelector('.loading-content').classList.remove('hidden')">
+                            <span class="default-content flex items-center">
+                                {{ $existingClaim ? 'Update Claim' : 'Submit Claim' }}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill ml-2" viewBox="0 0 16 16">
+                                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                                </svg>
+                            </span>
+                            <span class="loading-content hidden flex items-center">
+                                <svg class="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Processing...
+                            </span>
                         </button>
                     </div>
 

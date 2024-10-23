@@ -40,6 +40,20 @@ input[type="number"]::-webkit-outer-spin-button {
 /* Custom Classes */
 
 @layer components {
+   .notification {
+      @apply bg-white shadow-lg rounded-lg p-4 mb-4 flex items-center;
+      animation: slideIn 0.3s ease-out;
+   }
+
+   @keyframes slideIn {
+      from {
+         transform: translateX(100%);
+      }
+      to {
+         transform: translateX(0);
+      }
+   }
+
    .navbar-container {
       @apply fixed left-0 top-0 h-screen w-16 md:w-72 py-14 md:px-10 bg-wgg-white transition-all duration-300 ease-in-out;
    }

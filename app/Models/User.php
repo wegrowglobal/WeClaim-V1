@@ -21,6 +21,7 @@ class User extends Authenticatable
         'zip_code',
         'country',
         'profile_picture'
+
     ];
 
     protected $hidden = [
@@ -40,7 +41,7 @@ class User extends Authenticatable
 
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     public function department()

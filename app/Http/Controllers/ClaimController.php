@@ -8,11 +8,13 @@ use App\Models\User;
 use App\Mail\ClaimActionMail;
 use App\Models\ClaimLocation;
 use App\Services\ClaimService;
+use App\Notifications\ClaimStatusNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 
 
@@ -51,7 +53,7 @@ class ClaimController extends Controller
         if ($view === 'claims.dashboard') {
             $claims = Claim::with('user')->where('user_id', $user->id)->paginate($perPage);
         } elseif ($view === 'claims.approval') {
-            $claims = $this->claimService->getClaimsBasedOnRole($user, $perPage);
+            $claims = Claim::with('user')->paginate($perPage);
         } else {
             abort(404);
         }
@@ -61,7 +63,6 @@ class ClaimController extends Controller
             'claimService' => $this->claimService
         ]);
     }
-
     //////////////////////////////////////////////////////////////////
 
     public function show($id, $view)
@@ -75,8 +76,7 @@ class ClaimController extends Controller
     public function store(StoreClaimRequest $request)
     {
         try {
-
-            Log::info('Claim submission received', request()->all());
+            Log::info('Claim submission received', $request->all());
 
             DB::transaction(function () use ($request) {
                 Log::info('Starting claim submission process');
@@ -88,21 +88,29 @@ class ClaimController extends Controller
                     $claim = $this->claimService->createOrUpdateClaim($validatedData, $user, $request->claim_id);
                     $claim = $this->claimService->handleFileUploadsAndDocuments($claim, $request->file('toll_report'), $request->file('email_report'));
 
-                    /* Mail::to(self::ADMIN_EMAIL)->send(new ClaimActionMail($claim)); */
+                    // Refresh the claim to get the updated status
+                    $claim->refresh();
+
+                    // Send a resubmission notification if it's an update
+                    $actionType = $request->claim_id ? 'resubmitted' : 'submitted';
+
+                    // Send notification to the claim owner
+                    Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
+
+                    // Notify roles if necessary
+                    $this->notifyRoles($claim, $actionType);
                 } else {
                     return route('login');
                 }
             });
 
             return redirect()->route('claims.dashboard')->with('success', 'Claim submitted successfully!');
-
         } catch (\Exception $e) {
-
             Log::error('Error submitting claim: ' . $e->getMessage());
             return redirect()->back()->with('error', 'An error occurred while submitting the claim. Please try again.');
-
         }
     }
+
 
     //////////////////////////////////////////////////////////////////
 
@@ -173,13 +181,23 @@ class ClaimController extends Controller
 
             DB::transaction(function () use ($request, $user, $claim) {
                 if ($request->action === 'approve') {
-                    $newStatus = $this->determineNewStatus($user, $claim);
                     $this->claimService->approveClaim($user, $claim);
+                    $actionType = 'approved';
                 } else {
                     $this->claimService->rejectClaim($user, $claim);
+                    $actionType = 'rejected';
                 }
 
                 $this->claimService->storeRemarks($user, $claim, $request->remarks);
+
+                // Refresh the claim to get the updated status
+                $claim->refresh();
+
+                // Send notification to the claim owner
+                Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
+
+                // Send notification to specific roles if needed
+                $this->notifyRoles($claim, $actionType);
             });
 
             return redirect()->route('claims.approval')->with('success', 'Claim ' . $request->action . ' successfully.');
@@ -188,23 +206,52 @@ class ClaimController extends Controller
         }
     }
 
-    //////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
 
-    private function determineNewStatus(User $user, Claim $claim)
-{
-    switch ($user->role->name) {
-        case 'admin':
-            return Claim::STATUS_APPROVED_ADMIN;
-        case 'datuk':
-            return Claim::STATUS_APPROVED_DATUK;
-        case 'hr':
-            return Claim::STATUS_APPROVED_HR;
-        case 'finance':
-            return Claim::STATUS_APPROVED_FINANCE;
-        default:
-            return $claim->status; // Keep current status if role is not recognized
+    private function notifyRoles(Claim $claim, string $actionType)
+    {
+        // Initialize an empty array for roles to notify
+        $rolesToNotify = [];
+
+        switch ($actionType) {
+            case 'approved':
+                // Notify next approver based on the workflow
+                $nextRole = $this->claimService->getNextApproverRole($claim->status);
+                if ($nextRole) {
+                    $rolesToNotify[] = $nextRole;
+                }
+                break;
+
+            case 'rejected':
+                // Do not notify other roles when a claim is rejected
+                // Only the claim owner is notified elsewhere
+                break;
+
+            case 'resubmitted':
+                // Notify the role that previously rejected the claim
+                $previousRejectorRole = $this->claimService->getPreviousRejectorRole($claim);
+                if ($previousRejectorRole) {
+                    $rolesToNotify[] = $previousRejectorRole;
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        if (!empty($rolesToNotify)) {
+            // Fetch users with the specified roles
+            $usersToNotify = User::whereIn('role_id', function ($query) use ($rolesToNotify) {
+                $query->select('id')->from('roles')->whereIn('name', $rolesToNotify);
+            })->get();
+
+            // Send notifications to these users
+            foreach ($usersToNotify as $userToNotify) {
+                Notification::send($userToNotify, new ClaimStatusNotification($claim, $claim->status, $actionType, false));
+            }
+        }
     }
-}
+
 
     //////////////////////////////////////////////////////////////////
 

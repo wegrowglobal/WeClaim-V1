@@ -23,12 +23,12 @@ use App\Models\Claim;
                                 <p class="text-3xl font-bold text-yellow-600">{{ $claims->where('status', '!=', Claim::STATUS_DONE)->count() }}</p>
                             </div>
                             <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
-                                <p class="text-sm font-medium text-gray-500 mb-2">Approved Claims</p>
-                                <p class="text-3xl font-bold text-green-600">{{ $claims->where('status', Claim::STATUS_APPROVED_FINANCE)->count() }}</p>
+                                <p class="text-sm font-medium text-gray-500 mb-2">Pending Amount</p>
+                                <p class="text-3xl font-bold text-orange-600">RM {{ number_format($claims->where('status', '!=', Claim::STATUS_DONE)->sum(function($claim) { return $claim->petrol_amount + $claim->toll_amount; }), 2) }}</p>
                             </div>
                             <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
-                                <p class="text-sm font-medium text-gray-500 mb-2">Total Amount Claimed</p>
-                                <p class="text-3xl font-bold text-indigo-600">RM {{ number_format($claims->sum('petrol_amount') + $claims->sum('toll_amount'), 2) }}</p>
+                                <p class="text-sm font-medium text-gray-500 mb-2">Approved Amount</p>
+                                <p class="text-3xl font-bold text-green-600">RM {{ number_format($claims->where('status', Claim::STATUS_DONE)->sum(function($claim) { return $claim->petrol_amount + $claim->toll_amount; }), 2) }}</p>
                             </div>
                         </div>
                     </div>

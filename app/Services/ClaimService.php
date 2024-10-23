@@ -133,6 +133,24 @@ class ClaimService
 
     //////////////////////////////////////////////////////////////////
 
+    public function getNextApproverRole(string $currentStatus)
+    {
+        switch ($currentStatus) {
+            case Claim::STATUS_APPROVED_ADMIN:
+                return 'Datuk';
+            case Claim::STATUS_APPROVED_DATUK:
+                return 'HR';
+            case Claim::STATUS_APPROVED_HR:
+                return 'Finance';
+            case Claim::STATUS_APPROVED_FINANCE:
+                return null; // No further approver
+            default:
+                return 'Admin';
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////
+
     private function calculateTotalAmount($totalDistance)
     {
         return $totalDistance * self::PETROL_RATE;
@@ -211,6 +229,8 @@ class ClaimService
         return $claim;
     }
 
+    //////////////////////////////////////////////////////////////////
+
     public function storeRemarks(User $user, Claim $claim, string $remarks)
     {
         $reviewOrder = ClaimReview::where('claim_id', $claim->id)
@@ -230,6 +250,8 @@ class ClaimService
         $claimReview->save();
     }
 
+    //////////////////////////////////////////////////////////////////
+
     private function getPreviousNonRejectedStatus(Claim $claim)
     {
         $lastReview = $claim->reviews()
@@ -239,6 +261,30 @@ class ClaimService
 
         return $lastReview ? $lastReview->status : null;
     }
+
+    //////////////////////////////////////////////////////////////////
+
+    public function getPreviousRejectorRole(Claim $claim)
+    {
+        // Fetch the last review where the claim was rejected
+        $lastRejectedReview = $claim->reviews()
+            ->where('status', Claim::STATUS_REJECTED)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($lastRejectedReview) {
+            // Get the reviewer who rejected the claim
+            $reviewer = User::find($lastRejectedReview->reviewer_id);
+
+            if ($reviewer) {
+                return $reviewer->role->name;
+            }
+        }
+
+        return null;
+    }
+
+    //////////////////////////////////////////////////////////////////
 
     private function getReviewColumnForRole(string $roleName): string
     {

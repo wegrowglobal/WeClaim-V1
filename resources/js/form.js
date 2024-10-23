@@ -565,16 +565,14 @@ document.addEventListener("DOMContentLoaded", () => {
 ////////////////// File Uploading Progress Bar Dummy ///////////////////
 ////////////////////////////////////////////////////////////////////////
 
-function handleFileUpload(event, progressContainerId, progressBarId, fileLabelId) {
+function handleFileUpload(event, progressContainerId, fileLabelId) {
    const fileLabel = document.getElementById(fileLabelId);
    const fileName = event.target.files[0] ? event.target.files[0].name : "No File Selected";
 
    const progressContainer = document.getElementById(progressContainerId);
-   const progressBar = document.getElementById(progressBarId);
    progressContainer.classList.remove("hidden");
 
    // Simulate progress for demonstration purposes
-   progressBar.style.width = "100%";
    setTimeout(() => {
       progressContainer.classList.add("hidden");
       fileLabel.textContent = fileName;
@@ -582,9 +580,9 @@ function handleFileUpload(event, progressContainerId, progressBarId, fileLabelId
 }
 
 document.getElementById("toll_report").addEventListener("change", (event) => {
-   handleFileUpload(event, "toll_progress_container", "toll_progress_bar", "toll_file_label");
+   handleFileUpload(event, "toll_progress_container", "toll_file_label");
 });
 
 document.getElementById("email_report").addEventListener("change", (event) => {
-   handleFileUpload(event, "email_progress_container", "email_progress_bar", "email_file_label");
+   handleFileUpload(event, "email_progress_container", "email_file_label");
 });

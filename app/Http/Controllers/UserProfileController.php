@@ -28,7 +28,7 @@ class UserProfileController extends Controller
             'state' => 'required|string',
             'zip_code' => 'required|string',
             'country' => 'required|string',
-            'profile_picture' => 'nullable|image|max:2048'
+            'profile_picture' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $user = auth()->user();
