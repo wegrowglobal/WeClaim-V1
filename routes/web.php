@@ -43,7 +43,10 @@ Route::get('/settings', function () {
     return view();
 })->name('settings');
 
-Route::get('/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('profile');
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [App\Http\Controllers\UserProfileController::class, 'update'])->name('profile.update');
+});
 
 // All Claims Routes
 

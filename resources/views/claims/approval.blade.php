@@ -82,8 +82,19 @@ use App\Models\Claim;
                                             <tr class="claim-row" data-need-review="{{ $claimService->canReviewClaim(Auth::user(), $claim) ? 'true' : 'false' }}">
                                                 <td class="table-item">{{ $claim->id }}</td>
                                                 <td class="table-item">{{ $claim->submitted_at->format('d-m-Y') }}</td>
-                                                <td class="table-item">{{ $claim->user->first_name . ' ' . $claim->user->second_name }}</td>
-                                                <td class="table-item">{{ $claim->title }}</td>
+                                                <td class="table-item">
+                                                    <div class="flex items-center">
+                                                       {{--  @if ($claim->user->profile_picture_url) --}}
+                                                        @if($claim->user->profile_picture && Storage::disk('public')->exists(auth()->user()->profile_picture))
+                                                            <img src="{{ Storage::url('public/' . $claim->user->profile_picture) }}" alt="Profile Picture" class="h-8 w-8 rounded-full mr-2 object-cover">
+                                                        @else
+                                                            <div class="h-8 w-8 rounded-full mr-2 flex items-center justify-center text-white font-medium text-lg" style="background-color: {{ '#' . substr(md5($claim->user->first_name), 0, 6) }}">
+                                                                {{ strtoupper(substr($claim->user->first_name, 0, 1)) }}
+                                                            </div>
+                                                        @endif
+                                                        {{ $claim->user->first_name . ' ' . $claim->user->second_name }}
+                                                    </div>
+                                                </td>                                                <td class="table-item">{{ $claim->title }}</td>
                                                 <td class="table-item">{{ $claim->date_from->format('d-m-Y') }}</td>
                                                 <td class="table-item">{{ $claim->date_to->format('d-m-Y') }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
