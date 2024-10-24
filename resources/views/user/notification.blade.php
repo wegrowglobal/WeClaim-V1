@@ -31,38 +31,21 @@ use App\Models\Claim;
                 <!-- Quick Actions -->
                 <div class="space-y-4">
 
-                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-                        <h3 class="heading-2 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            Notification Feed
-                        </h3>
-                        <form action="{{ route('notifications.markAllAsRead') }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" class="text-green-600 hover:text-green-700 transition-all duration-300">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </button>
-                        </form>
-                    </div>
-
                     <!-- Notifications List -->
                     <div class="space-y-4">
                         @forelse(auth()->user()->notifications as $notification)
-                            <div class="bg-white p-4 rounded-lg border {{
-                                $notification->read_at ? 'border-gray-200 opacity-60 !shadow-none' :
+                            <div class="bg-white p-6 rounded-lg border {{
+                                $notification->read_at ? 'border-gray-200 opacity-60' :
                                 (isset($notification->data['action']) ?
                                     ($notification->data['action'] === 'rejected' ? 'border-2 border-red-600/50' :
                                     ($notification->data['action'] === 'approved' ? 'border-2 border-green-400/50' :
-                                    ($notification->data['action'] === 'resubmitted' ? 'border-2 border-yellow-400/50' : 'border-2 border-yellow-400/50')))
-                                : 'border-2 border-yellow-400/50')
+                                    ($notification->data['action'] === 'resubmitted' ? 'border-2 border-yellow-400/50' : 'border-2 border-blue-400/50')))
+                                : 'border-2 border-blue-400/50')
                             }} transition-all duration-300 hover:shadow-md">
-                                <div class="flex flex-row justify-between items-center">
-                                    <div class="flex items-center space-x-4">
-                                        <!-- Status Icon -->
-                                        <div class="flex-shrink-0">
+                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                                    <div class="flex-grow space-y-2">
+                                        <!-- Status Icon and Message -->
+                                        <div class="flex items-center space-x-2">
                                             @if(!$notification->read_at)
                                                 <div class="h-3 w-3 rounded-full {{
                                                     isset($notification->data['action']) ?
@@ -70,90 +53,75 @@ use App\Models\Claim;
                                                             'rejected' => 'bg-red-500',
                                                             'approved' => 'bg-green-500',
                                                             'resubmitted' => 'bg-yellow-500',
-                                                            default => 'bg-yellow-500'
+                                                            default => 'bg-blue-500'
                                                         }
-                                                    : 'bg-yellow-500'
+                                                    : 'bg-blue-500'
                                                 }}"></div>
                                             @endif
-                                        </div>
-
-                                        <!-- Notification Content -->
-                                        <div class="space-y-2">
-                                            <!-- Message -->
                                             <p class="text-sm font-medium text-wgg-black-700">
-                                                {{ $notification->data['message'] }}
-                                            </p>
-
-                                            <!-- Timestamp -->
-                                            <p class="text-xs text-gray-500 flex items-center gap-1">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none"
-                                                     viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                                {{ $notification->created_at->diffForHumans() }}
+                                                @if($notification->data['is_for_claim_owner'] ?? true)
+                                                    @if(in_array($notification->data['action'] ?? '', ['approved', 'rejected']))
+                                                        {{ $notification->data['message'] }}
+                                                    @else
+                                                        {{ $notification->data['message'] }}
+                                                    @endif
+                                                @else
+                                                    {{ $notification->data['message'] }}
+                                                @endif
                                             </p>
                                         </div>
+
+                                        <!-- Timestamp -->
+                                        <p class="text-xs text-gray-500 flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none"
+                                                 viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                      stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            {{ $notification->created_at->diffForHumans() }}
+                                        </p>
                                     </div>
+
                                     <!-- Action Buttons -->
-                                    <div class="flex flex-row h-full gap-2">
+                                    <div class="flex space-x-2 *:w-fit">
                                         @if($notification->data['is_for_claim_owner'] ?? true)
                                             @switch($notification->data['action'] ?? null)
                                                 @case('rejected')
-                                                    <!-- For Claim Owner - Rejected -->
-                                                    <a href="{{ route('claims.claim', $notification->data['claim_id']) }}" class="btn bg-orange-500 hover:bg-orange-700 text-white text-xs w-fit p-2 flex items-center">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <a href="{{ route('claims.claim', $notification->data['claim_id']) }}" class="btn bg-orange-500 hover:bg-orange-700 text-white text-xs p-2 flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                                         </svg>
+                                                        Resubmit
                                                     </a>
-                                                    @break
-
-                                                @case('approved')
-                                                    <!-- For Claim Owner - Approved -->
-                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                    </span>
-                                                    @break
-
-                                                @case('pending')
-                                                    <!-- For Claim Owner - Pending -->
-                                                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                        </svg>
-                                                    </span>
                                                     @break
 
                                                 @default
-                                                    <!-- For Claim Owner - Default Action -->
-                                                    <a href="{{ route('claims.claim', $notification->data['claim_id']) }}" class="btn bg-indigo-500 hover:bg-indigo-700 text-white text-xs w-fit p-2 flex items-center">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <a href="{{ route('claims.claim', $notification->data['claim_id']) }}" class="btn bg-indigo-500 hover:bg-indigo-700 text-white text-xs p-2 flex items-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon-small mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                         </svg>
+                                                        View Claim
                                                     </a>
                                             @endswitch
-
                                         @else
-                                        <!-- For Reviewer -->
-                                        <a href="{{ route('claims.review', $notification->data['claim_id']) }}" class="btn bg-yellow-500 hover:bg-yellow-700 text-white text-xs w-fit p-2 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        </a>
+                                            <a href="{{ route('claims.review', $notification->data['claim_id']) }}" class="btn bg-yellow-500 hover:bg-yellow-700 text-white text-xs p-2 flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-small mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                </svg>
+                                                Review
+                                            </a>
                                         @endif
 
                                         @if(!$notification->read_at)
-                                        <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit" class="btn bg-emerald-500 hover:bg-emerald-700 text-white text-xs w-fit p-2 flex items-center">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </button>
-                                        </form>
+                                            <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="btn bg-emerald-500 hover:bg-emerald-700 text-white text-xs p-2 flex items-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-small" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </button>
+                                            </form>
                                         @endif
                                     </div>
                                 </div>
@@ -164,8 +132,59 @@ use App\Models\Claim;
                             </div>
                         @endforelse
                     </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        console.log('Notification script loaded');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded event fired');
+            if (window.Echo) {
+                console.log('Echo is available');
+                const userId = {{ auth()->id() }};
+                console.log('User ID:', userId);
+                const channel = window.Echo.private(`App.Models.User.${userId}`);
+                console.log('Subscribed to channel:', `App.Models.User.${userId}`);
+                
+                channel.listen('.ClaimStatusNotification', (notification) => {
+                    console.log('ClaimStatusNotification received:', notification);
+                    
+                    // Update the notification count
+                    const countElement = document.getElementById('notification-count');
+                    if (countElement) {
+                        let currentCount = parseInt(countElement.textContent) || 0;
+                        currentCount++;
+                        
+                        countElement.textContent = currentCount;
+                        countElement.classList.remove('hidden');
+                        console.log('Updated notification count:', currentCount);
+                    } else {
+                        console.error('Notification count element not found');
+                    }
+                    
+                    // Refresh the notifications list if on the notifications page
+                    if (window.location.pathname === '{{ route('notifications') }}') {
+                        console.log('Refreshing notifications page');
+                        location.reload();
+                    }
+                });
+
+                channel.error((error) => {
+                    console.error('Error on Echo channel:', error);
+                });
+            } else {
+                console.error('Echo is not available');
+            }
+        });
+    </script>
+    @endpush
+    
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    </body>
+
 </x-layout>

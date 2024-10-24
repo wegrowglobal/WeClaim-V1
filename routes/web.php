@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications');
     Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
     Route::post('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unreadCount');
 
 
     // User Profile Routes
@@ -79,10 +80,11 @@ Route::middleware('auth')->group(function () {
 
     // Settings Routes
 
-    Route::get('/settings', function () {
+    Route::get('/settin//////////////////gs', function () {
         return view();
     })->name('settings');
 
     Route::get('/chat', [ChatController::class, 'index'])->name('posts.chat');
     Route::post('/chat/message', [ChatController::class, 'sendMessage'])->name('chat.message');
+
 });

@@ -18,8 +18,5 @@
         </div>
     </div>
 
-    @vite([
-    'resources/js/notification.js',
-    ])
 
 @include('components.footer')

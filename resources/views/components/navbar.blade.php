@@ -42,7 +42,7 @@
                     </svg>
                     New Claim
                 </a>
-
+                
                 <a class="navbar-item {{ request()->routeIs('notifications') ? 'navbar-item-active' : 'navbar-item-active-hover' }}" href="{{ route('notifications') }}">
                     <div class="flex items-center justify-between w-full">
                         <div class="flex items-center">
@@ -51,11 +51,9 @@
                             </svg>
                             Notifications
                         </div>
-                        @if(Auth::user()->unreadNotifications->count() > 0)
-                            <span class="bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
-                                {{ Auth::user()->unreadNotifications->count() }}
-                            </span>
-                        @endif
+                        <span id="notification-count" class="bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full {{ Auth::user()->unreadNotifications->count() > 0 ? '' : 'hidden' }}">
+                            {{ Auth::user()->unreadNotifications->count() }}
+                        </span>
                     </div>
                 </a>
 

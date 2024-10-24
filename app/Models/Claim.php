@@ -42,6 +42,7 @@ class Claim extends Model
         'date_from',
         'date_to',
         'total_distance',
+        'reviewer_id',
     ];
 
     protected $primaryKey = 'id';

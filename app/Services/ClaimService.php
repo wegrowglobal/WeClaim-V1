@@ -2,12 +2,12 @@
 
 namespace App\Services;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Claim;
 use App\Models\ClaimDocument;
 use App\Models\ClaimReview;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 use Str;
 
@@ -165,26 +165,6 @@ class ClaimService
     }
 
     //////////////////////////////////////////////////////////////////
-    /*
-    public function getClaimsBasedOnRole(User $user, int $perPage = 30)
-    {
-        $query = Claim::with('user');
-
-        switch ($user->role->name) {
-            case 'Admin':
-                return $query->where('status', '!=', Claim::STATUS_DONE)->paginate($perPage);
-            case 'Datuk':
-                return $query->where('status', Claim::STATUS_APPROVED_ADMIN)->paginate($perPage);
-            case 'HR':
-                return $query->where('status', Claim::STATUS_APPROVED_DATUK)->paginate($perPage);
-            case 'Finance':
-                return $query->where('status', Claim::STATUS_APPROVED_HR)->paginate($perPage);
-            default:
-                return $query->where('user_id', $user->id)->paginate($perPage);
-        }
-    }
-    */
-    /////////////////////////////////////////////////////////////////
 
     public function canReviewClaim(User $user, Claim $claim)
     {
@@ -205,28 +185,32 @@ class ClaimService
 
     public function approveClaim(User $user, Claim $claim)
     {
+        Log::info('Attempting to approve claim', [
+            'user_id' => $user->id,
+            'user_role' => $user->role->name,
+            'claim_id' => $claim->id,
+            'current_status' => $claim->status
+        ]);
+
         $nextReviewer = null;
-    
+        $originalStatus = $claim->status;
+
         switch ($user->role->name) {
             case 'Admin':
-                if ($claim->status === Claim::STATUS_SUBMITTED) {
-                    $claim->status = Claim::STATUS_APPROVED_ADMIN;
+                if ($claim->status === Claim::STATUS_SUBMITTED || $claim->status === Claim::STATUS_APPROVED_ADMIN) {
+                    $claim->status = Claim::STATUS_APPROVED_DATUK;
                     $nextReviewer = User::whereHas('role', function($query) {
-                        $query->where('id', self::ROLE_ID_DATUK);
+                        $query->where('id', self::ROLE_ID_HR);
                     })->first();
                 }
                 break;
-            case 'Datuk':
-                $claim->status = Claim::STATUS_APPROVED_DATUK;
-                $nextReviewer = User::whereHas('role', function($query) {
-                    $query->where('id', self::ROLE_ID_HR);
-                })->first();
-                break;
             case 'HR':
-                $claim->status = Claim::STATUS_APPROVED_HR;
-                $nextReviewer = User::whereHas('role', function($query) {
-                    $query->where('id', self::ROLE_ID_FINANCE);
-                })->first();
+                if ($claim->status === Claim::STATUS_APPROVED_DATUK) {
+                    $claim->status = Claim::STATUS_APPROVED_HR;
+                    $nextReviewer = User::whereHas('role', function($query) {
+                        $query->where('id', self::ROLE_ID_FINANCE);
+                    })->first();
+                }
                 break;
             case 'Finance':
                 if ($claim->status === Claim::STATUS_APPROVED_HR) {
@@ -235,11 +219,44 @@ class ClaimService
                     $claim->status = Claim::STATUS_DONE;
                 }
                 break;
+            default:
+                Log::warning('Unauthorized role attempting to approve claim', [
+                    'user_role' => $user->role->name,
+                    'claim_id' => $claim->id
+                ]);
+                return $claim;
         }
-    
-        $claim->reviewer_id = $nextReviewer ? $nextReviewer->id : null;
-        $claim->save();
-    
+
+        // If there's a next reviewer, set the reviewer_id
+        if ($nextReviewer) {
+            $claim->reviewer_id = $nextReviewer->id;
+        } else {
+            // If there's no next reviewer (e.g., claim is done), keep the current reviewer
+            $claim->reviewer_id = $user->id;
+        }
+
+        Log::info('Updating claim reviewer', [
+            'claim_id' => $claim->id,
+            'new_reviewer_id' => $claim->reviewer_id,
+            'new_status' => $claim->status
+        ]);
+
+        try {
+            $claim->save();
+            Log::info('Claim updated successfully', [
+                'claim_id' => $claim->id,
+                'old_status' => $originalStatus,
+                'new_status' => $claim->status,
+                'new_reviewer_id' => $claim->reviewer_id
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update claim', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+
         return $claim;
     }
 
