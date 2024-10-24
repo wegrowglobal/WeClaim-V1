@@ -1,4 +1,8 @@
-@include('components.header')
+@extends('layouts.auth')
+
+@section('title', 'Forgot Password - WeClaim')
+
+@section('content')
 
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black">
     <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md">
@@ -35,4 +39,4 @@
     </div>
 </div>
 
-@include('components.footer')
+@endsection

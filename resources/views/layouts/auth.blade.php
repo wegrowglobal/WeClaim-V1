@@ -18,27 +18,8 @@
 
 </head>
 <body>
-
     <div class="flex">
-
-        <!-- Navigation Sidebar -->
-        <div class="navbar-container lay-left">
-           @include('partials.navbar')
-        </div>
-
-        <!-- Content Here -->
-        <div class="content-container @yield('content-class')">
-            @yield('content')
-        </div>
-
+        @yield('content')
     </div>
-
-    <!-- Footer -->
-    @include('partials.footer')
-
-    <!-- Scripts -->
-    <script src="{{ asset('js/app.js') }}"></script>
-    @stack('scripts')
-
 </body>
 </html>

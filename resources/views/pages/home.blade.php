@@ -1,4 +1,7 @@
-<x-layout>
+@extends('layouts.app')
+
+@section('content')
+
     <div class="max-w-full-custom border border-wgg-border">
 
         @guest
@@ -110,4 +113,5 @@
         @endauth
 
     </div>
-</x-layout>
+
+@endsection

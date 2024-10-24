@@ -1,15 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Required meta tags -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- Title -->
-    <title>{{ config('app.name') }}</title>
-
     <!-- Google Fonts -->
     <link rel="icon" type="image/x-icon" href="{{ asset('resources/favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,11 +9,3 @@
 
     <!-- Others -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-
-    <!-- Vite -->
-    @vite([
-        'resources/css/app.css',
-        ])
-
-</head>
-<body>

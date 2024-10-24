@@ -21,7 +21,7 @@ use Illuminate\Http\Request;
 class ClaimController extends Controller
 {
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////  
 
     protected $claimService;
     use AuthorizesRequests;
@@ -31,7 +31,7 @@ class ClaimController extends Controller
     private const FINANCE_EMAIL = 'ammar@wegrow-global.com';
     private const TEST_EMAIL = 'ammar@wegrow-global.com';
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////      
 
     public function __construct(ClaimService $claimService)
     {
@@ -39,7 +39,7 @@ class ClaimController extends Controller
     }
 
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////  
 
     public function index($view)
     {
@@ -63,7 +63,8 @@ class ClaimController extends Controller
             'claimService' => $this->claimService
         ]);
     }
-    //////////////////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////////////////////////////////  
 
     public function show($id, $view)
     {
@@ -71,7 +72,7 @@ class ClaimController extends Controller
         return view($view, compact('claim'));
     }
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////      
 
     public function store(StoreClaimRequest $request)
     {
@@ -112,7 +113,7 @@ class ClaimController extends Controller
     }
 
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////  
 
 
     public function approvalScreen()
@@ -142,7 +143,7 @@ class ClaimController extends Controller
     }
 
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////  
 
     public function reviewClaim($id)
     {
@@ -161,7 +162,7 @@ class ClaimController extends Controller
         }
     }
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////      
 
 
     public function updateClaim(Request $request, $id)
@@ -206,7 +207,7 @@ class ClaimController extends Controller
         }
     }
 
-    /////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////
 
     private function notifyRoles(Claim $claim, string $actionType)
     {
@@ -253,7 +254,7 @@ class ClaimController extends Controller
     }
 
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////      
 
 
     public function approveClaim($id)
@@ -274,7 +275,7 @@ class ClaimController extends Controller
         }
     }
 
-    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////  
 
     public function viewDocument(Claim $claim, $type)
     {
@@ -294,7 +295,35 @@ class ClaimController extends Controller
         return response()->file($filePath);
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
 
+    public function approval()
+    {
+        $claims = Claim::paginate(10); // Adjust pagination as needed
+        $statistics = [
+            'totalClaims' => Claim::count(),
+            'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
+            'approvedClaims' => Claim::where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
+            'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
+        ];
 
-    //////////////////////////////////////////////////////////////////
+        return view('pages.claims.approval', compact('claims', 'statistics'));
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////  
+
+    public function dashboard()
+    {
+        $claims = Claim::paginate(10); // Adjust pagination as needed
+        $statistics = [
+            'totalClaims' => Claim::count(),
+            'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
+            'approvedClaims' => Claim::where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
+            'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
+        ];
+
+        return view('pages.claims.dashboard', compact('claims', 'statistics'));
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////  
 }

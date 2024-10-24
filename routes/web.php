@@ -1,34 +1,46 @@
 <?php
 
+///////////////////////////////////////////////////////////////////////////////////
+
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+
+///////////////////////////////////////////////////////////////////////////////////
 
 // All Static Routes
 
 Route::get('/', function () {
-    return view('posts.home');
+    return view('pages.home');
 })->name('home');
+
+///////////////////////////////////////////////////////////////////////////////////
 
 // Authentication Routes
 
 Route::get('/login', function () {
-    return view('authentication.login');
+    return view('pages.auth.login');
 })->name('login.form');
 
-Route::post('/login', [App\Http\Controllers\UserController::class, 'login'])->name('login');
+Route::post('/login', [UserController::class, 'login'])->name('login');
 
-Route::post('/logout', [App\Http\Controllers\UserController::class, 'logout'])->name('logout');
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
 Route::get('/forgot-password', function () {
-    return view('authentication.forgot_password');
+    return view('pages.auth.forgot-password');
 })->name('forgot-password');
+
+///////////////////////////////////////////////////////////////////////////////////
 
 // Middleware Routes
 
 Route::middleware('auth')->group(function () {
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     // Notification
 
@@ -37,54 +49,56 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unreadCount');
 
+    ///////////////////////////////////////////////////////////////////////////////////
 
     // User Profile Routes
 
-    Route::get('/profile', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profile');
-    Route::put('/profile', [App\Http\Controllers\UserProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile', [UserProfileController::class, 'show'])->name('profile');
+    Route::put('/profile', [UserProfileController::class, 'update'])->name('profile.update');
+
+    ///////////////////////////////////////////////////////////////////////////////////
 
     // Claims Routes
 
-    Route::get('claims', [App\Http\Controllers\ClaimController::class, 'index'])
-    ->defaults('view', 'claims.dashboard')
-    ->name('claims.dashboard');
+    Route::get('claims/dashboard', [ClaimController::class, 'dashboard'])->name('claims.dashboard');
 
     Route::get('claims/new', function () {
-        return view('claims.new');
+        return view('pages.claims.new');
     })->name('claims.new');
 
-    Route::post('claims/new', [App\Http\Controllers\ClaimController::class, 'store'])->name('claims.store');
+    Route::post('claims/new', [ClaimController::class, 'store'])->name('claims.store');
 
-    Route::get('claims/approval', [App\Http\Controllers\ClaimController::class, 'index'])
-    ->defaults('view', 'claims.approval')
-    ->name('claims.approval');
+    Route::get('claims/approval', [ClaimController::class, 'approval'])->name('claims.approval');
 
     Route::get('claims/{claim}/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])
         ->name('claims.view.document');
 
-    Route::get('/claims/{id}/review', [App\Http\Controllers\ClaimController::class, 'reviewClaim'])->name('claims.review');
+    Route::get('/claims/{id}/review', [ClaimController::class, 'reviewClaim'])->name('claims.review');
 
-    Route::get('claims/{id}', [App\Http\Controllers\ClaimController::class, 'show'])
-    ->defaults('view', 'claims.claim')
+    Route::get('claims/{id}', [ClaimController::class, 'show'])
+    ->defaults('view', 'pages.claims.claim')
     ->name('claims.claim');
 
     Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
 
-    Route::post('/claims/{id}/approve', [App\Http\Controllers\ClaimController::class, 'approveClaim'])->name('claims.approve');
+    Route::post('/claims/{id}/approve', [ClaimController::class, 'approveClaim'])->name('claims.approve');
 
-    // Reports Routes
+///////////////////////////C;////////////////////////////////////////////////////////
+
+    // Reports Routes   
 
     Route::get('/report', function () {
     return view();
     })->name('reports');
 
-    // Settings Routes
+    ///////////////////////////////////////////////////////////////////////////////////
 
-    Route::get('/settin//////////////////gs', function () {
+    // Settings Routes  
+
+    Route::get('/settings', function () {
         return view();
     })->name('settings');
 
-    Route::get('/chat', [ChatController::class, 'index'])->name('posts.chat');
-    Route::post('/chat/message', [ChatController::class, 'sendMessage'])->name('chat.message');
+    ///////////////////////////////////////////////////////////////////////////////////
 
 });
