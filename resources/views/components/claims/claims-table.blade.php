@@ -1,3 +1,9 @@
+@php
+    use App\Models\Claim;
+@endphp
+
+@props(['claims', 'claimService', 'actions', 'rows'])
+
 <div class="bg-white overflow-hidden">
     <table id="claimsTable" class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -71,9 +77,4 @@
             @endforeach
         </tbody>
     </table>
-    @if ($claims->hasPages())
-        <div class="m-1">
-            {{ $claims->links() }}
-        </div>
-    @endif
 </div>

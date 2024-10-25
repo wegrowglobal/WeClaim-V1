@@ -1,3 +1,7 @@
+@php
+    use App\Models\Claim;
+@endphp
+
 <span class="status-badge
     @if ($status == Claim::STATUS_SUBMITTED)
         bg-orange-100 text-orange-800

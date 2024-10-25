@@ -16,7 +16,7 @@ class NotificationController extends Controller
 
     public function index()
     {
-        return view('user.notification');
+        return view('pages.user.notification');
     }
 
     public function markAllAsRead()

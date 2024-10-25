@@ -134,7 +134,7 @@ class ClaimService
 
         $fileName = time() . "_{$prefix}_" . $file->getClientOriginalName();
         $filePath = $file->storeAs($path, $fileName, 'public');
-        Log::info("{$prefix} report uploaded", ['file_name' => $fileName]);
+        Log::info("{$prefix} report uploaded", ['file_name' => $fileName, 'file_path' => $filePath]);
 
         return ['fileName' => $fileName, 'filePath' => $filePath];
     }

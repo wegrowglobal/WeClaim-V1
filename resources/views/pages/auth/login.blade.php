@@ -4,7 +4,7 @@
 
 @section('content')
 
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black">
+<div class="min-h-screen w-full flex items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black">
     <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md">
         <div class="text-center mb-8">
             <svg width="60" height="48" viewBox="0 0 557 438" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4">

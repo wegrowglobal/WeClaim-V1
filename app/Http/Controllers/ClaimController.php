@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreClaimRequest;
 use App\Models\Claim;
 use App\Models\User;
-use App\Mail\ClaimActionMail;
 use App\Models\ClaimLocation;
+use App\Mail\ClaimActionMail;
 use App\Services\ClaimService;
 use App\Notifications\ClaimStatusNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -46,18 +46,17 @@ class ClaimController extends Controller
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-
+    
         $user = Auth::user();
-        $perPage = 30;
-
+    
         if ($view === 'claims.dashboard') {
-            $claims = Claim::with('user')->where('user_id', $user->id)->paginate($perPage);
+            $claims = Claim::with('user')->where('user_id', $user->id)->get(); // Changed from paginate to get
         } elseif ($view === 'claims.approval') {
-            $claims = Claim::with('user')->paginate($perPage);
+            $claims = Claim::with('user')->get(); // Changed from paginate to get
         } else {
             abort(404);
         }
-
+    
         return view($view, [
             'claims' => $claims,
             'claimService' => $this->claimService
@@ -69,7 +68,13 @@ class ClaimController extends Controller
     public function show($id, $view)
     {
         $claim = Claim::findOrFail($id);
-        return view($view, compact('claim'));
+        $claims = collect([$claim]); // Wrap the single claim in a collection
+
+        return view('pages.claims.claim', [
+            'claim' => $claim,
+            'claims' => $claims,
+            'claimService' => $this->claimService, // Pass the claimService variable
+        ]);
     }
 
     //////////////////////////////////////////////////////////////////////////////////      
@@ -119,20 +124,19 @@ class ClaimController extends Controller
     public function approvalScreen()
     {
         Log::info('Approval screen accessed by user: ' . Auth::id());
-
+    
         $user = Auth::user();
-
+    
         if (!$user) {
             return redirect()->route('login');
         }
-
+    
         if ($user->role->name === 'Staff') {
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }
-
+    
         if ($user instanceof User) {
-            $perPage = 30; // Define how many items per page
-            $claims = Claim::with('user')->paginate($perPage);
+            $claims = Claim::with('user')->get(); // Changed from paginate to get
             return view('claims.approval', [
                 'claims' => $claims,
                 'claimService' => $this->claimService
@@ -277,9 +281,8 @@ class ClaimController extends Controller
 
     //////////////////////////////////////////////////////////////////////////////////  
 
-    public function viewDocument(Claim $claim, $type)
+    public function viewDocument(Claim $claim, $type, $filename)
     {
-
         $document = $claim->documents()->first();
 
         if (!$document) {
@@ -290,6 +293,7 @@ class ClaimController extends Controller
 
         if (!file_exists($filePath)) {
             abort(404, 'File not found');
+            
         }
 
         return response()->file($filePath);
@@ -307,22 +311,30 @@ class ClaimController extends Controller
             'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
         ];
 
-        return view('pages.claims.approval', compact('claims', 'statistics'));
+        return view('pages.claims.approval', [
+            'claims' => $claims,
+            'statistics' => $statistics,
+            'claimService' => $this->claimService, // or however you're resolving this service
+        ]);
     }
 
     //////////////////////////////////////////////////////////////////////////////////  
 
     public function dashboard()
     {
-        $claims = Claim::paginate(10); // Adjust pagination as needed
+        $claims = Claim::get(); // Changed from paginate to get
         $statistics = [
             'totalClaims' => Claim::count(),
             'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
             'approvedClaims' => Claim::where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
             'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
         ];
-
-        return view('pages.claims.dashboard', compact('claims', 'statistics'));
+    
+        return view('pages.claims.dashboard', [
+            'claims' => $claims,
+            'statistics' => $statistics,
+            'claimService' => $this->claimService,
+        ]);
     }
 
     //////////////////////////////////////////////////////////////////////////////////  

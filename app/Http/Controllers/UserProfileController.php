@@ -11,7 +11,26 @@ class UserProfileController extends Controller
 
     public function show()
     {
-        return view('user.profile');
+        $stateOptions = [
+            'JHR' => 'Johor',
+            'KDH' => 'Kedah',
+            'KTN' => 'Kelantan',
+            'MLK' => 'Melaka',
+            'NSN' => 'Negeri Sembilan',
+            'PHG' => 'Pahang',
+            'PNG' => 'Penang',
+            'PRK' => 'Perak',
+            'PLS' => 'Perlis',
+            'SBH' => 'Sabah',
+            'SWK' => 'Sarawak',
+            'SGR' => 'Selangor',
+            'TRG' => 'Terengganu',
+            'KUL' => 'Kuala Lumpur',
+            'LBN' => 'Labuan',
+            'PJY' => 'Putrajaya'
+        ];
+
+        return view('pages.user.profile', compact('stateOptions'));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -31,7 +50,7 @@ class UserProfileController extends Controller
             'profile_picture' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
-        $user = auth()->user();
+        auth()->user()->update($validatedData);
 
         if ($request->hasFile('profile_picture')) {
             $path = $request->file('profile_picture')->store('profile-pictures', 'public');

@@ -71,13 +71,13 @@ Route::middleware('auth')->group(function () {
     Route::get('claims/approval', [ClaimController::class, 'approval'])->name('claims.approval');
 
     Route::get('claims/{claim}/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])
-        ->name('claims.view.document');
+    ->name('claims.view.document');
 
     Route::get('/claims/{id}/review', [ClaimController::class, 'reviewClaim'])->name('claims.review');
 
     Route::get('claims/{id}', [ClaimController::class, 'show'])
     ->defaults('view', 'pages.claims.claim')
-    ->name('claims.claim');
+    ->name('claims.view');
 
     Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
 
