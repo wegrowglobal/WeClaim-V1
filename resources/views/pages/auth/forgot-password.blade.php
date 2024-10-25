@@ -6,6 +6,7 @@
 
 <div class="min-h-screen w-full flex items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black">
     <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md">
+
         <div class="text-center mb-8">
             <svg width="60" height="48" viewBox="0 0 557 438" fill="none" xmlns="http://www.w3.org/2000/svg" class="mx-auto mb-4">
                 <path d="M202.74 76.0002L126.74 152L177.407 202.667L228.074 253.333L240.74 240.667L253.407 228L215.407 190L177.407 152L240.74 88.6668L304.074 25.3335L291.407 12.6668L278.74 0.000149548L202.74 76.0002Z" fill="#0A0A0A"/>
@@ -16,7 +17,7 @@
             <p class="text-wgg-black-600 mt-2">Enter your email to reset your password</p>
         </div>
 
-        <form method="POST" class="space-y-6" action=" ">
+        <form method="POST" class="space-y-6" action="{{ route('password.email') }}">
             @csrf
             <div class="relative">
                 <input id="email" value="{{ old('email') }}" name="email" placeholder=" " class="form-input-base peer" type="email" required>

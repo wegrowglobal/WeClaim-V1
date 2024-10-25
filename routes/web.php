@@ -9,6 +9,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserProfileController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\ForgotPasswordController;
 
 ///////////////////////////////////////////////////////////////////////////////////
 
@@ -30,9 +32,25 @@ Route::post('/login', [UserController::class, 'login'])->name('login');
 
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
-Route::get('/forgot-password', function () {
-    return view('pages.auth.forgot-password');
-})->name('forgot-password');
+Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->middleware('guest')
+    ->name('password.email');
+
+Route::get('forgot-password/confirmation', [ForgotPasswordController::class, 'showConfirmation'])
+    ->middleware('guest')
+    ->name('password.confirmation');
+
+Route::get('reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('reset-password', [ResetPasswordController::class, 'reset'])
+    ->middleware('guest')
+    ->name('password.update');
 
 ///////////////////////////////////////////////////////////////////////////////////
 
