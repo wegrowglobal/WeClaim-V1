@@ -30,8 +30,9 @@ class UserController extends Controller
     public function login(LoginRequest $request)
     {
         $credentials = $request->validated();
+        $remember = $request->has('remember');
 
-        if ($this->authService->attemptLogin($credentials)) {
+        if ($this->authService->attemptLogin($credentials, $remember)) {
             $request->session()->regenerate();
             $user = Auth::user();
 
