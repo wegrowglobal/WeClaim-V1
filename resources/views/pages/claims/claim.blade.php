@@ -23,7 +23,7 @@
                 <!-- Basic Details -->
                 <div class="space-y-2">
                     <h3 class="heading-2">Basic Details</h3>
-                    <div class="bg-white overflow-hidden shadow-sm">
+                    <div class="bg-white overflow-hidden">
                         <x-claims.table :rows="[
                             ['label' => 'Current Status', 'value' => str_replace('_', ' ', $claim->status)],
                             ['label' => 'Submitted Date', 'value' => $claim->submitted_at->format('d-m-Y')],
@@ -39,7 +39,7 @@
                 <!-- Toll Details -->
                 <div class="space-y-2">
                     <h3 class="heading-2">Toll Details</h3>
-                    <div class="bg-white overflow-hidden shadow-sm">
+                    <div class="bg-white overflow-hidden">
                         <x-claims.table :rows="[
                             ['label' => 'Toll Amount', 'value' => 'RM' . $claim->toll_amount],
                             [
@@ -63,7 +63,7 @@
                 <!-- Trip Details -->
                 <div class="space-y-2">
                     <h3 class="heading-2">Trip Details</h3>
-                    <div class="bg-white overflow-hidden shadow-sm">
+                    <div class="bg-white overflow-hidden">
                         <x-claims.table :rows="[
                             ['label' => 'Total Distance', 'value' => $claim->total_distance . ' KM'],
                         ]" />
@@ -112,7 +112,10 @@
     </div>
 
     <script>
-        var claimLocations = @json($claim->locations);
+        var claimLocations = @json($claim->locations->map(function($location) {
+            return ['location' => $location->location];
+        }));
+        console.log('Claim locations:', claimLocations);
     </script>
     
     @vite('resources/js/review.js')

@@ -17,6 +17,4 @@
         {{ $label }}
     </label>
 </div>
-@error($name)
-    <span class="error-text">{{ $message }}</span>
-@enderror
+<x-forms.error :name="$name" />

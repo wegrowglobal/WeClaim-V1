@@ -14,6 +14,4 @@
     >
     <label for="{{ $name }}" class="absolute left-2 top-2 text-xs text-wgg-black-400 font-normal transition-all duration-300 transform -translate-y-4 scale-75 z-10 origin-[0] bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:-translate-y-4 peer-focus:scale-75">{{ $label }}</label>
 </div>
-@error($name)
-    <span class="error-text">{{ $message }}</span>
-@enderror
+<x-forms.error :name="$name" />

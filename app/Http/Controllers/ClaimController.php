@@ -160,7 +160,7 @@ class ClaimController extends Controller
             }
 
             $reviews = $claim->reviews()->orderBy('department')->orderBy('review_order')->get();
-            return view('claims.review', compact('claim', 'reviews'));
+            return view('pages.claims.review', compact('claim', 'reviews'));
         } else {
             return route('login');
         }

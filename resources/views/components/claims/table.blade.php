@@ -1,7 +1,7 @@
-<table class="min-w-full divide-y divide-gray-200">
-    <tbody class="bg-white divide-y divide-gray-200">
+<table class="min-w-full divide-y divide-wgg-border-200">
+    <tbody class="bg-white divide-y divide-wgg-border-200">
         @foreach ($rows as $row)
-            <tr>
+            <tr class="">
                 <th class="table-horizontal-header">{{ $row['label'] }}</th>
                 <td class="table-horizontal-item">
                     @if (isset($row['component']))

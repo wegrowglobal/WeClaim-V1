@@ -25,8 +25,8 @@
                     <td class="table-item">{{ $claim->submitted_at->format('d-m-Y') }}</td>
                     <td class="table-item">
                         <div class="flex items-center">
-                            @if($claim->user->profile_picture && Storage::disk('public')->exists(auth()->user()->profile_picture))
-                                <img src="{{ Storage::url('public/' . $claim->user->profile_picture) }}" alt="Profile Picture" class="h-8 w-8 rounded-full mr-2 object-cover">
+                            @if($claim->user->profile_picture && Storage::disk('public')->exists($claim->user->profile_picture))
+                                <img src="{{ Storage::url($claim->user->profile_picture) }}" alt="Profile Picture" class="h-8 w-8 rounded-full mr-2 object-cover">
                             @else
                                 <div class="h-8 w-8 rounded-full mr-2 flex items-center justify-center text-white font-medium text-lg" style="background-color: {{ '#' . substr(md5($claim->user->first_name), 0, 6) }}">
                                     {{ strtoupper(substr($claim->user->first_name, 0, 1)) }}

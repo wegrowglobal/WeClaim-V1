@@ -10,6 +10,3 @@
     </div>
     <input type="hidden" name="total_distance" id="total-distance-input">
 </div>
-@error('location.*')
-    <span class="error-text">{{ $message }}</span>
-@enderror

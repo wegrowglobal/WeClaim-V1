@@ -1,13 +1,4 @@
-const MARKER_COLORS = [
-   "#4285F4",
-   "#DB4437",
-   "#F4B400",
-   "#0F9D58",
-   "#AB47BC",
-   "#00ACC1",
-   "#FF7043",
-   "#9E9E9E",
-];
+import { MAP_CONFIG, MARKER_COLORS } from './config.js';
 
 const { ColorScheme } = await google.maps.importLibrary("core");
 
@@ -22,28 +13,52 @@ class ClaimReviewMap {
       this.directionsRenderer = null;
       this.routeInfoPanel = null;
       this.infoWindows = [];
+      this.geocodeCache = new Map();
    }
 
    ////////////////////////////////////////////////////////////////////////
 
-   init() {
-      this.initMap();
+   showLoading() {
+      const loadingElement = document.createElement('div');
+      loadingElement.id = 'loading-indicator';
+      loadingElement.className = 'loading-indicator';
+      loadingElement.textContent = 'Loading...';
+      document.getElementById('map').appendChild(loadingElement);
+   }
 
-      this.plotLocations();
-
-      if (this.locations.length > 1) {
-         this.drawRoute();
+   hideLoading() {
+      const loadingElement = document.getElementById('loading-indicator');
+      if (loadingElement) {
+         loadingElement.remove();
       }
+   }
+
+   init() {
+      console.log('Initializing map with locations:', this.locations);
+      this.showLoading();
+      this.initMap();
+      this.plotLocations().then(() => {
+         console.log('Locations plotted, drawing route');
+         if (this.locations.length > 1) {
+            this.drawRoute();
+         } else {
+            console.log('Not enough locations to draw a route');
+         }
+      }).catch(error => {
+         console.error('Error initializing map:', error);
+         this.showError('An error occurred while initializing the map. Please try again.');
+      }).finally(() => {
+         this.hideLoading();
+      });
    }
 
    ////////////////////////////////////////////////////////////////////////
 
    initMap() {
-      const defaultCenter = { lat: 3.0311070837055487, lng: 101.61629987586117 };
-      let mapCenter = this.getValidCoordinates(this.locations[0]) || defaultCenter;
+      const mapCenter = this.getValidCoordinates(this.locations[0]) || MAP_CONFIG.initialCenter;
 
       this.map = new google.maps.Map(document.getElementById("map"), {
-         zoom: 10,
+         zoom: MAP_CONFIG.initialZoom,
          center: mapCenter,
          disableDefaultUI: true,
          zoomControl: true,
@@ -57,6 +72,10 @@ class ClaimReviewMap {
       this.directionsRenderer = new google.maps.DirectionsRenderer({
          map: this.map,
          suppressMarkers: true,
+         polylineOptions: {
+            strokeColor: "#4285F4",
+            strokeWeight: 5,
+         }
       });
    }
 
@@ -148,18 +167,45 @@ class ClaimReviewMap {
    // https://developers.google.com/maps/documentation/javascript/marker-clustering
 
    plotLocations() {
-      const bounds = new google.maps.LatLngBounds();
-      this.locations.forEach((location, index) => {
+      return new Promise((resolve, reject) => {
+         const bounds = new google.maps.LatLngBounds();
+         const geocodePromises = this.locations.map((location, index) => 
+            this.geocodeLocation(location.location, index)
+         );
+
+         Promise.all(geocodePromises).then(results => {
+            results.forEach(({position, index}) => {
+               if (position) {
+                  this.addMarker(position, index + 1);
+                  bounds.extend(position);
+               }
+            });
+            this.map.fitBounds(bounds);
+            resolve();
+         }).catch(reject);
+      });
+   }
+
+   ////////////////////////////////////////////////////////////////////////
+
+   geocodeLocation(address, index) {
+      if (this.geocodeCache.has(address)) {
+         return Promise.resolve({
+            position: this.geocodeCache.get(address),
+            index: index
+         });
+      }
+
+      return new Promise((resolve) => {
          const geocoder = new google.maps.Geocoder();
-         geocoder.geocode({ address: location.location }, (results, status) => {
+         geocoder.geocode({ address: address }, (results, status) => {
             if (status === "OK" && results[0]) {
                const position = results[0].geometry.location;
-               this.addMarker(position, index + 1);
-               bounds.extend(position);
-
-               if (index === this.locations.length - 1) {
-                  this.map.fitBounds(bounds);
-               }
+               this.geocodeCache.set(address, position);
+               resolve({position, index});
+            } else {
+               console.error(`Geocoding failed for address: ${address}`);
+               resolve({position: null, index});
             }
          });
       });
@@ -179,6 +225,11 @@ class ClaimReviewMap {
    ////////////////////////////////////////////////////////////////////////
 
    drawRoute() {
+      if (this.locations.length < 2) {
+         console.error('Not enough locations to draw a route');
+         return;
+      }
+
       const origin = this.locations[0].location;
       const destination = this.locations[this.locations.length - 1].location;
       const waypoints = this.locations.slice(1, -1).map((loc) => ({
@@ -186,20 +237,35 @@ class ClaimReviewMap {
          stopover: true,
       }));
 
+      console.log('Route details:', { origin, destination, waypoints });
+
       this.directionsService.route(
          {
             origin: origin,
             destination: destination,
             waypoints: waypoints,
-            travelMode: "DRIVING",
+            travelMode: google.maps.TravelMode.DRIVING,
          },
          (response, status) => {
             if (status === "OK") {
+               this.directionsRenderer.setMap(this.map);  // Ensure the renderer is attached to the map
                this.directionsRenderer.setDirections(response);
                this.addSegmentInfoBoxes(response.routes[0]);
+            } else {
+               console.error('Error drawing route:', status);
+               this.showError('Unable to calculate route. Please check your locations and try again.');
             }
          }
       );
+   }
+
+   showError(message) {
+      const errorElement = document.createElement("div");
+      errorElement.id = "error-message";
+      errorElement.className = "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg";
+      errorElement.textContent = message;
+      document.body.appendChild(errorElement);
+      setTimeout(() => errorElement.remove(), 5000);
    }
 }
 

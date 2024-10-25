@@ -1,29 +1,31 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="max-w-full-custom border border-wgg-border">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="p-10 space-y-4">
-                <h2 class="heading-1">Claims Approval</h2>
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6">Claims Approval</h2>
 
-                <!-- Claims Statistics -->
-                <div class="space-y-4">
-                    <h3 class="heading-2">Claims Overview</h3>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                        <x-others.statistics-card title="Total Claims to Review" value="{{ $statistics['totalClaims'] }}" color="text-blue-600" />
-                        <x-others.statistics-card title="Pending Review" value="{{ $statistics['pendingReview'] }}" color="text-yellow-600" />
-                        <x-others.statistics-card title="Approved Claims" value="{{ $statistics['approvedClaims'] }}" color="text-green-600" />
-                        <x-others.statistics-card title="Total Amount to Review" value="RM {{ number_format($statistics['totalAmount'], 2) }}" color="text-indigo-600" />
-                    </div>
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
+                <div class="w-full sm:w-auto mb-4 sm:mb-0">
+                    <label for="sortSelect" class="block text-sm font-medium text-gray-700 mb-2">Sort by:</label>
+                    <select id="sortSelect" class="form-select block w-full sm:w-auto">
+                        <option value="submitted_at">Submitted Date</option>
+                        <option value="date_from">Date From</option>
+                        <option value="date_to">Date To</option>
+                        <option value="status">Status</option>
+                    </select>
                 </div>
-
-                <!-- Claims Table -->
-                <div class="mb-10">
-                    <x-claims.claims-table :claims="$claims" :claimService="$claimService" actions="approval" />
+                <div class="w-full sm:w-auto">
+                    <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">Search:</label>
+                    <input type="text" id="searchInput" class="form-input block w-full sm:w-auto" placeholder="Search claims...">
                 </div>
             </div>
+
+            <x-claims.claims-table :claims="$claims" :claimService="$claimService" actions="approval" />
         </div>
     </div>
+</div>
 
-    @vite('resources/js/approval.js')
+@vite(['resources/js/approval.js'])
 @endsection

@@ -211,4 +211,10 @@ input[type="number"]::-webkit-outer-spin-button {
    .progress-bar {
       @apply bg-blue-600 h-2.5 rounded-full;
    }
+   
+   .loading-indicator {
+      @apply absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2;
+      @apply bg-white bg-opacity-80 p-5 rounded-md shadow-md;
+      @apply z-50;
+  }
 }
