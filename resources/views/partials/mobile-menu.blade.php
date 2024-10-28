@@ -1,7 +1,16 @@
-<nav class="h-full bg-wgg-white">
-    
-    <div class="flex flex-col h-full justify-between p-4 rounded-lg shadow-lg border border-wgg-border">
+<!-- Initially Hidden Mobile Menu With Simple Navigation Links -->
+<div id="mobile-menu" class="z-50 hidden absolute top-0 left-0 w-full h-screen bg-wgg-white">
+    <div class="flex flex-col h-full justify-between p-4">
         <div class="space-y-4">
+
+            <!-- Close Button -->
+            <button id="close-mobile-menu" class="close-mobile-menu">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+
             <!-- Logo -->
             <div class="flex items-center justify-center mb-6">
                 <svg width="48" height="48" viewBox="0 0 557 438" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-wgg-black-950">
@@ -43,7 +52,7 @@
                     </svg>
                     New Claim
                 </a>
-                
+
                 <a class="navbar-item {{ request()->routeIs('notifications') ? 'navbar-item-active' : 'navbar-item-active-hover' }}" href="{{ route('notifications') }}">
                     <div class="flex items-center justify-between w-full">
                         <div class="flex items-center">
@@ -58,7 +67,7 @@
                     </div>
                 </a>
 
-                <a class="navbar-item-inactive"  href="#" onclick="return false;">
+                <a class="navbar-item-inactive" href="#" onclick="return false;">
                     <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
@@ -86,7 +95,6 @@
                     </svg>
                     History
                 </a>
-
                 @endauth
 
                 @guest
@@ -96,7 +104,7 @@
                     </svg>
                     Login
                 </a>
-                <a class="navbar-item {{ request()->routeIs('register') ? 'navbar-item-active' : 'navbar-item-active-hover' }}" href=" ">
+                <a class="navbar-item {{ request()->routeIs('register') ? 'navbar-item-active' : 'navbar-item-active-hover' }}" href="#">
                     <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                     </svg>
@@ -134,4 +142,4 @@
         </div>
         @endauth
     </div>
-</nav>
+</div>

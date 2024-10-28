@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="profile-page">
-    <div class="flex items-center justify-center min-h-screen">
-        <div class="bg-wgg-white p-10 rounded-lg border border-wgg-border shadow-lg w-full max-w-2xl space-y-4">
+<div class="bg-white p-10 rounded-lg border border-wgg-border shadow-lg w-full flex justify-center items-center">
+    <div class="flex w-full">
+        <div class="w-full space-y-4">
             <div class="text-center">
                 <h1 class="heading-1">Profile Settings</h1>
             </div>
@@ -13,8 +13,6 @@
                 @method('PUT')
                 
                 <x-profile.photo-upload />
-                
-                <x-profile.incomplete-profile-alert />
                 
                 <x-profile.personal-info />
                 

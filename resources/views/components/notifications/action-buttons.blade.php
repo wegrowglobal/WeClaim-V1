@@ -4,23 +4,23 @@
     @if($notification->data['is_for_claim_owner'] ?? true)
         @switch($notification->data['action'] ?? null)
             @case('rejected')
-                <x-notifications.action-button 
-                    :href="route('claims.claim', $notification->data['claim_id'])"
+                <x-notifications.action-button-link 
+                    :href="route('claims.view', $notification->data['claim_id'])"
                     icon="refresh"
                     color="orange"
                     text="Resubmit"
                 />
                 @break
             @default
-                <x-notifications.action-button 
-                    :href="route('claims.claim', $notification->data['claim_id'])"
+                <x-notifications.action-button-link 
+                    :href="route('claims.view', $notification->data['claim_id'])"
                     icon="eye"
                     color="indigo"
                     text="View Claim"
                 />
         @endswitch
     @else
-        <x-notifications.action-button 
+        <x-notifications.action-button-link 
             :href="route('claims.review', $notification->data['claim_id'])"
             icon="clipboard-check"
             color="yellow"

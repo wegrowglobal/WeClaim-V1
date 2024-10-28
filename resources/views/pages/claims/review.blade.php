@@ -81,8 +81,8 @@ use App\Models\Claim;
                     </div>
                 </div>
 
-                <div id="map" class="rounded-lg border border-wgg-border shadow-sm">
-                    <<div id="map" class="w-full h-64 md:h-96 lg:h-[32rem] rounded-lg shadow-md"></div>
+                <div id="map" style="height: 500px; width: 100%" class="rounded-lg border border-wgg-border shadow-sm">
+                    <div id="route-info-panel"></div>
                 </div>
 
                 <!-- Remarks -->

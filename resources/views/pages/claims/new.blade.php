@@ -2,7 +2,7 @@
 
 @section('content')
     @auth
-        <div class="container mx-auto px-4 py-8">
+        <div class="w-full">
             @php
                 $existingClaim = request()->has('claim_id') ? \App\Models\Claim::find(request()->claim_id) : null;
             @endphp
@@ -24,20 +24,50 @@
 
                 <x-forms.error-summary />
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     <!-- Left Side -->
-                    <div class="lg:col-span-1 space-y-6 bg-white p-6 rounded-lg shadow-sm border border-wgg-border">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="lg:col-span-1 space-y-6 bg-white p-10 md:p-14 rounded-lg shadow-md border border-wgg-border">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <x-forms.date-input name="date_from" label="From" :value="old('date_from')" required />
                             <x-forms.date-input name="date_to" label="To" :value="old('date_to')" required />
                         </div>
 
                         <x-forms.number-input name="toll_amount" label="Toll Amount" :value="old('toll_amount')" required step="0.01" min="0" />
-
-                        <x-forms.file-upload-grid>
-                            <x-forms.file-upload name="toll_report" label="Toll Report" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                            <x-forms.file-upload name="email_report" label="Email Approval" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                        </x-forms.file-upload-grid>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
+                                <input 
+                                    class="hidden @error('toll_report') is-invalid @enderror" 
+                                    type="file" 
+                                    name="toll_report" 
+                                    id="toll_report" 
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    aria-label="Toll Report"
+                                    onchange="updateFileLabel(this, 'toll_report_label')"
+                                >
+                                <label for="toll_report" class="text-xs text-wgg-black-400 font-normal cursor-pointer">
+                                    <span id="toll_report_label">Toll Report</span>
+                                </label>
+                                <x-forms.error :name="'toll_report'" />
+                                <progress id="toll_report_progress" class="w-full mt-2 hidden" value="0" max="100"></progress>
+                            </div>
+                        
+                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
+                                <input 
+                                    class="hidden @error('email_report') is-invalid @enderror" 
+                                    type="file" 
+                                    name="email_report" 
+                                    id="email_report" 
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    aria-label="Email Approval"
+                                    onchange="updateFileLabel(this, 'email_report_label')"
+                                >
+                                <label for="email_report" class="text-xs text-wgg-black-400 font-normal cursor-pointer">
+                                    <span id="email_report_label">Email Approval</span>
+                                </label>
+                                <x-forms.error :name="'email_report'" />
+                                <progress id="email_report_progress" class="w-full mt-2 hidden" value="0" max="100"></progress>
+                            </div>
+                        </div>
 
                         <x-forms.file-size-note />
 
@@ -53,14 +83,26 @@
                     </div>
 
                     <!-- Right Side -->
-                    <div class="lg:col-span-2">
-                        <div id="map" class="w-full h-64 sm:h-96 lg:h-full rounded-lg shadow-md"></div>
+                    <div class="lg:col-span-1 xl:col-span-2">
+                        <div id="map" class="w-full h-64 sm:h-96 lg:h-full border border-wgg-border rounded-lg shadow-md"></div>
                     </div>
                 </div>
             </form>
         </div>
 
         @vite(['resources/js/form.js'])
+        
+        <script>
+            function updateFileLabel(input, labelId) {
+                const label = document.getElementById(labelId);
+                if (input.files && input.files[0]) {
+                    label.textContent = input.files[0].name;
+                } else {
+                    label.textContent = input.getAttribute('aria-label');
+                }
+            }
+        </script>
+    
     @endauth
 
     @guest

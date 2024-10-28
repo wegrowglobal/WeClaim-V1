@@ -51,6 +51,7 @@ class FormManager {
         const controlDiv = document.createElement("div");
         controlDiv.classList.add("wgg-flex-row", "gap-2");
         controlDiv.style.padding = "10px";
+        controlDiv.id = "map-controls";
 
         this.clearRouteBtn = document.createElement("button");
         this.clearRouteBtn.textContent = "Clear Route";
@@ -307,7 +308,7 @@ class FormManager {
 
         for (let i = 0; i < route.legs.length; i++) {
             let rawTotalDistance = 0;
-            const rawDistance = route.legs[i].distance.value / 1000;
+            const rawDistance = Number((route.legs[i].distance.value / 1000).toFixed(2));
             const leg = route.legs[i];
             const segment = document.createElement("div");
             segment.style.marginBottom = "10px";
@@ -321,7 +322,7 @@ class FormManager {
         }
 
         const totalDistance = route.legs.reduce((total, leg) => total + leg.distance.value, 0);
-        const totalDistanceKm = totalDistance / 1000;
+        const totalDistanceKm = Number((totalDistance / 1000).toFixed(2));
         const totalDuration = route.legs.reduce((total, leg) => total + leg.duration.value, 0);
         const totalHours = Math.floor(totalDuration / 3600);
         const totalMinutes = Math.floor((totalDuration % 3600) / 60);
@@ -603,29 +604,11 @@ document.addEventListener("DOMContentLoaded", () => {
     formManager.init();
 });
 
-////////////////////////////////////////////////////////////////////////
-////////////////// File Uploading Progress Bar Dummy ///////////////////
-////////////////////////////////////////////////////////////////////////
-
-function handleFileUpload(event, progressContainerId, fileLabelId) {
-    const fileLabel = document.getElementById(fileLabelId);
-    const fileName = event.target.files[0] ? event.target.files[0].name : "No File Selected";
-
-    const progressContainer = document.getElementById(progressContainerId);
-    progressContainer.classList.remove("hidden");
-
-    // Simulate progress for demonstration purposes
-    setTimeout(() => {
-        progressContainer.classList.add("hidden");
-        fileLabel.textContent = fileName;
-    }, 1000);
+function updateFileLabel(input, labelId) {
+    const label = document.getElementById(labelId);
+    if (input.files && input.files[0]) {
+        label.textContent = input.files[0].name;
+    } else {
+        label.textContent = input.getAttribute('aria-label');
+    }
 }
-
-document.getElementById("toll_report").addEventListener("change", (event) => {
-    handleFileUpload(event, "toll_progress_container", "toll_file_label");
-});
-
-document.getElementById("email_report").addEventListener("change", (event) => {
-    handleFileUpload(event, "email_progress_container", "email_file_label");
-});
-

@@ -1,4 +1,4 @@
-<div class="flex space-x-4">
+<div class="grid-to-flex-col">
     <a href=" " class="btn flex-center bg-red-400 hover:bg-red-600">
         Reset Password
     </a>

@@ -1,5 +1,5 @@
 <div class="flex flex-col items-center space-y-4">
-    <div class="relative w-32 h-32 rounded-full overflow-hidden group profile-picture">
+    <div class="relative w-20 h-20 md:w-32 md:h-32 rounded-full overflow-hidden group profile-picture">
         @if(auth()->user()->profile_picture && Storage::disk('public')->exists(auth()->user()->profile_picture))
             <img src="{{ Storage::url('public/' . auth()->user()->profile_picture) }}" alt="Profile Picture" class="w-full h-full object-cover">
         @else

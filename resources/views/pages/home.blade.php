@@ -2,10 +2,10 @@
 
 @section('content')
 
-    <div class="max-w-full-custom border border-wgg-border">
+    <div class="w-full rounded-lg">
 
         @guest
-            <div class="bg-white overflow-hidden space-y-4">
+            <div class="bg-white overflow-hidden space-y-4 border border-wgg-border">
                 <div class="p-10 space-y-2">
                     <h2 class="heading-1">Welcome to WeClaims</h2>
                     <span class="status-badge bg-red-100 text-red-800">Not Logged In</span>
@@ -15,10 +15,10 @@
         @endguest
 
         @auth
-            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-wgg-border">
                 <div class="p-10 space-y-8">
 
-                    <div class="flex flex-row  items-center gap-4">
+                    <div class="flex flex-col items-center gap-4 md:flex-row xl:flex-row">
                         @if(auth()->user()->profile_picture && Storage::disk('public')->exists(auth()->user()->profile_picture))
                             <img src="{{ Storage::url('public/' . auth()->user()->profile_picture) }}" alt="Profile Picture" class="h-20 w-20 rounded-full object-cover">
                         @else
@@ -26,7 +26,7 @@
                                 {{ strtoupper(substr(auth()->user()->first_name, 0, 1)) }}
                             </div>
                         @endif
-                        <div class="flex flex-col">
+                        <div class="flex flex-col items-center md:items-start">
                             <h2 class="heading-1">Welcome Back,</h2>
                             <span class="text-wgg-black-500 text-sm">{{ auth()->user()->first_name . ' ' . auth()->user()->second_name }}</span>
                         </div>
@@ -34,7 +34,7 @@
                     <!-- Claim Statistics -->
                     <div class="space-y-4">
                         <h3 class="heading-2">Personal Claim Overview</h3>
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                             @php
                                 $totalClaims = \App\Models\Claim::where('user_id', auth()->id())->count();
                                 $approvedClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'approved')->count();
@@ -76,7 +76,7 @@
                     </div>
 
                     <!-- Update Changelog -->
-                    <div class="space-y-4">
+                    <div id="changelog" class="space-y-4">
                         <h3 class="heading-2">Recent Updates</h3>
                         <div class="space-y-4">
                             <div class="flex items-center space-y-2">

@@ -13,16 +13,27 @@
     @include('partials.cdn-fonts')
 
     <!-- Vite -->
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/mobile-menu.js'])
     
 
 </head>
 <body>
 
-    <div class="flex">
+    <div class="flex relative">
+
+
+        <!-- Hamburger Menu with Icon SVG -->
+        <button id="hamburger-menu" class="z-50 hidden hamburger-menu">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+        </button>
+
+        <!-- Mobile Menu -->
+        @include('partials.mobile-menu')
 
         <!-- Navigation Sidebar -->
-        <div class="navbar-container lay-left">
+        <div class="navbar-container">
            @include('partials.navbar')
         </div>
 

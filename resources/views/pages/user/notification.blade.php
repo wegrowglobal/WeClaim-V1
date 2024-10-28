@@ -1,12 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-gray-900">Notifications</h2>
-        <form action="{{ route('notifications.mark-all-as-read') }}" method="POST" class="mt-4 sm:mt-0">
+<div class="w-full">
+    <div class="flex flex-row justify-between items-center mb-6">
+        <h2 class="heading-1 font-bold text-gray-900">Notifications</h2>
+        <form action="{{ route('notifications.mark-all-as-read') }}" method="POST" class="">
             @csrf
-            <button type="submit" class="btn btn-primary">Mark All as Read</button>
+            <button type="submit" class="p-4 bg-wgg-black-950 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="" height="" fill="currentColor" class="icon-large text-white" viewBox="0 0 16 16">
+                    <path d="M8.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L2.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093L8.95 4.992zm-.92 5.14.92.92a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 1 0-1.091-1.028L9.477 9.417l-.485-.486z"/>
+                </svg>
+            </button>
         </form>
     </div>
 
