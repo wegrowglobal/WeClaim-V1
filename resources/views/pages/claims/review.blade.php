@@ -5,9 +5,9 @@ use App\Models\Claim;
 @endphp
 
 @section('content')
-    <div class="max-w-full-custom border border-wgg-border">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="p-10 space-y-8">
+    <div class="w-full">
+        <div class="bg-white rounded-lg overflow-hidden">
+            <div class="space-y-8">
 
                 <!-- Header Section -->
                 <div class="flex-between items-center mb-6">
@@ -17,13 +17,13 @@ use App\Models\Claim;
                         </svg>
                         Back
                     </a>
-                    <h2 class="heading-2 text-semibold text-wgg-black-600">Reviewing Claim - {{ $claim->id }}</h2>
+                    <h2 class="text-md font-semibold text-wgg-black-300">Reviewing Claim - {{ $claim->id }}</h2>
                 </div>
 
                 <!-- Basic Details -->
-                <div class="space-y-2">
-                    <h3 class="heading-2">Basic Details</h3>
-                    <div class="bg-white overflow-hidden">
+                <h3 class="heading-2">Basic Details</h3>
+                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                    <div class="bg-white overflow-x-auto">
                         <x-claims.table :rows="[
                             ['label' => 'Current Status', 'value' => str_replace('_', ' ', $claim->status)],
                             ['label' => 'Submitted Date', 'value' => $claim->submitted_at->format('d-m-Y')],
@@ -37,9 +37,9 @@ use App\Models\Claim;
                 </div>
 
                 <!-- Toll Details -->
-                <div class="space-y-2">
-                    <h3 class="heading-2">Toll Details</h3>
-                    <div class="bg-white overflow-hidden">
+                <h3 class="heading-2">Toll Details</h3>
+                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                    <div class="bg-white overflow-x-auto">
                         <x-claims.table :rows="[
                             ['label' => 'Toll Amount', 'value' => 'RM' . $claim->toll_amount],
                             [
@@ -61,44 +61,63 @@ use App\Models\Claim;
                 </div>
 
                 <!-- Trip Details -->
-                <div class="space-y-2">
-                    <h3 class="heading-2">Trip Details</h3>
-                    <div class="bg-white overflow-hidden">
-                        <x-claims.table :rows="[
-                            ['label' => 'Total Distance', 'value' => $claim->total_distance . ' KM'],
-                        ]" />
-                        @if ($claim->locations && $claim->locations->count() > 0)
-                            @foreach ($claim->locations->sortBy('order') as $location)
-                                <x-claims.table :rows="[
-                                    ['label' => 'Location ' . $location->order, 'value' => $location->location],
-                                ]" />
-                            @endforeach
-                        @else
-                            <x-claims.table :rows="[
-                                ['label' => 'No locations found', 'value' => 'Contact System Administrator'],
-                            ]" />
-                        @endif
+                <h3 class="heading-2">Trip Details</h3>
+                <div class="space-y-4 md:space-y-6">
+                    <!-- Locations List -->
+                    <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                        <div class="bg-white overflow-x-auto">
+                            <table class="min-w-full divide-y divide-wgg-border-200">
+                                <thead>
+                                    <tr>
+                                        <th class="table-header">No.</th>
+                                        <th class="table-header">Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-wgg-border-200">
+                                    @if ($claim->locations && $claim->locations->count() > 0)
+                                        @foreach ($claim->locations->sortBy('order') as $location)
+                                            <tr>
+                                                <td class="table-item">{{ $location->order }}</td>
+                                                <td class="table-item">
+                                                    <div class="break-words">{{ $location->location }}</div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td class="table-item" colspan="2">
+                                                No locations found. Contact System Administrator
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div id="map" style="height: 500px; width: 100%" class="rounded-lg border border-wgg-border shadow-sm">
-                    <div id="route-info-panel"></div>
+                <!-- Map -->
+                <div class="space-y-4 md:space-y-6 w-full">
+                    <h3 class="heading-2">Map Details</h3>
+                    <div id="map" class="h-[300px] md:h-[500px] w-full rounded-lg border border-wgg-border shadow-sm">
+                        <div id="route-info-panel" class="text-sm"></div>
+                    </div>
                 </div>
 
                 <!-- Remarks -->
-                <form action="{{ route('claims.update', $claim->id) }}" class="wgg-flex-col gap-4" method="POST">
+                <form action="{{ route('claims.update', $claim->id) }}" class="flex flex-col w-full gap-4" method="POST">
                     @csrf
                     @method('PUT')
-                    <div class="wgg-flex-col gap-2">
-                        <label for="remarks" class="form-label-other">Remarks</label>
+                    <div class="flex flex-col space-y-4 md:space-y-6 w-full">
+                        <h3 class="heading-2">Remarks</h3>
                         <textarea class="form-input" name="remarks" id="remarks" cols="30" rows="5">{{ old('remarks') }}</textarea>
                     </div>
-                    <div class="wgg-flex-row gap-2">
-                        <x-claims.action-button type="submit" name="action" value="approve" class="bg-green-400 hover:bg-green-600">
+                    <div class="grid grid-cols-2 gap-4">
+                        <x-claims.action-button type="submit" name="action" value="approve" class="col-span-1 bg-green-400 hover:bg-green-600">
                             Approve
-                            <x-icons.check-circle-fill />
+                        <x-icons.check-circle-fill />
                         </x-claims.action-button>
-                        <x-claims.action-button type="submit" name="action" value="reject" class="bg-red-400 hover:bg-red-600">
+                        <x-claims.action-button type="submit" name="action" value="reject" class="col-span-1 bg-red-400 hover:bg-red-600">
                             Reject
                             <x-icons.x-circle-fill />
                         </x-claims.action-button>

@@ -26,7 +26,7 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     <!-- Left Side -->
-                    <div class="lg:col-span-1 space-y-6 bg-white p-10 md:p-14 rounded-lg shadow-md border border-wgg-border">
+                    <div class="lg:col-span-1 space-y-6 bg-white p-6 lg:p-18 md:p-14 rounded-lg shadow-md border border-wgg-border">
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             <x-forms.date-input name="date_from" label="From" :value="old('date_from')" required />
                             <x-forms.date-input name="date_to" label="To" :value="old('date_to')" required />

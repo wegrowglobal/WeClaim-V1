@@ -5,9 +5,9 @@
 @endphp
 
 @section('content')
-    <div class="max-w-full-custom">
+    <div class="w-full">
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <div class="p-10 space-y-8">
+            <div class="space-y-8">
 
                 <!-- Header Section -->
                 <div class="flex-between items-center mb-6">
@@ -21,9 +21,9 @@
                 </div>
 
                 <!-- Basic Details -->
-                <div class="space-y-2">
-                    <h3 class="heading-2">Basic Details</h3>
-                    <div class="bg-white overflow-hidden">
+                <h3 class="heading-2">Basic Details</h3>
+                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                    <div class="bg-white overflow-x-auto">
                         <x-claims.table :rows="[
                             ['label' => 'Current Status', 'value' => str_replace('_', ' ', $claim->status)],
                             ['label' => 'Submitted Date', 'value' => $claim->submitted_at->format('d-m-Y')],
@@ -37,9 +37,9 @@
                 </div>
 
                 <!-- Toll Details -->
-                <div class="space-y-2">
-                    <h3 class="heading-2">Toll Details</h3>
-                    <div class="bg-white overflow-hidden">
+                <h3 class="heading-2">Toll Details</h3>
+                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                    <div class="bg-white overflow-x-auto">
                         <x-claims.table :rows="[
                             ['label' => 'Toll Amount', 'value' => 'RM' . $claim->toll_amount],
                             [
@@ -61,28 +61,47 @@
                 </div>
 
                 <!-- Trip Details -->
-                <div class="space-y-2">
+                <div class="space-y-4 md:space-y-6">
                     <h3 class="heading-2">Trip Details</h3>
-                    <div class="bg-white overflow-hidden">
-                        <x-claims.table :rows="[
-                            ['label' => 'Total Distance', 'value' => $claim->total_distance . ' KM'],
-                        ]" />
-                        @if ($claim->locations && $claim->locations->count() > 0)
-                            @foreach ($claim->locations->sortBy('order') as $location)
-                                <x-claims.table : :rows="[
-                                    ['label' => 'Location ' . $location->order, 'value' => $location->location],
-                                ]" />
-                            @endforeach
-                        @else
-                            <x-claims.table  :rows="[
-                                ['label' => 'No locations found', 'value' => 'Contact System Administrator'],
-                            ]" />
-                        @endif
-                    </div>
-                </div>
 
-                <div id="map" style="height: 500px; width: 100%" class="rounded-lg border border-wgg-border shadow-sm">
-                    <div id="route-info-panel"></div>
+                    <!-- Locations List -->
+                    <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                        <div class="bg-white overflow-x-auto">
+                            <table class="min-w-full divide-y divide-wgg-border-200">
+                                <thead>
+                                    <tr>
+                                        <th class="table-header">No.</th>
+                                        <th class="table-header">Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-wgg-border-200">
+                                    @if ($claim->locations && $claim->locations->count() > 0)
+                                        @foreach ($claim->locations->sortBy('order') as $location)
+                                            <tr>
+                                                <td class="table-item">{{ $location->order }}</td>
+                                                <td class="table-item">
+                                                    <div class="break-words">{{ $location->location }}</div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td class="table-item" colspan="2">
+                                                No locations found. Contact System Administrator
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Map -->
+                    <div class="w-full">
+                        <div id="map" class="h-[300px] md:h-[500px] w-full rounded-lg border border-wgg-border shadow-sm">
+                            <div id="route-info-panel" class="text-sm"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Actions -->
@@ -90,7 +109,7 @@
                     @if ($claim->status == Claim::STATUS_SUBMITTED)
                         <form action="" method="POST">
                             @csrf
-                            <button type="submit" class="btn btn-danger">
+                            <button type="submit" class="btn py-4 btn-danger">
                                 Cancel Claim
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="icon-small" viewBox="0 0 16 16">
                                     <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.647 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>

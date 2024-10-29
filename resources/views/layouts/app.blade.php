@@ -42,10 +42,10 @@
             @yield('content')
         </div>
 
-    </div>
+        <!-- Footer -->
+        @include('partials.footer')
 
-    <!-- Footer -->
-    @include('partials.footer')
+    </div>
 
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}"></script>

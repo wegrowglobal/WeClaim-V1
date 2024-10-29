@@ -129,11 +129,9 @@ class ClaimReviewMap {
          const segment = document.createElement("div");
          segment.style.marginBottom = "10px";
          segment.innerHTML = `
-                <strong>Location ${i + 1} - Location ${i + 2}</strong><br>${legDecimal.toFixed(
-            2
-         )} km<br>
-                Distance: <br>
-                Duration: ${leg.duration.text}
+            <strong>Location ${i + 1} - Location ${i + 2}</strong><br>
+            Distance: ${legDecimal.toFixed(2)} km<br>
+            Duration: ${leg.duration.text}
             `;
          panel.appendChild(segment);
       }
