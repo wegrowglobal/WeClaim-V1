@@ -78,6 +78,8 @@ Route::middleware('auth')->group(function () {
 
     // Claims Routes
 
+
+
     Route::get('claims/dashboard', [ClaimController::class, 'dashboard'])->name('claims.dashboard');
 
     Route::get('claims/new', function () {
@@ -97,11 +99,18 @@ Route::middleware('auth')->group(function () {
     ->defaults('view', 'pages.claims.claim')
     ->name('claims.view');
 
-    Route::put('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
+    Route::post('/claims/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
 
-    Route::post('/claims/{id}/approve', [ClaimController::class, 'approveClaim'])->name('claims.approve');
+    // Route to send claim to Datuk
+    Route::post('/claims/send-to-datuk/{id}', [ClaimController::class, 'sendToDatuk'])
+        ->name('claims.mail.to.datuk')
+        ->middleware('auth'); // Ensure the user is authenticated
 
-///////////////////////////C;////////////////////////////////////////////////////////
+    Route::get('/claims/email-action/{id}', [ClaimController::class, 'handleEmailAction'])
+        ->name('claims.email.action')
+        ->middleware('auth'); // Ensure the user is authenticated
+
+/////////////////////////////////////////////////////////////////////////////////////
 
     // Reports Routes   
 
@@ -118,5 +127,10 @@ Route::middleware('auth')->group(function () {
     })->name('settings');
 
     ///////////////////////////////////////////////////////////////////////////////////
+    
 
 });
+
+Route::get('/claims/success', function () {
+    return view('pages.claims.success');
+})->name('claims.success.page');

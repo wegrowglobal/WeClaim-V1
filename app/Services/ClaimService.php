@@ -5,11 +5,13 @@ use App\Models\User;
 use App\Models\Claim;
 use App\Models\ClaimDocument;
 use App\Models\ClaimReview;
+use App\Mail\ClaimActionMail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
+use Illuminate\Support\Facades\Mail;
 use Str;
+
 
 class ClaimService
 {
@@ -338,6 +340,18 @@ class ClaimService
             default:
                 return 'remarks_admin';
         }
+    }
+
+    public function sendClaimToDatuk(Claim $claim)
+    {
+        // Prepare email data
+        $data = [
+            'claim' => $claim,
+            'locations' => $claim->locations,
+        ];
+
+        // Send email to Datuk
+        Mail::to('ammar@wegrow-global.com')->send(new ClaimActionMail($data));
     }
 
 }

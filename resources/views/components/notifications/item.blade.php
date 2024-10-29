@@ -8,11 +8,13 @@
         ($notification->data['action'] === 'resubmitted' ? 'border-2 border-yellow-400/50' : 'border-2 border-blue-400/50')))
     : 'border-2 border-blue-400/50')
 }} transition-all duration-300 hover:shadow-md">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-        <div class="flex-grow space-y-2">
+    <div class="grid grid-cols-3 gap-4">
+        <div class="w-fit col-span-2 space-y-2">
             <x-notifications.status-icon-and-message :notification="$notification" />
             <x-notifications.timestamp :notification="$notification" />
         </div>
-        <x-notifications.action-buttons :notification="$notification" />
+        <div class="col-span-1 justify-self-start md:justify-self-end">
+            <x-notifications.action-buttons :notification="$notification" />
+        </div>
     </div>
 </div>

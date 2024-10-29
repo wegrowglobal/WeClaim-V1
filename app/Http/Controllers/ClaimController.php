@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ClaimActionMail;
 use App\Http\Requests\StoreClaimRequest;
 use App\Models\Claim;
 use App\Models\User;
 use App\Models\ClaimLocation;
-use App\Mail\ClaimActionMail;
 use App\Services\ClaimService;
 use App\Notifications\ClaimStatusNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -303,7 +303,7 @@ class ClaimController extends Controller
 
     public function approval()
     {
-        $claims = Claim::all();
+        $claims = Claim::all(); // Adjust pagination as needed
         $statistics = [
             'totalClaims' => Claim::count(),
             'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
@@ -314,7 +314,7 @@ class ClaimController extends Controller
         return view('pages.claims.approval', [
             'claims' => $claims,
             'statistics' => $statistics,
-            'claimService' => $this->claimService,
+            'claimService' => $this->claimService, // or however you're resolving this service
         ]);
     }
 
@@ -344,4 +344,66 @@ class ClaimController extends Controller
     }
 
     //////////////////////////////////////////////////////////////////////////////////  
+    
+    public function sendToDatuk($id)
+    {
+        $claim = Claim::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user->role->name !== 'Admin') {
+            return redirect()->route('claims.approval')->with('error', 'You do not have permission to send this claim to Datuk.');
+        }
+
+        // Send email to Datuk
+        $this->claimService->sendClaimToDatuk($claim);
+
+        return redirect()->route('claims.approval')->with('success', 'Claim sent to Datuk successfully.');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////// 
+
+    public function handleEmailAction(Request $request, $id)
+    {
+        $claim = Claim::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user instanceof User) {
+            if (!$this->claimService->canReviewClaim($user, $claim)) {
+                return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
+            }
+
+            $action = $request->query('action'); // Get the action from the query parameter
+
+            if (!in_array($action, ['approve', 'reject'])) {
+                return redirect()->route('claims.approval')->with('error', 'Invalid action.');
+            }
+
+            DB::transaction(function () use ($action, $user, $claim) {
+                if ($action === 'approve') {
+                    $this->claimService->approveClaim($user, $claim);
+                    $actionType = 'approved';
+                } else {
+                    $this->claimService->rejectClaim($user, $claim);
+                    $actionType = 'rejected';
+                }
+
+                $this->claimService->storeRemarks($user, $claim, 'Action taken via email link.');
+
+                // Refresh the claim to get the updated status
+                $claim->refresh();
+
+                // Send notification to the claim owner
+                Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
+
+                // Send notification to specific roles if needed
+                $this->notifyRoles($claim, $actionType);
+            });
+
+            // Redirect to a specific page with a success message
+            return redirect()->route('claims.success.page')->with('success', 'Claim ' . $action . ' successfully.');
+        } else {
+            return route('login');
+        }
+    }
+
 }

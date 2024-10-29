@@ -7,8 +7,6 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/js/bootstrap.js',
-                'resources/js/app.js',
                 'resources/js/form.js',
                 'resources/js/review.js',
             ],
@@ -40,9 +38,5 @@ export default defineConfig({
         },
     },
     define: {
-        'process.env': {
-            'import.meta.env.VITE_PUSHER_APP_KEY': JSON.stringify(process.env.VITE_PUSHER_APP_KEY),
-            'import.meta.env.VITE_PUSHER_APP_CLUSTER': JSON.stringify(process.env.VITE_PUSHER_APP_CLUSTER),
-        }
     }
 });

@@ -87,28 +87,39 @@ use App\Models\Claim;
                     </div>
                 </div>
 
-                <!-- Remarks -->
-                <form action="{{ route('claims.update', $claim->id) }}" class="flex flex-col w-full gap-4" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <div class="flex flex-col space-y-4 md:space-y-6 w-full">
-                        <h3 class="heading-2">Remarks</h3>
-                        <textarea class="form-input" name="remarks" id="remarks" cols="30" rows="5">{{ old('remarks') }}</textarea>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <x-claims.action-button type="submit" name="action" value="approve" class="col-span-1 bg-green-400 hover:bg-green-600">
-                            Approve
-                        <x-icons.check-circle-fill />
-                        </x-claims.action-button>
-                        <x-claims.action-button type="submit" name="action" value="reject" class="col-span-1 bg-red-400 hover:bg-red-600">
-                            Reject
-                            <x-icons.x-circle-fill />
-                        </x-claims.action-button>
-                    </div>
-                    @error('remarks')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
-                </form>
+                <!-- Action -->
+                <div class="flex flex-col space-y-4 md:space-y-6 w-full mt-4">
+                    @if($claim->status === 'Approved_Admin' && auth()->user()->role->name === 'Admin')
+                    <form action="{{ route('claims.mail.to.datuk', $claim->id) }}" method="POST">
+                        @csrf
+                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Send to Datuk
+                        </button>
+                    </form>
+                    @else
+                    <form action="{{ route('claims.update', $claim->id) }}" class="flex flex-col w-full gap-4" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="flex flex-col space-y-4 md:space-y-6 w-full">
+                            <h3 class="heading-2">Remarks</h3>
+                            <textarea class="form-input" name="remarks" id="remarks" cols="30" rows="5">{{ old('remarks') }}</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <x-claims.action-button type="submit" name="action" value="approve" class="col-span-1 bg-green-400 hover:bg-green-600">
+                                Approve
+                            <x-icons.check-circle-fill />
+                            </x-claims.action-button>
+                            <x-claims.action-button type="submit" name="action" value="reject" class="col-span-1 bg-red-400 hover:bg-red-600">
+                                Reject
+                                <x-icons.x-circle-fill />
+                            </x-claims.action-button>
+                        </div>
+                        @error('remarks')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
+                    </form>
+                    @endif
+                </div>
 
             </div>
         </div>

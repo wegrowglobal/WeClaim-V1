@@ -22,6 +22,7 @@
     @include('partials.navbar')
 
     <!-- Hamburger Menu with Icon SVG -->
+    
     <button id="hamburger-menu" class="z-50 hidden hamburger-menu">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-large">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -32,7 +33,7 @@
     @include('partials.mobile-menu')
 
     <!-- Main Content -->
-    <main class="content-container min-h-screen bg-white py-8 px-4 md:py-8 md:px-0">
+    <main class="content-container min-h-screen bg-white py-4 px-4 md:py-8 md:px-0">
         <div class="max-w-8xl mx-auto px-0 md:px-6 lg:px-8">
             @yield('content')
         </div>

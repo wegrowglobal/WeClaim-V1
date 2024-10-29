@@ -119,7 +119,7 @@ input[type="number"]::-webkit-outer-spin-button {
    }
 
    .status-badge {
-      @apply px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full;
+      @apply px-3 py-1 inline-flex text-sm leading-5 font-medium rounded-full;
    }
 
    .flex-center {
