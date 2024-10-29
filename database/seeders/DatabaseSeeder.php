@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(RoleSeeder::class);
         $this->call(DepartmentSeeder::class);
+        $this->call(ClaimSeeder::class);
 
         $adminRoleId = Role::where('name', 'SU')->value('id');
         $staffRoleId = Role::where('name', 'Staff')->value('id');
@@ -46,9 +47,5 @@ class DatabaseSeeder extends Seeder
                 'department_id' => $randomDepartmentId,
             ]);
         }
-
-
-        /* $this->call(ClaimSeeder::class); */
-
     }
 }

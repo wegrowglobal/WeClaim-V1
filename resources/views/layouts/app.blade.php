@@ -19,33 +19,28 @@
 </head>
 <body>
 
-    <div class="flex relative">
+    @include('partials.navbar')
 
+    <!-- Hamburger Menu with Icon SVG -->
+    <button id="hamburger-menu" class="z-50 hidden hamburger-menu">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon-large">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+    </button>
 
-        <!-- Hamburger Menu with Icon SVG -->
-        <button id="hamburger-menu" class="z-50 hidden hamburger-menu">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-        </button>
+    <!-- Mobile Menu -->
+    @include('partials.mobile-menu')
 
-        <!-- Mobile Menu -->
-        @include('partials.mobile-menu')
-
-        <!-- Navigation Sidebar -->
-        <div class="navbar-container">
-           @include('partials.navbar')
-        </div>
-
-        <!-- Content Here -->
-        <div class="content-container @yield('content-class')">
+    <!-- Main Content -->
+    <main class="content-container min-h-screen bg-white py-8 px-4 md:py-8 md:px-0">
+        <div class="max-w-8xl mx-auto px-0 md:px-6 lg:px-8">
             @yield('content')
         </div>
+    </main>
 
-        <!-- Footer -->
-        @include('partials.footer')
+    <!-- Footer -->
+    @include('partials.footer')
 
-    </div>
 
     <!-- Scripts -->
     <script src="{{ asset('js/app.js') }}"></script>

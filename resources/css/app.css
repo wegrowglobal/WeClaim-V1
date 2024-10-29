@@ -32,7 +32,7 @@ input[type="number"]::-webkit-outer-spin-button {
       }
 
       .content-container {
-         @apply w-full p-14 !important;
+         @apply w-full mt-20 !important;
       }
 
       #map-controls {
@@ -40,7 +40,7 @@ input[type="number"]::-webkit-outer-spin-button {
       }
 
       #hamburger-menu {
-         @apply block fixed top-4 left-4 p-4 rounded-lg bg-wgg-white border border border-wgg-border !important;
+         @apply block fixed top-8 left-8 p-4 rounded-lg bg-wgg-white border border border-wgg-border !important;
       }
    }
 
@@ -53,7 +53,7 @@ input[type="number"]::-webkit-outer-spin-button {
       }
 
       .content-container {
-         @apply w-full p-4 mt-20 !important;
+         @apply w-full mt-0 !important;
       }
 
       #changelog {
@@ -61,7 +61,7 @@ input[type="number"]::-webkit-outer-spin-button {
       }
 
       #hamburger-menu {
-         @apply flex justify-center rounded-none items-center top-0 left-0 right-0 !important;
+         @apply static flex justify-start rounded-none items-center w-full !important;
       }
    }
 
@@ -69,13 +69,12 @@ input[type="number"]::-webkit-outer-spin-button {
       @apply grid grid-cols-2 gap-4;
    }
 
-   .navbar-container {
-      @apply sticky top-0 w-72 h-screen py-14 px-10 bg-wgg-white transition-all duration-300 ease-in-out;
-      
+   .nav-link {
+         @apply text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200;
    }
-
-   .content-container {
-      @apply flex flex-1 w-full h-auto py-14 pr-14;
+  
+   .nav-link-active {
+         @apply text-blue-600 font-semibold;
    }
 
    .notification {
@@ -120,7 +119,7 @@ input[type="number"]::-webkit-outer-spin-button {
    }
 
    .status-badge {
-      @apply px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full;
+      @apply px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full;
    }
 
    .flex-center {

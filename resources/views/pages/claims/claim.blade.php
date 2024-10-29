@@ -6,7 +6,7 @@
 
 @section('content')
     <div class="w-full">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="rounded-lg overflow-hidden">
             <div class="space-y-8">
 
                 <!-- Header Section -->

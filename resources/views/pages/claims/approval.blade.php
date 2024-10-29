@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="w-full p-4 md:p-0">
     <h2 class="text-3xl font-bold text-gray-900 mb-6">Claims Approval</h2>
 
     <div class="bg-white border border-wgg-border shadow-md rounded-lg overflow-hidden">
@@ -17,5 +17,5 @@
     </div>
 </div>
 
-@vite(['resources/js/approval.js'])
+@vite(['resources/js/filter.js'])
 @endsection

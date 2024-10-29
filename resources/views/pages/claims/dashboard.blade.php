@@ -3,7 +3,7 @@
 @section('content')
 
 <div class="w-full">
-    <h2 class="text-3xl font-bold text-gray-900 mb-6">Claims Dashboard</h2>
+    <h2 class="text-3xl font-bold text-gray-900 mb-8">Claims Dashboard</h2>
 
     <div class="bg-white border border-wgg-border shadow-md rounded-lg overflow-hidden">
         <div class="p-6">
@@ -18,5 +18,5 @@
     </div>
 </div>
 
-@vite(['resources/js/approval.js'])
+@vite(['resources/js/filter.js'])
 @endsection

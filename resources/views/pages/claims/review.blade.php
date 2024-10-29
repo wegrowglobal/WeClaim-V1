@@ -6,7 +6,7 @@ use App\Models\Claim;
 
 @section('content')
     <div class="w-full">
-        <div class="bg-white rounded-lg overflow-hidden">
+        <div class="rounded-lg overflow-hidden">
             <div class="space-y-8">
 
                 <!-- Header Section -->
@@ -62,37 +62,20 @@ use App\Models\Claim;
 
                 <!-- Trip Details -->
                 <h3 class="heading-2">Trip Details</h3>
-                <div class="space-y-4 md:space-y-6">
-                    <!-- Locations List -->
-                    <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
-                        <div class="bg-white overflow-x-auto">
-                            <table class="min-w-full divide-y divide-wgg-border-200">
-                                <thead>
-                                    <tr>
-                                        <th class="table-header">No.</th>
-                                        <th class="table-header">Address</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-wgg-border-200">
-                                    @if ($claim->locations && $claim->locations->count() > 0)
-                                        @foreach ($claim->locations->sortBy('order') as $location)
-                                            <tr>
-                                                <td class="table-item">{{ $location->order }}</td>
-                                                <td class="table-item">
-                                                    <div class="break-words">{{ $location->location }}</div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td class="table-item" colspan="2">
-                                                No locations found. Contact System Administrator
-                                            </td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                    <div class="bg-white overflow-x-auto">
+                        @if ($claim->locations && $claim->locations->count() > 0)
+                            <x-claims.table :rows="$claim->locations->sortBy('order')->map(function($location) {
+                                return [
+                                    'label' => 'Location ' . $location->order,
+                                    'value' => $location->location
+                                ];
+                            })" />
+                        @else
+                            <x-claims.table :rows="[
+                                ['label' => 'Status', 'value' => 'No locations found. Contact System Administrator']
+                            ]" />
+                        @endif
                     </div>
                 </div>
 

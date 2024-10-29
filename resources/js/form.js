@@ -314,7 +314,7 @@ class FormManager {
             segment.style.marginBottom = "10px";
             segment.innerHTML = `
                 <strong>Point ${i + 1} - Point ${i + 2}</strong><br>
-                Distance: ${rawDistance}<br>
+                Distance: ${rawDistance} km<br>
                 Duration: ${leg.duration.text}
             `;
             panel.appendChild(segment);

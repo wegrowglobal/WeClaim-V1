@@ -2,10 +2,10 @@
 
 @section('content')
 
-    <div class="w-full rounded-lg">
+    <div class="w-full">
 
         @guest
-            <div class="bg-white overflow-hidden space-y-4 border border-wgg-border">
+            <div class="bg-white overflow-hidden rounded-none md:rounded-lg space-y-4 border border-wgg-border">
                 <div class="p-10 space-y-2">
                     <h2 class="heading-1">Welcome to WeClaims</h2>
                     <span class="status-badge bg-red-100 text-red-800">Not Logged In</span>
@@ -15,7 +15,7 @@
         @endguest
 
         @auth
-            <div class="bg-white shadow-md rounded-lg overflow-hidden border border-wgg-border">
+            <div class="bg-white shadow-md rounded-none md:rounded-lg  overflow-hidden border border-wgg-border">
                 <div class="p-10 space-y-8">
 
                     <div class="flex flex-col items-center gap-4 md:flex-row xl:flex-row">

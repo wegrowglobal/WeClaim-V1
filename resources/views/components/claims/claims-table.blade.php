@@ -44,7 +44,7 @@
                             <td class="table-item hidden md:table-cell">{{ $claim->date_from->format('d-m-Y') }}</td>
                             <td class="table-item hidden md:table-cell">{{ $claim->date_to->format('d-m-Y') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="status-badge text-xs sm:text-sm
+                                <span class="status-badge inline-block w-fit text-center
                                     @if ($claim->status == Claim::STATUS_SUBMITTED)
                                         bg-orange-100 text-orange-800
                                     @elseif ($claim->status == Claim::STATUS_APPROVED_ADMIN)
@@ -66,13 +66,17 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 @if ($actions === 'approval')
-                                    @if ($claim->status == Claim::STATUS_APPROVED_FINANCE)
-                                        <form action="{{ route('claims.approve', $claim->id) }}" method="POST" class="inline">
-                                            @csrf
-                                            <button type="submit" class="text-green-600 hover:text-green-900">Mark as Done</button>
-                                        </form>
+                                    @if ($claimService->canReviewClaim(Auth::user(), $claim))
+                                        @if ($claim->status == Claim::STATUS_APPROVED_FINANCE)
+                                            <form action="{{ route('claims.approve', $claim->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-green-600 hover:text-green-900">Mark as Done</button>
+                                            </form>
+                                        @else
+                                            <a href="{{ route('claims.review', $claim->id) }}" class="text-blue-600 hover:text-blue-900">Start Review</a>
+                                        @endif
                                     @else
-                                        <a href="{{ route('claims.review', $claim->id) }}" class="text-blue-600 hover:text-blue-900">Start Review</a>
+                                        <span class="text-gray-400">Pending Other Review</span>
                                     @endif
                                 @elseif ($actions === 'dashboard')
                                     <a href="{{ route('claims.view', $claim->id) }}" class="text-blue-600 hover:text-blue-900">View</a>

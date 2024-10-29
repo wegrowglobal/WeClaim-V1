@@ -2,7 +2,7 @@
     <tbody class="bg-white divide-y divide-wgg-border-200">
         @foreach ($rows as $row)
             <tr class="">
-                <th class="table-header whitespace-nowrap w-fit">{{ $row['label'] }}</th>
+                <th class="table-header whitespace-nowrap w-fit lg:w-[200px]">{{ $row['label'] }}</th>
                 <td class="table-item">
                     @if (isset($row['component']))
                         <x-dynamic-component :component="$row['component']" :attributes="$row['attributes'] ?? []">

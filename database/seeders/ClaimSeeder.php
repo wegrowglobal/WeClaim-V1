@@ -24,7 +24,6 @@ class ClaimSeeder extends Seeder
             ['name' => 'Johor Bahru', 'lat' => 1.4927, 'lng' => 103.7414],
             ['name' => 'Penang', 'lat' => 5.4141, 'lng' => 100.3288],
             ['name' => 'Kota Kinabalu', 'lat' => 5.9804, 'lng' => 116.0735],
-            ['name' => 'Kuching', 'lat' => 1.5535, 'lng' => 110.3593],
         ];
 
         // Create 20 staff users
@@ -50,13 +49,42 @@ class ClaimSeeder extends Seeder
                 $dateFrom = $faker->dateTimeBetween('-3 months', 'now');
                 $dateTo = (clone $dateFrom)->modify('+' . $faker->numberBetween(1, 5) . ' days');
 
+                $purposes = [
+                    'Client meeting and project discussion',
+                    'Training session and workshop',
+                    'Site inspection and evaluation',
+                    'Sales presentation and negotiation',
+                    'Conference and networking event',
+                    'Project kickoff meeting',
+                    'Technical consultation',
+                    'Contract signing ceremony',
+                    'Product demonstration',
+                    'Team building activity'
+                ];
+
+                $additionalDetails = [
+                    'with potential investors',
+                    'with regional partners',
+                    'for upcoming project phase',
+                    'regarding system implementation',
+                    'for business expansion',
+                    'with stakeholders',
+                    'for quarterly review',
+                    'with international clients',
+                    'for market research',
+                    'with local authorities'
+                ];
+
+                $purpose = $faker->randomElement($purposes);
+                $detail = $faker->randomElement($additionalDetails);
+
                 $claim = Claim::create([
                     'user_id' => $user->id,
-                    'title' => 'Business trip to ' . $toCity['name'],
-                    'description' => 'Travel for client meeting and project discussion in ' . $toCity['name'],
+                    'title' => ucfirst($purpose) . ' in ' . $toCity['name'],
+                    'description' => $purpose . ' ' . $detail . ' in ' . $toCity['name'] . '. Travel from ' . $fromCity['name'] . ' for business purposes.',
                     'petrol_amount' => $faker->randomFloat(2, 50, 500),
                     'status' => $faker->randomElement(['Submitted', 'Approved_Admin', 'Approved_Datuk', 'Approved_HR', 'Approved_Finance', 'Done', 'Rejected']),
-                    'claim_type' => 'Petrol',
+                    'claim_type' => 'Petrol', 
                     'total_distance' => $faker->randomFloat(2, 50, 1000),
                     'submitted_at' => Carbon::now(),
                     'claim_company' => $faker->company,

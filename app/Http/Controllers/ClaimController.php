@@ -50,9 +50,9 @@ class ClaimController extends Controller
         $user = Auth::user();
     
         if ($view === 'claims.dashboard') {
-            $claims = Claim::with('user')->where('user_id', $user->id)->get(); // Changed from paginate to get
+            $claims = Claim::with('user')->where('user_id', $user->id)->get(); 
         } elseif ($view === 'claims.approval') {
-            $claims = Claim::with('user')->get(); // Changed from paginate to get
+            $claims = Claim::with('user')->get();
         } else {
             abort(404);
         }
@@ -303,7 +303,7 @@ class ClaimController extends Controller
 
     public function approval()
     {
-        $claims = Claim::paginate(10); // Adjust pagination as needed
+        $claims = Claim::all();
         $statistics = [
             'totalClaims' => Claim::count(),
             'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
@@ -314,7 +314,7 @@ class ClaimController extends Controller
         return view('pages.claims.approval', [
             'claims' => $claims,
             'statistics' => $statistics,
-            'claimService' => $this->claimService, // or however you're resolving this service
+            'claimService' => $this->claimService,
         ]);
     }
 
@@ -322,14 +322,20 @@ class ClaimController extends Controller
 
     public function dashboard()
     {
-        $claims = Claim::get(); // Changed from paginate to get
+        $user = Auth::user();
+        $claims = Claim::where('user_id', $user->id)->get(); // Only get claims for current user
         $statistics = [
-            'totalClaims' => Claim::count(),
-            'pendingReview' => Claim::where('status', '!=', Claim::STATUS_DONE)->count(),
-            'approvedClaims' => Claim::where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
-            'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
+            'totalClaims' => Claim::where('user_id', $user->id)->count(),
+            'pendingReview' => Claim::where('user_id', $user->id)
+                ->where('status', '!=', Claim::STATUS_DONE)
+                ->count(),
+            'approvedClaims' => Claim::where('user_id', $user->id)
+                ->where('status', Claim::STATUS_APPROVED_FINANCE)
+                ->count(),
+            'totalAmount' => Claim::where('user_id', $user->id)
+                ->sum(DB::raw('petrol_amount + toll_amount')),
         ];
-    
+
         return view('pages.claims.dashboard', [
             'claims' => $claims,
             'statistics' => $statistics,
