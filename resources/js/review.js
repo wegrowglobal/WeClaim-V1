@@ -137,7 +137,7 @@ class ClaimReviewMap {
       }
 
       const totalDistance = route.legs.reduce((total, leg) => total + leg.distance.value, 0);
-      const totalDistanceKm = Math.floor(totalDistance / 10) / 100;
+      const totalDistanceKm = Number((totalDistance / 1000).toFixed(2));
       const totalDuration = route.legs.reduce((total, leg) => total + leg.duration.value, 0);
       const totalHours = Math.floor(totalDuration / 3600);
       const totalMinutes = Math.floor((totalDuration % 3600) / 60);

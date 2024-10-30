@@ -99,7 +99,6 @@ use App\Models\Claim;
                     @else
                     <form action="{{ route('claims.update', $claim->id) }}" class="flex flex-col w-full gap-4" method="POST">
                         @csrf
-                        @method('PUT')
                         <div class="flex flex-col space-y-4 md:space-y-6 w-full">
                             <h3 class="heading-2">Remarks</h3>
                             <textarea class="form-input" name="remarks" id="remarks" cols="30" rows="5">{{ old('remarks') }}</textarea>

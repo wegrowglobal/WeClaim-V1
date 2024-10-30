@@ -78,8 +78,6 @@ Route::middleware('auth')->group(function () {
 
     // Claims Routes
 
-
-
     Route::get('claims/dashboard', [ClaimController::class, 'dashboard'])->name('claims.dashboard');
 
     Route::get('claims/new', function () {

@@ -163,7 +163,8 @@ class ClaimService
 
     private function calculateTotalAmount($totalDistance)
     {
-        return $totalDistance * self::PETROL_RATE;
+        $roundedDistance = round(floatval($totalDistance), 2);
+        return $roundedDistance * self::PETROL_RATE;
     }
 
     //////////////////////////////////////////////////////////////////

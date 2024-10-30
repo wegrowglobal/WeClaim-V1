@@ -19,7 +19,7 @@ class StoreClaimRequest extends FormRequest
             'date_to' => 'required|date|after:date_from',
             'location' => 'required|array|min:2',
             'location.*' => 'required|string',
-            'total_distance' => 'required|numeric',
+            'total_distance' => ['required', 'numeric', 'regex:/^\d+(\.\d{0,2})?$/'],
             'toll_amount' => 'required|numeric',
             'toll_report' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'email_report' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
