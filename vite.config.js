@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
-import path from 'path';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     plugins: [
@@ -12,31 +12,16 @@ export default defineConfig({
             ],
             refresh: true,
         }),
+        vue(),
     ],
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, 'resources/js'),
-            '@css': path.resolve(__dirname, 'resources/css'),
-        },
-    },
-    css: {
-        preprocessorOptions: {
-            scss: {
-                additionalData: `@import "resources/css/variables.scss";`
-            },
-        },
-    },
     build: {
-        minify: 'esbuild', // Use esbuild for faster builds
-        sourcemap: true,   // Enable sourcemaps for debugging
+        target: 'esnext', // This enables support for top-level await
         rollupOptions: {
             output: {
                 manualChunks: {
-                    vendor: ['vue', 'axios'], // Example of splitting vendor code
-                },
-            },
-        },
-    },
-    define: {
+                    vendor: ['vue', 'axios']
+                }
+            }
+        }
     }
 });
