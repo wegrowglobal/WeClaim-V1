@@ -10,13 +10,27 @@
             <table id="claimsTable" class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th scope="col" class="table-header whitespace-nowrap w-fit">ID</th>
-                        <th scope="col" class="table-header hidden sm:table-cell whitespace-nowrap w-fit">Submitted</th>
-                        <th scope="col" class="table-header whitespace-nowrap w-fit">Submitted By</th>
-                        <th scope="col" class="table-header whitespace-nowrap w-fit">Title</th>
-                        <th scope="col" class="table-header hidden md:table-cell whitespace-nowrap w-fit">Date From</th>
-                        <th scope="col" class="table-header hidden md:table-cell whitespace-nowrap w-fit">Date To</th>
-                        <th scope="col" class="table-header whitespace-nowrap w-fit">Status</th>
+                        <th scope="col" class="table-header whitespace-nowrap w-fit cursor-pointer" data-sort="id">
+                            ID <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header hidden sm:table-cell whitespace-nowrap w-fit cursor-pointer" data-sort="submitted">
+                            Submitted <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header whitespace-nowrap w-fit cursor-pointer" data-sort="user">
+                            Submitted By <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header whitespace-nowrap w-fit cursor-pointer" data-sort="title">
+                            Title <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header hidden md:table-cell whitespace-nowrap w-fit cursor-pointer" data-sort="dateFrom">
+                            Date From <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header hidden md:table-cell whitespace-nowrap w-fit cursor-pointer" data-sort="dateTo">
+                            Date To <i class="fas fa-sort ml-2"></i>
+                        </th>
+                        <th scope="col" class="table-header whitespace-nowrap w-fit cursor-pointer" data-sort="status">
+                            Status <i class="fas fa-sort"></i>
+                        </th>
                         <th scope="col" class="table-header whitespace-nowrap w-fit">Actions</th>
                     </tr>
                 </thead>
