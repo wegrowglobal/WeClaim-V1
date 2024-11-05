@@ -92,8 +92,11 @@ use App\Models\Claim;
                     @if($claim->status === 'Approved_Admin' && auth()->user()->role->name === 'Admin')
                     <form action="{{ route('claims.mail.to.datuk', $claim->id) }}" method="POST">
                         @csrf
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Send to Datuk
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transform transition duration-200 hover:shadow-xl flex items-center gap-2">
+                            <span>Send to Datuk</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                            </svg>
                         </button>
                     </form>
                     @else

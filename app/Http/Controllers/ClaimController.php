@@ -350,40 +350,140 @@ class ClaimController extends Controller
     public function handleEmailAction(Request $request, $id)
     {
         $claim = Claim::findOrFail($id);
-        $user = Auth::user();
+        $action = $request->query('action');
 
-        if ($user instanceof User) {
-            if (!$this->claimService->canReviewClaim($user, $claim)) {
-                return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
+        if (!in_array($action, ['approve', 'reject'])) {
+            return view('pages.claims.email-action', [
+                'success' => false,
+                'message' => 'Invalid action specified.'
+            ]);
+        }
+
+        try {
+            // Get the latest review
+            $latestReview = $claim->reviews()
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Check if this is a valid new review cycle
+            $canProcess = false;
+            $message = '';
+
+            if (!$latestReview) {
+                $canProcess = true;
+            } else if ($latestReview->department === 'Email Approval' && $claim->status === Claim::STATUS_APPROVED_DATUK) {
+                // Already processed and approved by Datuk
+                return view('pages.claims.email-action', [
+                    'alreadyProcessed' => true,
+                    'claim' => $claim,
+                    'message' => 'This claim has already been approved. No further action is required.'
+                ]);
+            } else if ($latestReview->department === 'Email Approval' && $claim->status === Claim::STATUS_APPROVED_ADMIN) {
+                // Already rejected by Datuk but reviewed by Admin again
+                $canProcess = true;
+            } else if ($latestReview->department === 'Admin' && $claim->status === Claim::STATUS_APPROVED_ADMIN) {
+                // Reviewed by Admin after rejection, ready for new Datuk decision
+                $canProcess = true;
             }
 
-            $action = $request->query('action');
-
-            if (!in_array($action, ['approve', 'reject'])) {
-                return redirect()->route('claims.approval')->with('error', 'Invalid action.');
+            if (!$canProcess) {
+                return view('pages.claims.email-action', [
+                    'alreadyProcessed' => true,
+                    'claim' => $claim,
+                    'message' => 'This claim is not in the correct state for this action.'
+                ]);
             }
 
-            DB::transaction(function () use ($action, $user, $claim) {
+            DB::transaction(function () use ($action, $claim) {
                 if ($action === 'approve') {
-                    $this->claimService->approveClaim($user, $claim);
-                    $actionType = 'approved';
+                    $claim->status = Claim::STATUS_APPROVED_DATUK;
+                    
+                    // Find HR reviewer
+                    $hrReviewer = User::whereHas('role', function($query) {
+                        $query->where('name', 'HR');
+                    })->first();
+                    
+                    if ($hrReviewer) {
+                        $claim->reviewer_id = $hrReviewer->id;
+                    }
                 } else {
-                    $this->claimService->rejectClaim($user, $claim);
-                    $actionType = 'rejected';
+                    $claim->status = Claim::STATUS_SUBMITTED;
+                    
+                    // Find Admin reviewer
+                    $adminReviewer = User::whereHas('role', function($query) {
+                        $query->where('name', 'Admin');
+                    })->first();
+                    
+                    if ($adminReviewer) {
+                        $claim->reviewer_id = $adminReviewer->id;
+                    }
                 }
 
-                $this->claimService->storeRemarks($user, $claim, 'Action taken via email link.');
+                $claim->save();
 
-                $claim->refresh();
+                // Create review record
+                $reviewData = [
+                    'claim_id' => $claim->id,
+                    'reviewer_id' => null,
+                    'remarks' => 'Action taken via email: ' . ($action === 'approve' ? 'Approved' : 'Rejected by Datuk'),
+                    'department' => 'Email Approval',
+                    'review_order' => $claim->reviews()->count() + 1,
+                    'status' => $claim->status,
+                    'reviewed_at' => now()
+                ];
 
-                Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
+                Log::info('Creating review record with data:', $reviewData);
+                $review = $claim->reviews()->create($reviewData);
+                Log::info('Review record created successfully:', ['review_id' => $review->id]);
 
-                $this->notifyRoles($claim, $actionType);
+                // Notify claim owner
+                Notification::send($claim->user, new ClaimStatusNotification(
+                    $claim, 
+                    $claim->status, 
+                    $action === 'approve' ? 'approved_by_datuk' : 'rejected_by_datuk'
+                ));
+
+                // Notify next reviewer
+                if ($action === 'approve') {
+                    // Notify HR team
+                    User::whereHas('role', function($query) {
+                        $query->where('name', 'HR');
+                    })->get()->each(function($user) use ($claim) {
+                        Notification::send($user, new ClaimStatusNotification(
+                            $claim, 
+                            $claim->status, 
+                            'pending_review', 
+                            false
+                        ));
+                    });
+                } else {
+                    // Notify Admin team
+                    User::whereHas('role', function($query) {
+                        $query->where('name', 'Admin');
+                    })->get()->each(function($user) use ($claim) {
+                        Notification::send($user, new ClaimStatusNotification(
+                            $claim, 
+                            $claim->status, 
+                            'returned_from_datuk', 
+                            false
+                        ));
+                    });
+                }
             });
 
-            return redirect()->route('claims.success.page')->with('success', 'Claim ' . $action . ' successfully.');
-        } else {
-            return route('login');
+            return view('pages.claims.email-action', [
+                'success' => true,
+                'message' => 'Claim has been ' . ($action === 'approve' ? 'approved' : 'rejected') . ' successfully.',
+                'claim' => $claim
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error processing email action: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return view('pages.claims.email-action', [
+                'success' => false,
+                'message' => 'An error occurred while processing your request.'
+            ]);
         }
     }
 

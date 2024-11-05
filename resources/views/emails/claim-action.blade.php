@@ -28,6 +28,22 @@
             <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">Status:</span>
             <span style="color: #333; font-size: 14px;">{{ str_replace('_', ' ', $claim->status) }}</span>
         </div>
+        <div style="margin-bottom: 12px;">
+            <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">From Date:</span>
+            <span style="color: #333; font-size: 14px;">{{ $claim->date_from->format('d/m/Y') }}</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">To Date:</span>
+            <span style="color: #333; font-size: 14px;">{{ $claim->date_to->format('d/m/Y') }}</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">Toll Amount:</span>
+            <span style="color: #333; font-size: 14px;">RM {{ number_format($claim->toll_amount, 2) }}</span>
+        </div>
+        <div style="margin-bottom: 12px;">
+            <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">Petrol Amount:</span>
+            <span style="color: #333; font-size: 14px;">RM {{ number_format($claim->petrol_amount, 2) }}</span>
+        </div>
     </div>
 
     <h3>Locations</h3>
@@ -77,6 +93,6 @@
 
     <p>Thank you for your attention to this matter.</p>
     <p>Best regards,<br>
-    <strong>The WeClaim System</strong></p>
+    <p><strong>The WeClaim System</strong></p>
 </body>
 </html>

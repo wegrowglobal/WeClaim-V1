@@ -23,6 +23,7 @@ class ClaimActionMail extends Mailable
     public function build()
     {
         return $this->view('emails.claim-action')
+                    ->subject('Claim Approval Request')
                     ->with([
                         'claim' => $this->claim,
                         'locations' => $this->locations,

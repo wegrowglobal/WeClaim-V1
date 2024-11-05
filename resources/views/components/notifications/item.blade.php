@@ -4,8 +4,10 @@
     $notification->read_at ? 'border-gray-200 opacity-60' :
     (isset($notification->data['action']) ?
         ($notification->data['action'] === 'rejected' ? 'border-2 border-red-600/50' :
+        ($notification->data['action'] === 'rejected_by_datuk' ? 'border-2 border-red-600/50' :
         ($notification->data['action'] === 'approved' ? 'border-2 border-green-400/50' :
-        ($notification->data['action'] === 'resubmitted' ? 'border-2 border-yellow-400/50' : 'border-2 border-blue-400/50')))
+        ($notification->data['action'] === 'approved_by_datuk' ? 'border-2 border-green-400/50' :
+        ($notification->data['action'] === 'resubmitted' ? 'border-2 border-yellow-400/50' : 'border-2 border-blue-400/50')))))
     : 'border-2 border-blue-400/50')
 }} transition-all duration-300 hover:shadow-md">
     <div class="grid grid-cols-3 gap-4">

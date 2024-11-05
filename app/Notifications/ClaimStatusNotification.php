@@ -95,6 +95,8 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
         $messages = [
             'approved' => "Your claim #{$this->claim->id} has been approved by {$this->getReviewerRole($this->claim->reviewer)}.",
             'rejected' => "Your claim #{$this->claim->id} has been rejected by {$this->getReviewerRole($this->claim->reviewer)}.",
+            'rejected_by_datuk' => "Your claim #{$this->claim->id} has been rejected by Datuk and returned to Admin for review.",
+            'approved_by_datuk' => "Your claim #{$this->claim->id} has been approved by Datuk and sent to HR for review.",
             'resubmitted' => "Your claim #{$this->claim->id} has been resubmitted.",
             'submitted' => "Your claim #{$this->claim->id} has been submitted.",
         ];
@@ -109,76 +111,13 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
         $messages = [
             'resubmitted' => "Claim #{$this->claim->id} has been resubmitted and requires your review.",
             'submitted' => "Claim #{$this->claim->id} has been submitted and requires your review.",
+            'returned_from_datuk' => "Claim #{$this->claim->id} has been rejected by Datuk and requires your review.",
+            'pending_review' => "Claim #{$this->claim->id} requires your review.",
         ];
 
         return $messages[$this->action] ?? "Claim #{$this->claim->id} status changed to {$statusFormatted}.";
     }
 
-    ///////////////////////////////////////////////////////////////////
-/* 
-    protected function createMessage()
-    {
-        $statusFormatted = str_replace('_', ' ', $this->status);
-
-        // Get the reviewer user
-        $reviewer = $this->claim->reviewer;
-
-        // Add more detailed logging
-        Log::info('Claim Details:', [
-            'claim_id' => $this->claim->id,
-            'reviewer_id' => $this->claim->reviewer_id,
-            'status' => $this->claim->status,
-        ]);
-
-        $reviewerRole = 'Reviewer'; // Default value
-        if ($reviewer) {
-            Log::info('Reviewer Details:', [
-                'reviewer_id' => $reviewer->id,
-                'reviewer_name' => $reviewer->name,
-                'role_id' => $reviewer->role_id,
-            ]);
-            
-            if ($reviewer->role) {
-                $reviewerRole = $reviewer->role->name;
-                Log::info('Reviewer Role:', ['role_name' => $reviewerRole]);
-            } else {
-                Log::warning('Reviewer has no role assigned');
-                $reviewerRole = 'Unknown Role';
-            }
-        } else {
-            Log::warning('No reviewer assigned to this claim');
-            $reviewerRole = 'System';
-        }
-
-        if ($this->isForClaimOwner) {
-            // Messages for the claim owner
-            switch ($this->action) {
-                case 'approved':
-                    return "Your claim #{$this->claim->id} has been approved by {$reviewerRole}.";
-                case 'rejected':
-                    return "Your claim #{$this->claim->id} has been rejected {$reviewerRole}.";
-                case 'resubmitted':
-                    return "Your claim #{$this->claim->id} has been resubmitted.";
-                case 'submitted':
-                    return "Your claim #{$this->claim->id} has been submitted.";
-                case 'status_update':
-                default:
-                    return "Your claim #{$this->claim->id} status changed to {$statusFormatted}.";
-            }
-        } else {
-            // Messages for role users
-            switch ($this->action) {
-                case 'resubmitted':
-                    return "Claim #{$this->claim->id} has been resubmitted and requires your review.";
-                case 'submitted':
-                    return "Claim #{$this->claim->id} has been submitted and requires your review.";
-                case 'status_update':
-                default:
-                    return "Claim #{$this->claim->id} status changed to {$statusFormatted}.";
-            }
-        }
-    }
- */
     ///////////////////////////////////////////////////////////////////
 
     public function toBroadcast($notifiable)

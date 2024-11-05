@@ -200,7 +200,11 @@ class ClaimService
 
         switch ($user->role->name) {
             case 'Admin':
-                if ($claim->status === Claim::STATUS_SUBMITTED || $claim->status === Claim::STATUS_APPROVED_ADMIN) {
+                if ($claim->status === Claim::STATUS_SUBMITTED) {
+                    $claim->status = Claim::STATUS_APPROVED_ADMIN;
+
+                    $claim->reviewer_id = $user->id;
+                } elseif ($claim->status === Claim::STATUS_APPROVED_ADMIN) {
                     $claim->status = Claim::STATUS_APPROVED_DATUK;
                     $nextReviewer = User::whereHas('role', function($query) {
                         $query->where('id', self::ROLE_ID_HR);
@@ -233,9 +237,6 @@ class ClaimService
         // If there's a next reviewer, set the reviewer_id
         if ($nextReviewer) {
             $claim->reviewer_id = $nextReviewer->id;
-        } else {
-            // If there's no next reviewer (e.g., claim is done), keep the current reviewer
-            $claim->reviewer_id = $user->id;
         }
 
         Log::info('Updating claim reviewer', [
