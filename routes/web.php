@@ -108,6 +108,10 @@ Route::middleware('auth')->group(function () {
         ->name('claims.email.action')
         ->middleware('auth'); // Ensure the user is authenticated
 
+    Route::post('/claims/{claim}/export', [ClaimController::class, 'export'])
+        ->name('claims.export')
+        ->middleware('auth');
+
 /////////////////////////////////////////////////////////////////////////////////////
 
     // Reports Routes   

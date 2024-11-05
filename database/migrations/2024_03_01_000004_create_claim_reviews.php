@@ -14,7 +14,10 @@ return new class extends Migration
         Schema::create('claim_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('claim_id')->constrained('claim', 'id')->onDelete('cascade');
-            $table->foreignId('reviewer_id')->constrained('users');
+            $table->foreignId('reviewer_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null');
             $table->text('remarks')->nullable();
             $table->integer('review_order');
             $table->string('department');

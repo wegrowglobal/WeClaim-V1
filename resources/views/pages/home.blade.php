@@ -35,11 +35,26 @@
                     <div class="space-y-4">
                         <h3 class="heading-2">Personal Claim Overview</h3>
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                            @inject('claim', 'App\Models\Claim')
                             @php
-                                $totalClaims = \App\Models\Claim::where('user_id', auth()->id())->count();
-                                $approvedClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'approved')->count();
-                                $pendingClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'pending')->count();
-                                $rejectedClaims = \App\Models\Claim::where('user_id', auth()->id())->where('status', 'rejected')->count();
+                                $totalClaims = $claim::where('user_id', auth()->id())->count();
+                                $approvedClaims = $claim::where('user_id', auth()->id())
+                                    ->whereIn('status', [
+                                        \App\Models\Claim::STATUS_DONE
+                                    ])
+                                    ->count();
+                                $pendingClaims = $claim::where('user_id', auth()->id())
+                                    ->whereIn('status', [
+                                        \App\Models\Claim::STATUS_SUBMITTED,
+                                        \App\Models\Claim::STATUS_APPROVED_ADMIN,
+                                        \App\Models\Claim::STATUS_APPROVED_DATUK,
+                                        \App\Models\Claim::STATUS_APPROVED_HR,
+                                        \App\Models\Claim::STATUS_APPROVED_FINANCE,
+                                    ])
+                                    ->count();
+                                $rejectedClaims = $claim::where('user_id', auth()->id())
+                                    ->where('status', \App\Models\Claim::STATUS_REJECTED)
+                                    ->count();
                             @endphp
                             <div class="bg-white p-6 rounded-lg border border-gray-200 transition-all duration-300 hover:shadow-md">
                                 <p class="text-sm font-medium text-gray-500 mb-2">Total Claims</p>

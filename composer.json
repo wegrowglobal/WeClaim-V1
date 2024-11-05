@@ -12,7 +12,8 @@
         "google/apiclient": "^2.17",
         "guzzlehttp/guzzle": "^7.9",
         "laravel/framework": "^11.9",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "phpoffice/phpspreadsheet": "^3.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

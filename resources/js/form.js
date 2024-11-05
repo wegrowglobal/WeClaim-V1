@@ -18,6 +18,7 @@ class FormManager {
         this.csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         this.handleResize = this.handleResize.bind(this);
         window.addEventListener('resize', this.handleResize);
+        this.distances = [];
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -137,12 +138,14 @@ class FormManager {
                     travelMode: google.maps.TravelMode[this.travelMode.toUpperCase()],
                 };
 
-                const result = await this.directionsService.route(request);
-                this.directionsRenderer.setDirections(result);
-
-                this.map.fitBounds(bounds);
-                this.addSegmentInfoBoxes(result.routes[0]);
-                this.clearRouteBtn.disabled = false;
+                this.directionsService.route(request, (response, status) => {
+                    if (status === "OK") {
+                        this.directionsRenderer.setDirections(response);
+                        this.updateDistances(response);
+                        this.clearRouteBtn.disabled = false;
+                        this.map.fitBounds(bounds);
+                    }
+                });
             }
         } catch (error) {
             console.error("Error updating map:", error);
@@ -584,6 +587,18 @@ class FormManager {
     }
 
     ///////////////////////////////////////////////////////////////////
+
+    updateDistances(response) {
+        const legs = response.routes[0].legs;
+        const distanceInputs = document.querySelectorAll('.location-distance');
+        
+        legs.forEach((leg, index) => {
+            const distanceInKm = leg.distance.value / 1000;
+            if (distanceInputs[index]) {
+                distanceInputs[index].value = distanceInKm.toFixed(2);
+            }
+        });
+    }
 
 }
 

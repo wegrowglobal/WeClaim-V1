@@ -6,14 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-
-    /////////////////////////////////////////////////////////////
-
     public function up(): void
     {
         Schema::create('claim', function (Blueprint $table) {
-            $table->id('id');
+            $table->id();
             $table->foreignId('user_id')->constrained()->onUpdate('cascade');
+            $table->unsignedBigInteger('reviewer_id')->nullable();
             $table->string('title');
             $table->text('description')->nullable();
             $table->decimal('petrol_amount', 10, 2);
@@ -33,21 +31,22 @@ return new class extends Migration
             $table->decimal('toll_amount', 10, 2)->nullable();
             $table->string('from_location')->nullable();
             $table->string('to_location')->nullable();
-            $table->timestamp('date_from')->nullable();
-            $table->timestamp('date_to')->nullable();
+            $table->date('date_from')->nullable();
+            $table->date('date_to')->nullable();
             $table->string('token')->unique()->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            // Add foreign key constraint for reviewer_id
+            $table->foreign('reviewer_id')
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
         });
     }
-
-    /////////////////////////////////////////////////////////////
 
     public function down(): void
     {
         Schema::dropIfExists('claim');
     }
-
-    /////////////////////////////////////////////////////////////
-
-};
+}; 

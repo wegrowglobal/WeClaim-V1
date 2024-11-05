@@ -13,6 +13,11 @@
                         <th scope="col" class="table-header whitespace-nowrap w-fit cursor-pointer" data-sort="id">
                             ID <i class="fas fa-sort ml-2"></i>
                         </th>
+                        @if(Auth::user()->role->name === 'Admin' || Auth::user()->role->name === 'Finance')
+                        <th scope="col" class="table-header whitespace-nowrap w-fit">
+                            Export
+                        </th>
+                        @endif
                         <th scope="col" class="table-header hidden sm:table-cell whitespace-nowrap w-fit cursor-pointer" data-sort="submitted">
                             Submitted <i class="fas fa-sort ml-2"></i>
                         </th>
@@ -38,6 +43,18 @@
                     @foreach ($claims as $claim)
                         <tr class="claim-row" data-need-review="{{ $claimService->canReviewClaim(Auth::user(), $claim) ? 'true' : 'false' }}">
                             <td class="table-item">{{ $claim->id }}</td>
+                            @if(Auth::user()->role->name === 'Admin' || Auth::user()->role->name === 'Finance')
+                            <td class="table-item">
+                                <form action="{{ route('claims.export', $claim->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-green-600 hover:text-green-900">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </td>
+                            @endif
                             <td class="table-item hidden sm:table-cell">{{ $claim->submitted_at->format('d-m-Y') }}</td>
                             <td class="table-item">
                                 <div class="flex items-center">

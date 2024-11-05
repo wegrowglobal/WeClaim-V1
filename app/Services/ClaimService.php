@@ -83,13 +83,18 @@ class ClaimService
 
     //////////////////////////////////////////////////////////////////
 
-    private function createOrUpdateLocations(Claim $claim, array $locations)
+    private function createOrUpdateLocations(Claim $claim, array $locationData)
     {
         $claim->locations()->delete();
+        
+        $locations = array_values($locationData);
+        $distances = request()->input('distance', []);
+        
         foreach ($locations as $index => $location) {
             $claim->locations()->create([
                 'location' => $location,
                 'order' => $index + 1,
+                'distance' => $distances[$index] ?? null,
                 'claim_id' => $claim->id,
             ]);
         }
