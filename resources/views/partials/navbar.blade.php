@@ -74,7 +74,7 @@
                 @else
                     <div class="flex items-center space-x-4">
                         <a href="{{ route('login.form') }}" class="text-gray-600 hover:text-gray-900 font-medium transition-colors">Login</a>
-                        <a href="{{ route('register') }}" class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">Request Access</a>
+                        <a href=" " class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">Request Access</a>
                     </div>
                 @endauth
             </div>

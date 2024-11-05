@@ -38,9 +38,12 @@
                 </button>
             </div>
 
-            @error('password')
-            <p class="text-sm text-red-600">{{ $message }}</p>
-            @enderror
+            {{-- For general authentication errors --}}
+            @if ($errors->has('auth'))
+                <div class="flex items-center justify-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-sm text-red-600 text-center">{{ $errors->first('auth') }}</p>
+                </div>
+            @endif
 
             <div class="flex items-center">
                 <input type="checkbox" name="remember" id="remember" class="h-4 w-4 text-wgg-black-600 focus:ring-wgg-black-500 border-gray-300 rounded">
