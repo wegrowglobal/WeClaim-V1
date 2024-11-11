@@ -11,7 +11,8 @@ return new class extends Migration
         Schema::create('claim_locations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('claim_id')->constrained('claim')->onDelete('cascade');
-            $table->string('location');
+            $table->string('from_location');
+            $table->string('to_location');
             $table->decimal('distance', 10, 2)->nullable();
             $table->integer('order');
             $table->timestamps();

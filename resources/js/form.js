@@ -142,6 +142,7 @@ class FormManager {
                     if (status === "OK") {
                         this.directionsRenderer.setDirections(response);
                         this.updateDistances(response);
+                        const totalDistanceKm = this.updateTotalDistance(response.routes[0]);
                         this.clearRouteBtn.disabled = false;
                         this.map.fitBounds(bounds);
                     }
@@ -324,15 +325,12 @@ class FormManager {
             rawTotalDistance += leg.distance.value;
         }
 
-        const totalDistance = route.legs.reduce((total, leg) => total + leg.distance.value, 0);
-        const totalDistanceKm = Number((totalDistance / 1000).toFixed(2));
+        const totalDistanceKm = this.updateTotalDistance(route);
         const totalDuration = route.legs.reduce((total, leg) => total + leg.duration.value, 0);
         const totalHours = Math.floor(totalDuration / 3600);
         const totalMinutes = Math.floor((totalDuration % 3600) / 60);
 
         console.log("Total Distance (km):", totalDistanceKm);
-
-        document.getElementById("total-distance-input").value = totalDistanceKm;
 
         const totalInfo = document.createElement("div");
         totalInfo.style.borderTop = "1px solid #ccc";
@@ -395,22 +393,41 @@ class FormManager {
     addLocation() {
         this.locationCount++;
         const newInput = document.createElement("div");
-        newInput.classList.add(`location-${this.locationCount}`, "relative");
-        newInput.innerHTML = `
-            <input type="text" name="location[]" id="location-${this.locationCount}" class="form-input location-input text-wgg-black-950 w-full px-4 py-2 pt-6 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out" placeholder=" " required>
-
-            <label for="location-1" class="absolute text-sm text-wgg-black-400 font-wgg font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3">
+        newInput.classList.add("wgg-flex-col", "gap-2");
+        newInput.id = `location-wrapper-${this.locationCount}`;
+        
+        const inputWrapper = document.createElement("div");
+        inputWrapper.classList.add("relative");
+        
+        inputWrapper.innerHTML = `
+            <input 
+                type="text" 
+                name="location[]" 
+                id="location-${this.locationCount}" 
+                class="form-input location-input text-wgg-black-950 w-full px-4 py-2 pt-6 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border transition duration-150 ease-in-out" 
+                placeholder=" " 
+                required
+            >
+            <label 
+                for="location-${this.locationCount}" 
+                class="absolute text-sm text-wgg-black-400 font-normal duration-300 transform -translate-y-3 scale-75 top-4 z-10 origin-[0] left-4 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-3"
+            >
                 Location ${this.locationCount}
             </label>
         `;
+
+        newInput.appendChild(inputWrapper);
         this.locationInputContainer.appendChild(newInput);
 
-        const newLocationInput = newInput.querySelector('.location-input');
+        // Initialize autocomplete for new input
+        const newLocationInput = inputWrapper.querySelector('.location-input');
         new google.maps.places.Autocomplete(newLocationInput);
 
         this.updateRemoveButtonState();
         this.attachInputListeners();
+        this.updateLocationLabels();
 
+        // Update map if we already have markers
         if (this.markers.length > 0) {
             const currentBounds = this.map.getBounds();
             this.updateMap().then(() => {
@@ -425,9 +442,17 @@ class FormManager {
 
     removeLocation() {
         if (this.locationCount > 1) {
-            this.locationInputContainer.removeChild(this.locationInputContainer.lastChild);
+            // Remove all distance inputs for the last location pair
+            const lastLocationWrapper = this.locationInputContainer.lastChild;
+            const distanceInputs = lastLocationWrapper.querySelectorAll('.location-distance');
+            distanceInputs.forEach(input => input.remove());
+
+            // Remove the location input
+            this.locationInputContainer.removeChild(lastLocationWrapper);
             this.locationCount--;
+            
             this.updateRemoveButtonState();
+            this.updateLocationLabels();
             this.attachInputListeners();
             this.updateMap();
         }
@@ -560,6 +585,12 @@ class FormManager {
         this.addLocationBtn.addEventListener("click", () => this.addLocation());
         this.removeLocationBtn.addEventListener("click", () => this.removeLocation());
 
+        // Add form submission validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', (e) => this.validateForm(e));
+        }
+
         const firstLocationInput = document.querySelector(".location-input");
         if (firstLocationInput) {
             new google.maps.places.Autocomplete(firstLocationInput);
@@ -590,14 +621,79 @@ class FormManager {
 
     updateDistances(response) {
         const legs = response.routes[0].legs;
-        const distanceInputs = document.querySelectorAll('.location-distance');
+        const locationInputs = document.querySelectorAll('.location-input');
         
-        legs.forEach((leg, index) => {
-            const distanceInKm = leg.distance.value / 1000;
-            if (distanceInputs[index]) {
-                distanceInputs[index].value = distanceInKm.toFixed(2);
-            }
-        });
+        // Clear existing distance inputs
+        document.querySelectorAll('.location-distance').forEach(input => input.remove());
+        
+        let totalDistance = 0;
+        
+        // Create location pairs and assign distances
+        for (let i = 0; i < locationInputs.length - 1; i++) {
+            const distance = legs[i].distance.value / 1000; // Convert to km
+            totalDistance += distance;
+            
+            // Create hidden distance input
+            const distanceInput = document.createElement('input');
+            distanceInput.type = 'hidden';
+            distanceInput.name = `distances[${i}]`;
+            distanceInput.value = distance.toFixed(2);
+            distanceInput.classList.add('location-distance');
+            locationInputs[i].parentNode.appendChild(distanceInput);
+        }
+        
+        // Update total distance
+        const totalDistanceInput = document.getElementById('total-distance-input');
+        if (totalDistanceInput) {
+            totalDistanceInput.value = totalDistance.toFixed(2);
+        }
+
+        // Update route info panel with new distances
+        this.addSegmentInfoBoxes(response.routes[0]);
+    }
+
+    updateTotalDistance(route) {
+        const totalDistance = route.legs.reduce((total, leg) => total + leg.distance.value, 0);
+        const totalDistanceKm = Number((totalDistance / 1000).toFixed(2));
+        
+        // Update hidden input
+        const totalDistanceInput = document.getElementById("total-distance-input");
+        if (totalDistanceInput) {
+            totalDistanceInput.value = totalDistanceKm;
+            // Dispatch an event to notify other parts of the application
+            totalDistanceInput.dispatchEvent(new Event('change'));
+        }
+        
+        return totalDistanceKm;
+    }
+
+    validateForm(e) {
+        const distanceInputs = document.querySelectorAll('.location-distance');
+        const locationInputs = document.querySelectorAll('.location-input');
+
+        // Check if we have at least two locations
+        if (locationInputs.length < 2) {
+            e.preventDefault();
+            this.showError('Please add at least two locations');
+            return false;
+        }
+
+        // Check if we have all required distances
+        if (distanceInputs.length < locationInputs.length - 1) {
+            e.preventDefault();
+            this.showError('Please wait for distance calculations to complete');
+            return false;
+        }
+
+        // Check if total distance is calculated
+        const totalDistanceInput = document.getElementById('total-distance-input');
+        if (!totalDistanceInput || !totalDistanceInput.value) {
+            e.preventDefault();
+            this.showError('Total distance has not been calculated');
+            return false;
+        }
+
+        return true;
     }
 
 }

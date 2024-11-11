@@ -39,6 +39,7 @@ class ClaimController extends Controller
 
     public function __construct(ClaimService $claimService)
     {
+        Log::info('ClaimController instantiated', ['service' => get_class($claimService)]);
         $this->claimService = $claimService;
     }
 
@@ -47,17 +48,24 @@ class ClaimController extends Controller
 
     public function index($view)
     {
+        Log::info('Accessing claims index', ['view' => $view]);
+
         if (!Auth::check()) {
+            Log::warning('Unauthenticated user attempted to access claims index');
             return redirect()->route('login');
         }
     
         $user = Auth::user();
+        Log::info('User accessing claims index', ['user_id' => $user->id, 'role' => $user->role->name]);
     
         if ($view === 'claims.dashboard') {
-            $claims = Claim::with('user')->where('user_id', $user->id)->get(); 
+            $claims = Claim::with('user')->where('user_id', $user->id)->get();
+            Log::info('Retrieved user claims', ['count' => $claims->count()]);
         } elseif ($view === 'claims.approval') {
             $claims = Claim::with('user')->get();
+            Log::info('Retrieved all claims for approval', ['count' => $claims->count()]);
         } else {
+            Log::error('Invalid view requested', ['view' => $view]);
             abort(404);
         }
     
@@ -71,8 +79,16 @@ class ClaimController extends Controller
 
     public function show($id, $view)
     {
+        Log::info('Showing claim details', ['claim_id' => $id, 'view' => $view]);
+
         $claim = Claim::findOrFail($id);
         $claims = collect([$claim]);
+
+        Log::info('Retrieved claim for viewing', [
+            'claim_id' => $claim->id,
+            'user_id' => $claim->user_id,
+            'status' => $claim->status
+        ]);
 
         return view('pages.claims.claim', [
             'claim' => $claim,
@@ -86,33 +102,58 @@ class ClaimController extends Controller
     public function store(StoreClaimRequest $request)
     {
         try {
-            Log::info('Claim submission received', $request->all());
+            Log::info('Starting claim submission', [
+                'user_id' => Auth::id(),
+                'claim_id' => $request->claim_id,
+                'has_toll_report' => $request->hasFile('toll_report'),
+                'has_email_report' => $request->hasFile('email_report')
+            ]);
 
             DB::transaction(function () use ($request) {
-                Log::info('Starting claim submission process');
-
                 $validatedData = $request->validated();
                 $user = Auth::user();
 
                 if ($user instanceof User) {
+                    Log::info('Creating/updating claim', [
+                        'user_id' => $user->id,
+                        'claim_id' => $request->claim_id
+                    ]);
+
                     $claim = $this->claimService->createOrUpdateClaim($validatedData, $user, $request->claim_id);
+                    
+                    Log::info('Handling file uploads', [
+                        'claim_id' => $claim->id
+                    ]);
+                    
                     $claim = $this->claimService->handleFileUploadsAndDocuments($claim, $request->file('toll_report'), $request->file('email_report'));
 
                     $claim->refresh();
 
                     $actionType = $request->claim_id ? 'resubmitted' : 'submitted';
+                    
+                    Log::info('Sending notifications', [
+                        'claim_id' => $claim->id,
+                        'action_type' => $actionType,
+                        'status' => $claim->status
+                    ]);
 
                     Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
 
                     $this->notifyRoles($claim, $actionType);
                 } else {
+                    Log::error('Invalid user instance during claim submission');
                     return route('login');
                 }
             });
 
+            Log::info('Claim submission completed successfully');
             return redirect()->route('claims.dashboard')->with('success', 'Claim submitted successfully!');
         } catch (\Exception $e) {
-            Log::error('Error submitting claim: ' . $e->getMessage());
+            Log::error('Error submitting claim', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id()
+            ]);
             return redirect()->back()->with('error', 'An error occurred while submitting the claim. Please try again.');
         }
     }
@@ -123,25 +164,33 @@ class ClaimController extends Controller
 
     public function approvalScreen()
     {
-        Log::info('Approval screen accessed by user: ' . Auth::id());
+        $userId = Auth::id();
+        Log::info('Accessing approval screen', ['user_id' => $userId]);
     
         $user = Auth::user();
     
         if (!$user) {
+            Log::warning('Unauthenticated user attempted to access approval screen');
             return redirect()->route('login');
         }
     
         if ($user->role->name === 'Staff') {
+            Log::warning('Staff member attempted to access approval screen', ['user_id' => $userId]);
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }
     
         if ($user instanceof User) {
             $claims = Claim::with('user')->get();
+            Log::info('Retrieved claims for approval screen', [
+                'claims_count' => $claims->count(),
+                'user_role' => $user->role->name
+            ]);
             return view('claims.approval', [
                 'claims' => $claims,
                 'claimService' => $this->claimService
             ]);
         } else {
+            Log::error('Invalid user instance when accessing approval screen');
             return redirect()->route('login');
         }
     }
@@ -151,19 +200,37 @@ class ClaimController extends Controller
 
     public function reviewClaim($id)
     {
+        Log::info('Accessing claim review', ['claim_id' => $id]);
+
         $user = Auth::user();
-        $claim = Claim::with('locations')->findOrFail($id);
+        $claim = Claim::with(['locations' => function($query) {
+            $query->orderBy('order');
+        }])->findOrFail($id);
+
+        // Debug the locations data
+        Log::info('Claim locations data:', [
+            'claim_id' => $id,
+            'locations' => $claim->locations->toArray()
+        ]);
 
         if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
-                return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
+                Log::warning('Unauthorized claim review attempt', [
+                    'user_id' => $user->id,
+                    'claim_id' => $id,
+                    'user_role' => $user->role->name
+                ]);
+                return redirect()->route('claims.approval')
+                    ->with('error', 'You do not have permission to review this claim.');
             }
 
             $reviews = $claim->reviews()->orderBy('department')->orderBy('review_order')->get();
+            
             return view('pages.claims.review', compact('claim', 'reviews'));
-        } else {
-            return route('login');
         }
+
+        Log::error('Invalid user instance during claim review');
+        return route('login');
     }
 
     //////////////////////////////////////////////////////////////////////////////////      
@@ -171,11 +238,21 @@ class ClaimController extends Controller
 
     public function updateClaim(Request $request, $id)
     {
+        Log::info('Starting claim update process', [
+            'claim_id' => $id,
+            'action' => $request->action
+        ]);
+
         $claim = Claim::findOrFail($id);
         $user = Auth::user();
 
         if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
+                Log::warning('Unauthorized claim update attempt', [
+                    'user_id' => $user->id,
+                    'claim_id' => $id,
+                    'user_role' => $user->role->name
+                ]);
                 return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
             }
 
@@ -185,6 +262,12 @@ class ClaimController extends Controller
             ]);
 
             DB::transaction(function () use ($request, $user, $claim) {
+                Log::info('Processing claim update', [
+                    'claim_id' => $claim->id,
+                    'action' => $request->action,
+                    'reviewer_id' => $user->id
+                ]);
+
                 if ($request->action === 'approve') {
                     $this->claimService->approveClaim($user, $claim);
                     $actionType = 'approved';
@@ -197,13 +280,25 @@ class ClaimController extends Controller
 
                 $claim->refresh();
 
+                Log::info('Sending claim update notifications', [
+                    'claim_id' => $claim->id,
+                    'action_type' => $actionType,
+                    'status' => $claim->status
+                ]);
+
                 Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
 
                 $this->notifyRoles($claim, $actionType);
             });
 
+            Log::info('Claim update completed successfully', [
+                'claim_id' => $claim->id,
+                'final_status' => $claim->status
+            ]);
+
             return redirect()->route('claims.approval')->with('success', 'Claim ' . $request->action . ' successfully.');
         } else {
+            Log::error('Invalid user instance during claim update');
             return route('login');
         }
     }
@@ -212,27 +307,47 @@ class ClaimController extends Controller
 
     private function notifyRoles(Claim $claim, string $actionType)
     {
+        Log::info('Starting role notification process', [
+            'claim_id' => $claim->id,
+            'action_type' => $actionType
+        ]);
+
         $rolesToNotify = [];
 
         switch ($actionType) {
+            case 'submitted':
             case 'approved':
                 $nextRole = $this->claimService->getNextApproverRole($claim->status);
                 if ($nextRole) {
                     $rolesToNotify[] = $nextRole;
+                    Log::info('Next approver role identified', [
+                        'action_type' => $actionType,
+                        'role' => $nextRole,
+                        'claim_id' => $claim->id
+                    ]);
                 }
                 break;
 
             case 'rejected':
+                Log::info('No roles to notify for rejection');
                 break;
 
             case 'resubmitted':
                 $previousRejectorRole = $this->claimService->getPreviousRejectorRole($claim);
                 if ($previousRejectorRole) {
                     $rolesToNotify[] = $previousRejectorRole;
+                    Log::info('Previous rejector role identified', [
+                        'role' => $previousRejectorRole,
+                        'claim_id' => $claim->id
+                    ]);
                 }
                 break;
 
             default:
+                Log::warning('Unknown action type for notifications', [
+                    'action_type' => $actionType,
+                    'claim_id' => $claim->id
+                ]);
                 break;
         }
 
@@ -240,6 +355,11 @@ class ClaimController extends Controller
             $usersToNotify = User::whereIn('role_id', function ($query) use ($rolesToNotify) {
                 $query->select('id')->from('roles')->whereIn('name', $rolesToNotify);
             })->get();
+
+            Log::info('Sending notifications to users', [
+                'roles' => $rolesToNotify,
+                'users_count' => $usersToNotify->count()
+            ]);
 
             foreach ($usersToNotify as $userToNotify) {
                 Notification::send($userToNotify, new ClaimStatusNotification($claim, $claim->status, $actionType, false));
@@ -253,18 +373,30 @@ class ClaimController extends Controller
 
     public function approveClaim($id)
     {
+        Log::info('Direct claim approval initiated', ['claim_id' => $id]);
+
         $user = Auth::user();
         $claim = Claim::findOrFail($id);
 
         if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
+                Log::warning('Unauthorized direct claim approval attempt', [
+                    'user_id' => $user->id,
+                    'claim_id' => $id,
+                    'user_role' => $user->role->name
+                ]);
                 return redirect()->route('claims.approval')->with('error', 'You do not have permission to approve this claim.');
             }
 
             $updatedClaim = $this->claimService->approveClaim($user, $claim);
+            Log::info('Claim approved successfully', [
+                'claim_id' => $id,
+                'new_status' => $updatedClaim->status
+            ]);
 
             return redirect()->route('claims.approval')->with('success', 'Claim approved successfully.');
         } else {
+            Log::error('Invalid user instance during direct claim approval');
             return route('login');
         }
     }
@@ -273,17 +405,36 @@ class ClaimController extends Controller
 
     public function viewDocument(Claim $claim, $type, $filename)
     {
+        Log::info('Document view request', [
+            'claim_id' => $claim->id,
+            'document_type' => $type,
+            'filename' => $filename
+        ]);
+
         $document = $claim->documents()->first();
 
         if (!$document) {
+            Log::warning('Document not found', [
+                'claim_id' => $claim->id,
+                'type' => $type
+            ]);
             abort(404, 'Document not found');
         }
 
         $filePath = storage_path('app/public/' . $document->{$type . '_file_path'});
 
         if (!file_exists($filePath)) {
+            Log::error('Physical file missing', [
+                'claim_id' => $claim->id,
+                'path' => $filePath
+            ]);
             abort(404, 'File not found');
         }
+
+        Log::info('Serving document', [
+            'claim_id' => $claim->id,
+            'file_path' => $filePath
+        ]);
 
         return response()->file($filePath);
     }
@@ -292,6 +443,8 @@ class ClaimController extends Controller
 
     public function approval()
     {
+        Log::info('Accessing approval overview page');
+
         $claims = Claim::all();
         $statistics = [
             'totalClaims' => Claim::count(),
@@ -299,6 +452,8 @@ class ClaimController extends Controller
             'approvedClaims' => Claim::where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
             'totalAmount' => Claim::sum('petrol_amount') + Claim::sum('toll_amount'),
         ];
+
+        Log::info('Retrieved approval statistics', $statistics);
 
         return view('pages.claims.approval', [
             'claims' => $claims,
@@ -312,6 +467,8 @@ class ClaimController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
+        Log::info('Accessing user dashboard', ['user_id' => $user->id]);
+
         $claims = Claim::where('user_id', $user->id)->get();
         $statistics = [
             'totalClaims' => Claim::where('user_id', $user->id)->count(),
@@ -325,6 +482,11 @@ class ClaimController extends Controller
                 ->sum(DB::raw('petrol_amount + toll_amount')),
         ];
 
+        Log::info('Retrieved user dashboard statistics', [
+            'user_id' => $user->id,
+            'statistics' => $statistics
+        ]);
+
         return view('pages.claims.dashboard', [
             'claims' => $claims,
             'statistics' => $statistics,
@@ -336,27 +498,56 @@ class ClaimController extends Controller
     
     public function sendToDatuk($id)
     {
+        Log::info('Initiating send to Datuk process', ['claim_id' => $id]);
+
         $claim = Claim::findOrFail($id);
         $user = Auth::user();
 
         if ($user->role->name !== 'Admin') {
+            Log::warning('Unauthorized attempt to send claim to Datuk', [
+                'user_id' => $user->id,
+                'user_role' => $user->role->name,
+                'claim_id' => $id
+            ]);
             return redirect()->route('claims.approval')->with('error', 'You do not have permission to send this claim to Datuk.');
         }
 
-        // Send email to Datuk
-        $this->claimService->sendClaimToDatuk($claim);
+        try {
+            Log::info('Sending claim to Datuk', [
+                'claim_id' => $id,
+                'sender_id' => $user->id
+            ]);
+            $this->claimService->sendClaimToDatuk($claim);
 
-        return redirect()->route('claims.approval')->with('success', 'Claim sent to Datuk successfully.');
+            Log::info('Claim sent to Datuk successfully', ['claim_id' => $id]);
+            return redirect()->route('claims.approval')->with('success', 'Claim sent to Datuk successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to send claim to Datuk', [
+                'claim_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('claims.approval')->with('error', 'Failed to send claim to Datuk.');
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////// 
 
     public function handleEmailAction(Request $request, $id)
     {
+        Log::info('Processing email action', [
+            'claim_id' => $id,
+            'action' => $request->query('action')
+        ]);
+
         $claim = Claim::findOrFail($id);
         $action = $request->query('action');
 
         if (!in_array($action, ['approve', 'reject'])) {
+            Log::warning('Invalid email action attempted', [
+                'claim_id' => $id,
+                'action' => $action
+            ]);
             return view('pages.claims.email-action', [
                 'success' => false,
                 'message' => 'Invalid action specified.'
@@ -364,33 +555,43 @@ class ClaimController extends Controller
         }
 
         try {
-            // Get the latest review
             $latestReview = $claim->reviews()
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            // Check if this is a valid new review cycle
+            Log::info('Checking claim state for email action', [
+                'claim_id' => $id,
+                'current_status' => $claim->status,
+                'latest_review' => $latestReview ? [
+                    'department' => $latestReview->department,
+                    'created_at' => $latestReview->created_at
+                ] : null
+            ]);
+
             $canProcess = false;
             $message = '';
 
             if (!$latestReview) {
                 $canProcess = true;
             } else if ($latestReview->department === 'Email Approval' && $claim->status === Claim::STATUS_APPROVED_DATUK) {
-                // Already processed and approved by Datuk
+                Log::info('Claim already processed by Datuk', ['claim_id' => $id]);
                 return view('pages.claims.email-action', [
                     'alreadyProcessed' => true,
                     'claim' => $claim,
                     'message' => 'This claim has already been approved. No further action is required.'
                 ]);
             } else if ($latestReview->department === 'Email Approval' && $claim->status === Claim::STATUS_APPROVED_ADMIN) {
-                // Already rejected by Datuk but reviewed by Admin again
                 $canProcess = true;
             } else if ($latestReview->department === 'Admin' && $claim->status === Claim::STATUS_APPROVED_ADMIN) {
-                // Reviewed by Admin after rejection, ready for new Datuk decision
                 $canProcess = true;
             }
 
             if (!$canProcess) {
+                Log::warning('Invalid claim state for email action', [
+                    'claim_id' => $id,
+                    'current_status' => $claim->status,
+                    'latest_review_department' => $latestReview ? $latestReview->department : null
+                ]);
                 return view('pages.claims.email-action', [
                     'alreadyProcessed' => true,
                     'claim' => $claim,
@@ -399,10 +600,14 @@ class ClaimController extends Controller
             }
 
             DB::transaction(function () use ($action, $claim) {
+                Log::info('Processing email action transaction', [
+                    'claim_id' => $claim->id,
+                    'action' => $action
+                ]);
+
                 if ($action === 'approve') {
                     $claim->status = Claim::STATUS_APPROVED_DATUK;
                     
-                    // Find HR reviewer
                     $hrReviewer = User::whereHas('role', function($query) {
                         $query->where('name', 'HR');
                     })->first();
@@ -413,7 +618,6 @@ class ClaimController extends Controller
                 } else {
                     $claim->status = Claim::STATUS_SUBMITTED;
                     
-                    // Find Admin reviewer
                     $adminReviewer = User::whereHas('role', function($query) {
                         $query->where('name', 'Admin');
                     })->first();
@@ -425,7 +629,6 @@ class ClaimController extends Controller
 
                 $claim->save();
 
-                // Create review record
                 $reviewData = [
                     'claim_id' => $claim->id,
                     'reviewer_id' => null,
@@ -436,20 +639,17 @@ class ClaimController extends Controller
                     'reviewed_at' => now()
                 ];
 
-                Log::info('Creating review record with data:', $reviewData);
+                Log::info('Creating review record', $reviewData);
                 $review = $claim->reviews()->create($reviewData);
-                Log::info('Review record created successfully:', ['review_id' => $review->id]);
+                Log::info('Review record created', ['review_id' => $review->id]);
 
-                // Notify claim owner
                 Notification::send($claim->user, new ClaimStatusNotification(
                     $claim, 
                     $claim->status, 
                     $action === 'approve' ? 'approved_by_datuk' : 'rejected_by_datuk'
                 ));
 
-                // Notify next reviewer
                 if ($action === 'approve') {
-                    // Notify HR team
                     User::whereHas('role', function($query) {
                         $query->where('name', 'HR');
                     })->get()->each(function($user) use ($claim) {
@@ -461,7 +661,6 @@ class ClaimController extends Controller
                         ));
                     });
                 } else {
-                    // Notify Admin team
                     User::whereHas('role', function($query) {
                         $query->where('name', 'Admin');
                     })->get()->each(function($user) use ($claim) {
@@ -475,6 +674,12 @@ class ClaimController extends Controller
                 }
             });
 
+            Log::info('Email action processed successfully', [
+                'claim_id' => $claim->id,
+                'action' => $action,
+                'final_status' => $claim->status
+            ]);
+
             return view('pages.claims.email-action', [
                 'success' => true,
                 'message' => 'Claim has been ' . ($action === 'approve' ? 'approved' : 'rejected') . ' successfully.',
@@ -482,8 +687,11 @@ class ClaimController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error processing email action: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error processing email action', [
+                'claim_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return view('pages.claims.email-action', [
                 'success' => false,
                 'message' => 'An error occurred while processing your request.'
@@ -494,11 +702,12 @@ class ClaimController extends Controller
     public function export(Claim $claim)
     {
         try {
+            Log::info('Starting claim export', ['claim_id' => $claim->id]);
+
             $templatePath = resource_path('templates/claim_template.xlsx');
             $spreadsheet = IOFactory::load($templatePath);
             $worksheet = $spreadsheet->getActiveSheet();
 
-            // Define explicit cell mappings with their coordinates and full text patterns
             $cellMappings = [
                 'A1' => [
                     'search' => 'STAFF CLAIM FOR EXPENSES INCURRED ON OFFICIAL DUTIES FORM - ${claim_company}',
@@ -530,28 +739,12 @@ class ClaimController extends Controller
                 ]
             ];
 
-            // Debug current values
-            foreach ($cellMappings as $coordinate => $mapping) {
-                $currentValue = $worksheet->getCell($coordinate)->getValue();
-                Log::info("Before replacement - Cell {$coordinate}", [
-                    'Current value' => $currentValue,
-                    'Search pattern' => $mapping['search'],
-                    'Will replace with' => $mapping['replace']
-                ]);
-            }
-
-            
-
-            // Process each mapped cell
             foreach ($cellMappings as $coordinate => $mapping) {
                 $cell = $worksheet->getCell($coordinate);
                 $currentValue = $cell->getValue();
-                
                 if ($currentValue === $mapping['search']) {
-                    // Exact match replacement
                     $cell->setValue($mapping['replace']);
                 } else {
-                    // Partial replacement preserving surrounding text
                     $newValue = str_replace(
                         [
                             '${first_name}',
@@ -575,30 +768,22 @@ class ClaimController extends Controller
                     );
                     $cell->setValue($newValue);
                 }
-
-                Log::info("After replacement - Cell {$coordinate}", [
-                    'New value' => $cell->getValue()
-                ]);
             }
 
-            // Handle locations
+            // Get locations ordered by sequence
             $locations = $claim->locations()->orderBy('order')->get();
+            
             $startRow = 8;
-            $locationCount = $locations->count();
-
-            if ($locationCount > 1) {
-                // Set the date range in first row
+            if ($locations->count() > 0) {
+                // Set date range for the entire claim
                 $dateRange = $claim->date_from->format('d/m/Y') . ' - ' . $claim->date_to->format('d/m/Y');
-                $worksheet->setCellValue('A' . $startRow, $dateRange);
-
-                // Create pairs of consecutive locations
-                for ($i = 0; $i < $locationCount - 1; $i++) {
-                    $currentRow = $startRow + $i;
-                    $currentLocation = $locations[$i];
-                    $nextLocation = $locations[$i + 1];
-
-                    // If not first row, insert new row and copy formatting
-                    if ($i > 0) {
+                
+                // Process each location pair
+                foreach ($locations as $index => $locationPair) {
+                    $currentRow = $startRow + $index;
+                    
+                    // Insert new row if not first row
+                    if ($index > 0) {
                         $worksheet->insertNewRowBefore($currentRow, 1);
                         $worksheet->duplicateStyle(
                             $worksheet->getStyle('A8:Q8'),
@@ -606,70 +791,41 @@ class ClaimController extends Controller
                         );
                     }
 
-                    // Format location text with proper line breaks
-                    $locationText = $currentLocation->location . " ->\n" . $nextLocation->location;
+                    // Set date range only in first row
+                    if ($index === 0) {
+                        $worksheet->setCellValue('A' . $currentRow, $dateRange);
+                    }
+
+                    // Format location text as "From -> To"
+                    $locationText = $locationPair->from_location . " ->\n" . $locationPair->to_location;
                     
-                    // Set location journey
+                    // Set values in the worksheet
                     $worksheet->setCellValue('B' . $currentRow, $locationText);
+                    $worksheet->setCellValue('E' . $currentRow, $locationPair->distance ?? '');
                     
-                    // Set distance for current location pair
-                    $worksheet->setCellValue('E' . $currentRow, $currentLocation->distance ?? '');
-                    
-                    // Set cell properties for location text
+                    // Set toll amount only in first row
+                    if ($index === 0) {
+                        $worksheet->setCellValue('F' . $currentRow, $claim->toll_amount ?? '');
+                    }
+
+                    // Configure cell styling
                     $worksheet->getStyle('B' . $currentRow)
                         ->getAlignment()
                         ->setWrapText(true)
                         ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP);
-
-                    // Adjust row height to accommodate the text
+                    
                     $worksheet->getRowDimension($currentRow)->setRowHeight(45);
                 }
 
-                // Merge date cell across all location rows
-                if ($locationCount > 2) {
-                    $lastRow = $startRow + $locationCount - 2;
+                // Merge date cells if multiple locations
+                if ($locations->count() > 1) {
+                    $lastRow = $startRow + $locations->count() - 1;
                     $worksheet->mergeCells('A' . $startRow . ':A' . $lastRow);
-                    
-                    // Center align the merged date cell
                     $worksheet->getStyle('A' . $startRow . ':A' . $lastRow)
                         ->getAlignment()
                         ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
                         ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
                 }
-
-                // Set toll amount for first row
-                $worksheet->setCellValue('F' . $startRow, $claim->toll_amount ?? '');
-
-                // Merge toll cells if multiple rows
-                if ($locationCount > 2) {
-                    $worksheet->mergeCells('F' . $startRow . ':F' . $lastRow);
-                    
-                    // Center align the merged cells
-                    $worksheet->getStyle('F' . $startRow . ':F' . $lastRow)
-                        ->getAlignment()
-                        ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)
-                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-                }
-
-                // Update total row position
-                $totalRow = $startRow + $locationCount - 1;
-                
-                // Set totals
-                $worksheet->setCellValue('A' . $totalRow, 'TOTAL');
-                $worksheet->setCellValue('E' . $totalRow, '=SUM(E' . $startRow . ':E' . ($totalRow-1) . ')');
-                $worksheet->setCellValue('F' . $totalRow, $claim->toll_amount ?? 0);
-
-                // Apply borders to the entire range
-                $range = 'A' . $startRow . ':Q' . $totalRow;
-                $worksheet->getStyle($range)->getBorders()->getAllBorders()->setBorderStyle(
-                    \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN
-                );
-
-                // Adjust column widths
-                $worksheet->getColumnDimension('A')->setWidth(15);
-                $worksheet->getColumnDimension('B')->setWidth(50);
-                $worksheet->getColumnDimension('E')->setWidth(12);
-                $worksheet->getColumnDimension('F')->setWidth(12);
             }
 
             // Create response
@@ -684,9 +840,12 @@ class ClaimController extends Controller
             exit;
 
         } catch (\Exception $e) {
-            Log::error('Excel export failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return redirect()->back()->with('error', 'Failed to export claim data: ' . $e->getMessage());
+            Log::error('Error exporting claim', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
     }
 

@@ -39,7 +39,7 @@ class ClaimReviewMap {
       this.initMap();
       this.plotLocations().then(() => {
          console.log('Locations plotted, drawing route');
-         if (this.locations.length > 1) {
+         if (this.locations.length > 0) {
             this.drawRoute();
          } else {
             console.log('Not enough locations to draw a route');
@@ -125,7 +125,6 @@ class ClaimReviewMap {
       for (let i = 0; i < route.legs.length; i++) {
          const leg = route.legs[i];
          const legDecimal = leg.distance.value / 1000;
-         console.log(legDecimal);
          const segment = document.createElement("div");
          segment.style.marginBottom = "10px";
          segment.innerHTML = `
@@ -153,9 +152,6 @@ class ClaimReviewMap {
         `;
       panel.appendChild(totalInfo);
 
-      console.log(totalDistance);
-      console.log(totalDistanceKm);
-
       return panel;
    }
 
@@ -167,17 +163,41 @@ class ClaimReviewMap {
    plotLocations() {
       return new Promise((resolve, reject) => {
          const bounds = new google.maps.LatLngBounds();
-         const geocodePromises = this.locations.map((location, index) => 
-            this.geocodeLocation(location.location, index)
+         // Only geocode unique locations to avoid duplicates
+         const uniqueLocations = new Set();
+         this.locations.forEach(location => {
+            uniqueLocations.add(location.from_location);
+            uniqueLocations.add(location.to_location);
+         });
+
+         const geocodePromises = Array.from(uniqueLocations).map((address, index) => 
+            this.geocodeLocation(address, index)
          );
 
          Promise.all(geocodePromises).then(results => {
-            results.forEach(({position, index}) => {
+            // Create a map of address to position for quick lookup
+            const positionMap = new Map();
+            results.forEach(({position, address}) => {
                if (position) {
-                  this.addMarker(position, index + 1);
-                  bounds.extend(position);
+                  positionMap.set(address, position);
                }
             });
+
+            // Add markers in the correct order based on location pairs
+            this.locations.forEach((locationPair, index) => {
+               const fromPosition = positionMap.get(locationPair.from_location);
+               const toPosition = positionMap.get(locationPair.to_location);
+               
+               if (fromPosition && index === 0) {
+                  this.addMarker(fromPosition, 1);
+                  bounds.extend(fromPosition);
+               }
+               if (toPosition) {
+                  this.addMarker(toPosition, index + 2);
+                  bounds.extend(toPosition);
+               }
+            });
+
             this.map.fitBounds(bounds);
             resolve();
          }).catch(reject);
@@ -190,6 +210,7 @@ class ClaimReviewMap {
       if (this.geocodeCache.has(address)) {
          return Promise.resolve({
             position: this.geocodeCache.get(address),
+            address: address,
             index: index
          });
       }
@@ -200,10 +221,10 @@ class ClaimReviewMap {
             if (status === "OK" && results[0]) {
                const position = results[0].geometry.location;
                this.geocodeCache.set(address, position);
-               resolve({position, index});
+               resolve({position, address, index});
             } else {
                console.error(`Geocoding failed for address: ${address}`);
-               resolve({position: null, index});
+               resolve({position: null, address, index});
             }
          });
       });
@@ -223,16 +244,16 @@ class ClaimReviewMap {
    ////////////////////////////////////////////////////////////////////////
 
    drawRoute() {
-      if (this.locations.length < 2) {
+      if (this.locations.length < 1) {
          console.error('Not enough locations to draw a route');
          return;
       }
 
-      const origin = this.locations[0].location;
-      const destination = this.locations[this.locations.length - 1].location;
-      const waypoints = this.locations.slice(1, -1).map((loc) => ({
-         location: loc.location,
-         stopover: true,
+      const origin = this.locations[0].from_location;
+      const destination = this.locations[this.locations.length - 1].to_location;
+      const waypoints = this.locations.slice(0, -1).map(loc => ({
+         location: loc.to_location,
+         stopover: true
       }));
 
       console.log('Route details:', { origin, destination, waypoints });
@@ -246,7 +267,7 @@ class ClaimReviewMap {
          },
          (response, status) => {
             if (status === "OK") {
-               this.directionsRenderer.setMap(this.map);  // Ensure the renderer is attached to the map
+               this.directionsRenderer.setMap(this.map);
                this.directionsRenderer.setDirections(response);
                this.addSegmentInfoBoxes(response.routes[0]);
             } else {

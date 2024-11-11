@@ -71,7 +71,9 @@
                                 <thead>
                                     <tr>
                                         <th class="table-header">No.</th>
-                                        <th class="table-header">Address</th>
+                                        <th class="table-header">From</th>
+                                        <th class="table-header">To</th>
+                                        <th class="table-header">Distance (km)</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-wgg-border-200">
@@ -80,13 +82,17 @@
                                             <tr>
                                                 <td class="table-item">{{ $location->order }}</td>
                                                 <td class="table-item">
-                                                    <div class="break-words">{{ $location->location }}</div>
+                                                    <div class="break-words">{{ $location->from_location }}</div>
                                                 </td>
+                                                <td class="table-item">
+                                                    <div class="break-words">{{ $location->to_location }}</div>
+                                                </td>
+                                                <td class="table-item">{{ number_format($location->distance, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td class="table-item" colspan="2">
+                                            <td class="table-item" colspan="4">
                                                 No locations found. Contact System Administrator
                                             </td>
                                         </tr>
@@ -130,10 +136,23 @@
         </div>
     </div>
 
+    @php
+        $locationData = $claim->locations
+            ->sortBy('order')
+            ->map(function($location) {
+                return [
+                    'from_location' => $location->from_location,
+                    'to_location' => $location->to_location,
+                    'order' => $location->order,
+                    'distance' => $location->distance
+                ];
+            })
+            ->values()
+            ->toArray();
+    @endphp
+
     <script>
-        var claimLocations = @json($claim->locations->map(function($location) {
-            return ['location' => $location->location];
-        }));
+        var claimLocations = @json($locationData);
         console.log('Claim locations:', claimLocations);
     </script>
     

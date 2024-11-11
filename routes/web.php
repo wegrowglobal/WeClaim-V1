@@ -52,6 +52,8 @@ Route::post('reset-password', [ResetPasswordController::class, 'reset'])
     ->middleware('guest')
     ->name('password.update');
 
+Route::view('password-reset-success', 'pages.auth.password-reset-success')->name('password.reset.success');
+
 ///////////////////////////////////////////////////////////////////////////////////
 
 // Middleware Routes

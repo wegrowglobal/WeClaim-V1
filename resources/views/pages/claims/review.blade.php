@@ -61,29 +61,52 @@ use App\Models\Claim;
                 </div>
 
                 <!-- Trip Details -->
-                <h3 class="heading-2">Trip Details</h3>
-                <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
-                    <div class="bg-white overflow-x-auto">
-                        @if ($claim->locations && $claim->locations->count() > 0)
-                            <x-claims.table :rows="$claim->locations->sortBy('order')->map(function($location) {
-                                return [
-                                    'label' => 'Location ' . $location->order,
-                                    'value' => $location->location
-                                ];
-                            })" />
-                        @else
-                            <x-claims.table :rows="[
-                                ['label' => 'Status', 'value' => 'No locations found. Contact System Administrator']
-                            ]" />
-                        @endif
-                    </div>
-                </div>
+                <div class="space-y-4 md:space-y-6">
+                    <h3 class="heading-2">Trip Details</h3>
 
-                <!-- Map -->
-                <div class="space-y-4 md:space-y-6 w-full">
-                    <h3 class="heading-2">Map Details</h3>
-                    <div id="map" class="h-[300px] md:h-[500px] w-full rounded-lg border border-wgg-border shadow-sm">
-                        <div id="route-info-panel" class="text-sm"></div>
+                    <!-- Locations List -->
+                    <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
+                        <div class="bg-white overflow-x-auto">
+                            <table class="min-w-full divide-y divide-wgg-border-200">
+                                <thead>
+                                    <tr>
+                                        <th class="table-header">No.</th>
+                                        <th class="table-header">From</th>
+                                        <th class="table-header">To</th>
+                                        <th class="table-header">Distance (km)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-wgg-border-200">
+                                    @if ($claim->locations && $claim->locations->count() > 0)
+                                        @foreach ($claim->locations->sortBy('order') as $location)
+                                            <tr>
+                                                <td class="table-item">{{ $location->order }}</td>
+                                                <td class="table-item">
+                                                    <div class="break-words">{{ $location->from_location }}</div>
+                                                </td>
+                                                <td class="table-item">
+                                                    <div class="break-words">{{ $location->to_location }}</div>
+                                                </td>
+                                                <td class="table-item">{{ number_format($location->distance, 2) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td class="table-item" colspan="4">
+                                                No locations found. Contact System Administrator
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Map -->
+                    <div class="w-full">
+                        <div id="map" class="h-[300px] md:h-[500px] w-full rounded-lg border border-wgg-border shadow-sm">
+                            <div id="route-info-panel" class="text-sm"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -127,8 +150,25 @@ use App\Models\Claim;
         </div>
     </div>
 
+    @php
+        $locationData = $claim->locations
+            ->sortBy('order')
+            ->map(function($location) {
+                return [
+                    'from_location' => $location->from_location,
+                    'to_location' => $location->to_location,
+                    'order' => $location->order,
+                    'distance' => $location->distance
+                ];
+            })
+            ->values()
+            ->toArray();
+    @endphp
+
     <script>
-        var claimLocations = @json($claim->locations);
+        var claimLocations = @json($locationData);
+        console.log('Claim locations:', claimLocations);
     </script>
+    
     @vite('resources/js/review.js')
 @endsection

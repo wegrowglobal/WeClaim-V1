@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Str;
+use App\Http\Requests\ResetPasswordRequest;
 
 class ResetPasswordController extends Controller
 {
@@ -17,29 +18,25 @@ class ResetPasswordController extends Controller
         return view('pages.auth.reset-password', ['token' => $token, 'email' => $request->email]);
     }
 
-    public function reset(Request $request)
+    public function reset(ResetPasswordRequest $request)
     {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
-                    'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
-
-                $user->save();
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ])->save();
 
                 event(new PasswordReset($user));
             }
         );
 
-        return $status === Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withErrors(['email' => [__($status)]]);
+        // Check if password was reset successfully
+        if ($status === Password::PASSWORD_RESET) {
+            return view('pages.auth.password-reset-success');
+        }
+
+        return back()->withErrors(['email' => __($status)]);
     }
 }
