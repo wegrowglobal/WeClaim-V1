@@ -1,5 +1,5 @@
-<div class="wgg-flex-col gap-2" id="location-input-container">
-    <div class="wgg-flex-col gap-2" id="location-wrapper-1">
+<div class="flex flex-col gap-2" id="location-input-container">
+    <div class="flex flex-col gap-2" id="location-wrapper-1">
         <div class="relative">
             <input 
                 type="text" 

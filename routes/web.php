@@ -16,9 +16,7 @@ use App\Http\Controllers\ForgotPasswordController;
 
 // All Static Routes
 
-Route::get('/', function () {
-    return view('pages.home');
-})->name('home');
+Route::get('/', [ClaimController::class, 'home'])->name('home');
 
 ///////////////////////////////////////////////////////////////////////////////////
 

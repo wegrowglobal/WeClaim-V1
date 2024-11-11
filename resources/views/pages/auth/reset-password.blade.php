@@ -63,7 +63,7 @@
             @enderror
 
             <div>
-                <button class="btn flex-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" type="submit">Reset Password</button>
+                <button class="btn flex items-center justify-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" type="submit">Reset Password</button>
             </div>
         </form>
     </div>

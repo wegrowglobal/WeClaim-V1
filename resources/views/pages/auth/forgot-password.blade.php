@@ -29,11 +29,11 @@
             @enderror
 
             <div>
-                <button class="btn flex-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" type="submit">Send Reset Link</button>
+                <button class="btn flex items-center justify-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out" type="submit">Send Reset Link</button>
             </div>
         </form>
 
-        <div class="mt-6 flex-between">
+        <div class="mt-6 flex justify-between items-center">
             <a href="{{ route('login') }}" class="text-sm font-medium text-wgg-black-300 transition ease-in-out duration-150  hover:text-wgg-black-600">Remember Your Password?</a>
         </div>
 

@@ -17,7 +17,7 @@
             <p class="text-wgg-black-600 mb-6">We couldn't find an account with that email address. Please try again or contact support.</p>
         @endif
 
-        <a href="{{ route('login') }}" class="btn flex-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+        <a href="{{ route('login') }}" class="btn flex items-center justify-center bg-wgg-black-950 hover:bg-wgg-black-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
             Return to Login
         </a>
     </div>

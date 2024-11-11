@@ -867,4 +867,81 @@ class ClaimController extends Controller
         }
     }
 
+    /**
+     * Get dashboard statistics for the home page
+     */
+    public function getHomePageStatistics()
+    {
+        Log::info('Retrieving home page statistics');
+
+        $user = Auth::user();
+        
+        if (!$user) {
+            Log::info('No authenticated user, returning empty statistics');
+            return [
+                'totalClaims' => 0,
+                'approvedClaims' => 0,
+                'pendingClaims' => 0,
+                'rejectedClaims' => 0
+            ];
+        }
+
+        try {
+            // For staff, show only their claims
+            if ($user->role->name === 'Staff') {
+                $claims = Claim::where('user_id', $user->id);
+            } else {
+                // For admin/managers, show all claims
+                $claims = new Claim;
+            }
+
+            $statistics = [
+                'totalClaims' => $claims->count(),
+                'approvedClaims' => $claims->where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
+                'pendingClaims' => $claims->whereNotIn('status', [
+                    Claim::STATUS_APPROVED_FINANCE,
+                    Claim::STATUS_REJECTED,
+                    Claim::STATUS_DONE
+                ])->count(),
+                'rejectedClaims' => $claims->where('status', Claim::STATUS_REJECTED)->count()
+            ];
+
+            Log::info('Home page statistics retrieved successfully', [
+                'user_id' => $user->id,
+                'role' => $user->role->name,
+                'statistics' => $statistics
+            ]);
+
+            return $statistics;
+
+        } catch (\Exception $e) {
+            Log::error('Error retrieving home page statistics', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return [
+                'totalClaims' => 0,
+                'approvedClaims' => 0,
+                'pendingClaims' => 0,
+                'rejectedClaims' => 0
+            ];
+        }
+    }
+
+    /**
+     * Display the home page with statistics
+     */
+    public function home()
+    {
+        $statistics = $this->getHomePageStatistics();
+
+        return view('pages.home', [
+            'totalClaims' => $statistics['totalClaims'],
+            'approvedClaims' => $statistics['approvedClaims'],
+            'pendingClaims' => $statistics['pendingClaims'],
+            'rejectedClaims' => $statistics['rejectedClaims']
+        ]);
+    }
+
 }

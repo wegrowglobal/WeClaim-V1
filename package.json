@@ -8,13 +8,16 @@
         "start": "vite preview"
     },
     "dependencies": {
-        "vue": "^3.x.x",
         "@vitejs/plugin-vue": "^4.x.x",
-        "vite": "^5.x.x",
-        "laravel-vite-plugin": "^1.0.0",
-        "tailwindcss": "^3.4.0",
         "autoprefixer": "^10.4.16",
+        "axios": "^1.6.2",
+        "laravel-vite-plugin": "^1.0.0",
         "postcss": "^8.4.31",
-        "axios": "^1.6.2"
+        "tailwindcss": "^3.4.0",
+        "vite": "^5.x.x",
+        "vue": "^3.x.x"
+    },
+    "devDependencies": {
+        "postcss-import": "^16.1.0"
     }
 }

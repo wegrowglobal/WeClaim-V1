@@ -50,7 +50,7 @@ class FormManager {
 
     initMapControls() {
         const controlDiv = document.createElement("div");
-        controlDiv.classList.add("wgg-flex-row", "gap-2");
+        controlDiv.classList.add("flex flex-row", "gap-2");
         controlDiv.style.padding = "10px";
         controlDiv.id = "map-controls";
 
@@ -172,7 +172,7 @@ class FormManager {
             if (index === 0) {
                 input.value = "";
             } else {
-                input.closest(".wgg-flex-col").remove();
+                input.closest(".flex flex-col").remove();
             }
         });
         this.locationCount = 1;
@@ -393,7 +393,7 @@ class FormManager {
     addLocation() {
         this.locationCount++;
         const newInput = document.createElement("div");
-        newInput.classList.add("wgg-flex-col", "gap-2");
+        newInput.classList.add("flex flex-col", "gap-2");
         newInput.id = `location-wrapper-${this.locationCount}`;
         
         const inputWrapper = document.createElement("div");

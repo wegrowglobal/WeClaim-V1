@@ -53,11 +53,11 @@
             </div>
 
             <div>
-                <button class="btn flex-center bg-wgg-black-950 hover:bg-wgg-black-600" type="submit">Sign In</button>
+                <button class="btn flex items-center justify-center bg-wgg-black-950 hover:bg-wgg-black-600" type="submit">Sign In</button>
             </div>
         </form>
 
-        <div class="mt-6 flex-between">
+        <div class="mt-6 flex justify-between items-center">
             <div class="text-sm">
                 <a href="{{ route('password.request') }}" class="font-medium text-wgg-black-300 transition ease-in-out duration-150 hover:text-wgg-black-600">Forgot Your Password?</a>
             </div>
