@@ -35,6 +35,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         App\Providers\AppServiceProvider::class,
+        App\Providers\BreadcrumbsServiceProvider::class,
     ],
 ];
 

@@ -9,17 +9,6 @@
         <div class="rounded-lg overflow-hidden">
             <div class="space-y-8">
 
-                <!-- Header Section -->
-                <div class="flex-between items-center mb-6">
-                    <a href="{{ route('claims.dashboard') }}" class="text-blue-600 hover:text-blue-800 flex items-center font-medium text-sm transition ease-in-out duration-150">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-circle-fill mr-2" viewBox="0 0 16 16">
-                            <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0m3.5 7.5a.5.5 0 0 1 0 1H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5z"/>
-                        </svg>
-                        Back
-                    </a>
-                    <h2 class="text-md font-semibold text-wgg-black-300">Claim ID {{ $claim->id }}</h2>
-                </div>
-
                 <!-- Basic Details -->
                 <h3 class="heading-2">Basic Details</h3>
                 <div class="bg-white overflow-hidden rounded-lg border border-wgg-border">
