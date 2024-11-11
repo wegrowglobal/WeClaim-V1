@@ -81,19 +81,42 @@ class ClaimController extends Controller
     {
         Log::info('Showing claim details', ['claim_id' => $id, 'view' => $view]);
 
-        $claim = Claim::findOrFail($id);
+        $claim = Claim::with(['locations' => function ($query) {
+            $query->orderBy('order');
+        }])->findOrFail($id);
+        
         $claims = collect([$claim]);
+
+        // Prepare location data for the map
+        $locationData = $claim->locations->map(function ($location) {
+            return [
+                'order' => $location->order,
+                'from' => [
+                    'name' => $location->from_location,
+                    'lat' => $location->from_latitude,
+                    'lng' => $location->from_longitude
+                ],
+                'to' => [
+                    'name' => $location->to_location,
+                    'lat' => $location->to_latitude,
+                    'lng' => $location->to_longitude
+                ],
+                'distance' => $location->distance
+            ];
+        })->values()->all();
 
         Log::info('Retrieved claim for viewing', [
             'claim_id' => $claim->id,
             'user_id' => $claim->user_id,
-            'status' => $claim->status
+            'status' => $claim->status,
+            'locations_count' => count($locationData)
         ]);
 
         return view('pages.claims.claim', [
             'claim' => $claim,
             'claims' => $claims,
             'claimService' => $this->claimService,
+            'locationData' => $locationData
         ]);
     }
 
