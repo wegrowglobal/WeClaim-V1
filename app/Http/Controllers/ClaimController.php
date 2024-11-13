@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\Session;
 
 
 class ClaimController extends Controller
@@ -127,55 +128,69 @@ class ClaimController extends Controller
         try {
             Log::info('Starting claim submission', [
                 'user_id' => Auth::id(),
-                'claim_id' => $request->claim_id,
-                'has_toll_report' => $request->hasFile('toll_report'),
-                'has_email_report' => $request->hasFile('email_report')
+                'draft_data' => session('claim_draft')
             ]);
 
             DB::transaction(function () use ($request) {
                 $validatedData = $request->validated();
+                $draftData = session('claim_draft', []);
                 $user = Auth::user();
 
                 if ($user instanceof User) {
-                    Log::info('Creating/updating claim', [
-                        'user_id' => $user->id,
-                        'claim_id' => $request->claim_id
+                    // Merge draft data with validated data
+                    $claimData = array_merge($draftData, $validatedData);
+                    
+                    // Create the claim
+                    $claim = $this->claimService->createOrUpdateClaim($claimData, $user, $request->claim_id);
+                    
+                    // Handle locations
+                    if (!empty($claimData['locations'])) {
+                        $locations = is_string($claimData['locations']) 
+                            ? json_decode($claimData['locations'], true) 
+                            : $claimData['locations'];
+
+                        foreach ($locations as $index => $location) {
+                            ClaimLocation::create([
+                                'claim_id' => $claim->id,
+                                'order' => $index + 1,
+                                'from_location' => $location['from']['name'] ?? '',
+                                'from_latitude' => $location['from']['lat'] ?? null,
+                                'from_longitude' => $location['from']['lng'] ?? null,
+                                'to_location' => $location['to']['name'] ?? '',
+                                'to_latitude' => $location['to']['lat'] ?? null,
+                                'to_longitude' => $location['to']['lng'] ?? null,
+                                'distance' => $location['distance'] ?? 0
+                            ]);
+                        }
+                    }
+
+                    // Handle file uploads
+                    $claim = $this->claimService->handleFileUploadsAndDocuments(
+                        $claim, 
+                        $request->file('toll_report'), 
+                        $request->file('email_report')
+                    );
+
+                    // Clear session data
+                    session()->forget([
+                        'claim_draft',
+                        'total_distance',
+                        'total_cost',
+                        'locations'
                     ]);
 
-                    $claim = $this->claimService->createOrUpdateClaim($validatedData, $user, $request->claim_id);
-                    
-                    Log::info('Handling file uploads', [
-                        'claim_id' => $claim->id
-                    ]);
-                    
-                    $claim = $this->claimService->handleFileUploadsAndDocuments($claim, $request->file('toll_report'), $request->file('email_report'));
-
-                    $claim->refresh();
-
+                    // Handle notifications
                     $actionType = $request->claim_id ? 'resubmitted' : 'submitted';
-                    
-                    Log::info('Sending notifications', [
-                        'claim_id' => $claim->id,
-                        'action_type' => $actionType,
-                        'status' => $claim->status
-                    ]);
-
                     Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
-
                     $this->notifyRoles($claim, $actionType);
-                } else {
-                    Log::error('Invalid user instance during claim submission');
-                    return route('login');
                 }
             });
 
-            Log::info('Claim submission completed successfully');
             return redirect()->route('claims.dashboard')->with('success', 'Claim submitted successfully!');
         } catch (\Exception $e) {
             Log::error('Error submitting claim', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id()
+                'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'An error occurred while submitting the claim. Please try again.');
         }
@@ -890,9 +905,7 @@ class ClaimController extends Controller
         }
     }
 
-    /**
-     * Get dashboard statistics for the home page
-     */
+    // Get dashboard statistics for the home page
     public function getHomePageStatistics()
     {
         Log::info('Retrieving home page statistics');
@@ -952,9 +965,7 @@ class ClaimController extends Controller
         }
     }
 
-    /**
-     * Display the home page with statistics
-     */
+    // Display the home page with statistics
     public function home()
     {
         $statistics = $this->getHomePageStatistics();
@@ -965,6 +976,121 @@ class ClaimController extends Controller
             'pendingClaims' => $statistics['pendingClaims'],
             'rejectedClaims' => $statistics['rejectedClaims']
         ]);
+    }
+
+    public function new(Request $request)
+    {
+        $step = $request->query('step', 1);
+        $draftData = Session::get('claim_draft', []);
+
+        // Validate step range
+        if (!in_array($step, [1, 2, 3])) {
+            return redirect()->route('claims.new', ['step' => 1]);
+        }
+
+        return view('pages.claims.new', [
+            'currentStep' => (int) $step,
+            'draftData' => $draftData
+        ]);
+    }
+
+    public function getStep(Request $request, $step)
+    {
+        try {
+            $draftData = Session::get('claim_draft', []);
+            
+            // Validate step access
+            if (!$this->claimFormService->canAccessStep($step, $draftData)) {
+                return response()->json([
+                    'error' => 'Cannot access this step yet'
+                ], 403);
+            }
+
+            return view("components.forms.claim.step-{$step}", [
+                'draftData' => $draftData,
+                'currentStep' => (int) $step
+            ])->render();
+
+        } catch (\Exception $e) {
+            Log::error('Error loading step', [
+                'step' => $step,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Error loading step'
+            ], 500);
+        }
+    }
+
+    public function saveStep(Request $request)
+    {
+        try {
+            $currentDraft = session('claim_draft', []);
+            $data = $request->all();
+            
+            Log::info('Saving step data', ['incoming_data' => $data]); // Debug log
+            
+            // Handle locations data specially
+            if (isset($data['locations'])) {
+                $data['locations'] = is_string($data['locations']) 
+                    ? json_decode($data['locations'], true) 
+                    : $data['locations'];
+            }
+            
+            // Ensure we're not overwriting existing data with null values
+            $data = array_filter($data, function ($value) {
+                return $value !== null && $value !== '';
+            });
+            
+            // Merge new data with existing draft
+            $updatedDraft = array_merge($currentDraft, $data);
+            
+            session(['claim_draft' => $updatedDraft]);
+            
+            Log::info('Updated draft data', ['draft' => $updatedDraft]); // Debug log
+            
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Error saving claim step', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save draft data'
+            ], 500);
+        }
+    }
+
+    public function resetSession(Request $request)
+    {
+        try {
+            Session::forget(['claim_draft', 'current_step']);
+            
+            if ($request->ajax()) {
+                return response()->json(['success' => true]);
+            }
+            
+            return redirect()->route('claims.new', ['step' => 1]);
+        } catch (\Exception $e) {
+            Log::error('Error resetting session', [
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error resetting form'
+            ], 500);
+        }
+    }
+
+    public function getProgressSteps($step)
+    {
+        return view('components.forms.progress-steps', [
+            'currentStep' => (int) $step
+        ])->render();
     }
 
 }

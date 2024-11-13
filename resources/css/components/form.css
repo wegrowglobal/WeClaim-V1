@@ -10,4 +10,12 @@
     .form-input {
         @apply py-2 px-4 border border-gray-300 rounded-lg text-xs;
     }
+    
+    .peer:invalid:not(:placeholder-shown) ~ .peer-invalid\:flex {
+        display: flex;
+    }
+    
+    .peer:placeholder-shown ~ .peer-invalid\:flex {
+        display: none;
+    }
 }

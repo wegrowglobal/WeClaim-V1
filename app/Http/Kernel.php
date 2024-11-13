@@ -8,5 +8,6 @@ class Kernel extends HttpKernel
 {
     protected $routeMiddleware = [
         'role' => \App\Http\Middleware\CheckRole::class,
+        'reset.claim' => \App\Http\Middleware\ResetClaimForm::class,
     ];
 } 

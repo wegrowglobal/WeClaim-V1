@@ -18,7 +18,7 @@
                 <a href="{{ route('login') }}" class="btn-primary">
                     Sign In
                 </a>
-                <a href="{{ route('register') }}" class="btn-secondary">
+                <a href=" " class="btn-secondary">
                     Create Account
                 </a>
             </div>

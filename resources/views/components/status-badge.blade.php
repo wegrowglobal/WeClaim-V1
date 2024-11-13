@@ -33,7 +33,9 @@
     ];
 
     $statusText = collect(explode('_', strtolower($status)))
-        ->map(fn($word) => ucfirst($word))
+        ->map(function($word) {
+            return $word === 'hr' ? 'HR' : ucfirst($word);
+        })
         ->join(' ');
 @endphp
 

@@ -715,11 +715,3 @@ document.addEventListener("DOMContentLoaded", () => {
     formManager.init();
 });
 
-function updateFileLabel(input, labelId) {
-    const label = document.getElementById(labelId);
-    if (input.files && input.files[0]) {
-        label.textContent = input.files[0].name;
-    } else {
-        label.textContent = input.getAttribute('aria-label');
-    }
-}

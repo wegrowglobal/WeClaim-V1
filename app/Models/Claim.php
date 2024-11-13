@@ -13,6 +13,7 @@ class Claim extends Model
     protected $dates = ['submitted_at', 'date_from', 'date_to'];
 
     const STATUS_SUBMITTED = 'Submitted';
+    const STATUS_RESUBMITTED = 'Resubmitted';
     const STATUS_APPROVED_ADMIN = 'Approved_Admin';
     const STATUS_APPROVED_DATUK = 'Approved_Datuk';
     const STATUS_APPROVED_HR = 'Approved_HR';

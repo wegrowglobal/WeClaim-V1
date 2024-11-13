@@ -67,4 +67,42 @@
             transform: translateY(0);
         }
     }
+
+    /* Progress Steps Animations */
+    .step-circle {
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-circle.completed {
+        transform: scale(1.1);
+    }
+
+    .progress-bar {
+        transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .step-container {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Hover Effects */
+    .step-label {
+        transition: all 0.3s ease;
+    }
+
+    .step-container:hover .step-label {
+        transform: translateY(-2px);
+    }
+
+    /* Custom Animation for Check Mark */
+    @keyframes checkmark {
+        0% { stroke-dashoffset: 24; }
+        100% { stroke-dashoffset: 0; }
+    }
+
+    .checkmark-path {
+        stroke-dasharray: 24;
+        stroke-dashoffset: 24;
+        animation: checkmark 0.5s ease-in-out forwards;
+    }
 }

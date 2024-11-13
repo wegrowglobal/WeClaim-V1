@@ -1,28 +1,53 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="w-full">
-    <div class="flex flex-row justify-between items-center mb-6">
-        <h2 class="heading-1 font-bold text-gray-900">Notifications</h2>
-        <form action="{{ route('notifications.mark-all-as-read') }}" method="POST" class="">
-            @csrf
-            <button type="submit" class="text-xs flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-700 transition-colors">
-                <span>Mark all as read</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="" height="" fill="currentColor" class="icon-large" viewBox="0 0 16 16">
-                    <path d="M8.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L2.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093L8.95 4.992zm-.92 5.14.92.92a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 1 0-1.091-1.028L9.477 9.417l-.485-.486z"/>
-                </svg>
-            </button>
-        </form>
-    </div>
-
-    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div class="">
-            <x-notifications.list :notifications="auth()->user()->notifications()->paginate(10)" />
+<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header Section -->
+    <div class="card p-8 mb-8 animate-slide-in">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h2 class="heading-1">Notifications</h2>
+                <p class="text-gray-600 mt-1">Stay updated with your claims status and activities</p>
+            </div>
+            <form action="{{ route('notifications.mark-all-as-read') }}" method="POST">
+                @csrf
+                <button type="submit" 
+                        class="btn-secondary inline-flex items-center gap-2 text-sm">
+                    <span>Mark all as read</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </button>
+            </form>
         </div>
     </div>
 
-    <div class="mt-6">
-        {{ auth()->user()->notifications()->paginate(10)->links() }}
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <!-- Total Notifications -->
+        <div class="stats-card animate-slide-in delay-100">
+            <span class="stats-label">Total</span>
+            <span class="stats-value text-gray-900">{{ auth()->user()->notifications->count() }}</span>
+        </div>
+
+        <!-- Unread Notifications -->
+        <div class="stats-card animate-slide-in delay-200">
+            <span class="stats-label">Unread</span>
+            <span class="stats-value text-yellow-600">{{ auth()->user()->unreadNotifications->count() }}</span>
+        </div>
+
+        <!-- Read Notifications -->
+        <div class="stats-card animate-slide-in delay-300">
+            <span class="stats-label">Read</span>
+            <span class="stats-value text-green-600">{{ auth()->user()->readNotifications->count() }}</span>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="card animate-slide-in delay-400">
+        <div class="divide-y divide-gray-100">
+            <x-notifications.list :notifications="auth()->user()->notifications()->paginate(10)" />
+        </div>
     </div>
 </div>
 @endsection

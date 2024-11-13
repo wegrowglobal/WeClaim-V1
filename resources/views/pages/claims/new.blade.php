@@ -1,111 +1,79 @@
 @extends('layouts.app')
 
 @section('content')
-    @auth
-        <div class="w-full">
-            @php
-                $existingClaim = request()->has('claim_id') ? \App\Models\Claim::find(request()->claim_id) : null;
-            @endphp
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
-            <h2 class="text-3xl font-bold text-gray-900 mb-6">
-                {{ $existingClaim ? 'Edit or Re-Submit Claim' : 'New Claim' }}
-            </h2>
+<!-- Main Container -->
+<div class="min-h-screen">
 
-            @if($existingClaim)
-                <x-claims.existing-claim-details :claim="$existingClaim" class="mb-6" />
-            @endif
-
-            <form action="{{ route('claims.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                @csrf
-
-                @if($existingClaim)
-                    <input type="hidden" name="claim_id" value="{{ $existingClaim->id }}">
-                @endif
-
-                <x-forms.error-summary />
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    <!-- Left Side -->
-                    <div class="lg:col-span-1 space-y-6 bg-white p-6 lg:p-18 md:p-14 rounded-lg shadow-md border border-wgg-border">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <x-forms.date-input name="date_from" label="From" :value="old('date_from')" required />
-                            <x-forms.date-input name="date_to" label="To" :value="old('date_to')" required />
-                        </div>
-
-                        <x-forms.number-input name="toll_amount" label="Toll Amount" :value="old('toll_amount')" required step="0.01" min="0" />
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
-                                <input 
-                                    class="hidden @error('toll_report') is-invalid @enderror" 
-                                    type="file" 
-                                    name="toll_report" 
-                                    id="toll_report" 
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    aria-label="Toll Report"
-                                    onchange="updateFileLabel(this, 'toll_report_label')"
-                                >
-                                <label for="toll_report" class="text-xs text-wgg-black-400 font-normal cursor-pointer">
-                                    <span id="toll_report_label">Toll Report</span>
-                                </label>
-                                <x-forms.error :name="'toll_report'" />
-                                <progress id="toll_report_progress" class="w-full mt-2 hidden" value="0" max="100"></progress>
-                            </div>
-                        
-                            <div class="col-span-1 flex flex-col justify-center items-center py-4 w-full border border-dotted border-wgg-border rounded-lg">
-                                <input 
-                                    class="hidden @error('email_report') is-invalid @enderror" 
-                                    type="file" 
-                                    name="email_report" 
-                                    id="email_report" 
-                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    aria-label="Email Approval"
-                                    onchange="updateFileLabel(this, 'email_report_label')"
-                                >
-                                <label for="email_report" class="text-xs text-wgg-black-400 font-normal cursor-pointer">
-                                    <span id="email_report_label">Email Approval</span>
-                                </label>
-                                <x-forms.error :name="'email_report'" />
-                                <progress id="email_report_progress" class="w-full mt-2 hidden" value="0" max="100"></progress>
-                            </div>
-                        </div>
-
-                        <x-forms.file-size-note />
-
-                        <x-forms.textarea name="remarks" label="Remarks" :value="old('remarks', $existingClaim->remarks ?? '')" />
-
-                        <x-forms.select name="claim_company" label="Claim Company" :options="['wge' => 'WGE', 'wgg' => 'WGG', 'wgg & wge' => 'WGG & WGE']" :selected="old('claim_company')" required />
-
-                        <x-forms.location-inputs />
-
-                        <x-forms.add-remove-location-buttons />
-
-                        <x-forms.submit-button :text="$existingClaim ? 'Update Claim' : 'Submit Claim'" class="w-full" />
+    <!-- Content Area -->
+    <div class="py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="animate-slide-in">
+                <div class="flex items-center justify-between mb-14">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Submit New Claim</h1>
+                        <p class="text-gray-600 mt-1">Create a new petrol claim request</p>
                     </div>
-
-                    <!-- Right Side -->
-                    <div class="lg:col-span-1 xl:col-span-2">
-                        <div id="map" class="w-full h-64 sm:h-96 lg:h-full border border-wgg-border rounded-lg shadow-md"></div>
+                    <div class="flex gap-2">
+                        <button type="button" 
+                                onclick="window.claimForm.resetForm()"
+                                class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-600 bg-white rounded-lg border border-red-200 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reset Form
+                        </button>
+                        <a href="{{ route('claims.dashboard') }}" 
+                           class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
+                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+                            </svg>
+                            Back to Dashboard
+                        </a>
                     </div>
                 </div>
-            </form>
+            </div>
+
+            @if(isset($currentStep))
+                <!-- Progress Steps Container -->
+                <div id="steps-container" class="mb-14 animate-slide-in delay-100">
+                    <x-forms.progress-steps :currentStep="$currentStep" />
+                </div>
+
+                <!-- Form Wrapper -->
+                <form id="claimForm" class="space-y-8">
+                    @csrf
+                    <!-- Form Container -->
+                    <div id="form-container" class="transition-opacity duration-300 animate-slide-in delay-200">
+                        <!-- Step Content -->
+                        @include("components.forms.claim.step-{$currentStep}")
+                    </div>
+                </form>
+            @else
+                <div class="text-center py-12 animate-slide-in">
+                    <div class="text-red-500">
+                        Error: Current step not defined. Please try refreshing the page.
+                    </div>
+                </div>
+            @endif
         </div>
+    </div>
+</div>
 
-        @vite(['resources/js/form.js'])
-        
-        <script>
-            function updateFileLabel(input, labelId) {
-                const label = document.getElementById(labelId);
-                if (input.files && input.files[0]) {
-                    label.textContent = input.files[0].name;
-                } else {
-                    label.textContent = input.getAttribute('aria-label');
-                }
-            }
-        </script>
-    
-    @endauth
-
-    @guest
-        <script>window.location.href = "{{ route('login') }}";</script>
-    @endguest
 @endsection
+
+@push('scripts')
+    
+    {{-- Add your application scripts --}}
+    @vite(['resources/js/claim-form.js', 'resources/js/claim-map.js'])
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.claimForm === 'undefined') {
+                console.error('ClaimForm not initialized');
+            }
+        });
+    </script>
+@endpush

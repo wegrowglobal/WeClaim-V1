@@ -18,19 +18,19 @@
                     <div class="hidden md:flex items-center gap-2">
                         <!-- Each nav item with incremental delays -->
                         <a href="{{ route('home') }}" 
-                           class="nav-link {{ request()->routeIs('home') ? 'nav-link-active' : '' }} animate-fade-in delay-100">
+                           class="nav-link {{ request()->routeIs('home') ? 'nav-link-active' : '' }} animate-fade-in">
                             Home
                         </a>
 
                         @auth
                             <a href="{{ route('claims.dashboard') }}" 
-                               class="nav-link {{ request()->routeIs('claims.dashboard') ? 'nav-link-active' : '' }} animate-fade-in delay-200">
+                               class="nav-link {{ request()->routeIs('claims.dashboard') ? 'nav-link-active' : '' }} animate-fade-in">
                                 Claims
                             </a>
 
                             @if (Auth::user()->role->name != 'Staff')
                                 <a href="{{ route('claims.approval') }}" 
-                                   class="nav-link {{ request()->routeIs('claims.approval') ? 'nav-link-active' : '' }} animate-fade-in delay-300">
+                                   class="nav-link {{ request()->routeIs('claims.approval') ? 'nav-link-active' : '' }} animate-fade-in">
                                     Approval
                                 </a>
                             @endif
@@ -41,61 +41,60 @@
                 <!-- Right Side Actions -->
                 <div class="flex items-center gap-2">
                     @auth
-                        <!-- Each action button with incremental delays -->
                         <a href="{{ route('claims.new') }}" 
-                           class="nav-action-button animate-fade-in delay-100">
+                           class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition-all animate-fade-in"
+                           title="New Claim">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
                             </svg>
-                            <span class="hidden sm:block">New Claim</span>
+                            <span class="text-sm font-medium">New Claim</span>
                         </a>
 
-                        <!-- Notifications -->
                         <a href="{{ route('notifications') }}" 
-                           class="nav-action-button {{ Auth::user()->unreadNotifications->count() > 0 ? 'text-indigo-600' : 'text-gray-600' }} animate-fade-in delay-200">
+                           class="p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-all animate-fade-in {{ Auth::user()->unreadNotifications->count() > 0 ? 'text-indigo-600' : 'text-gray-600' }}"
+                           title="Notifications">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
                                       d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
                         </a>
 
-                        <!-- Profile -->
                         <a href="{{ route('profile') }}" 
-                           class="nav-action-button animate-fade-in delay-300">
+                           class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all animate-fade-in"
+                           title="Profile">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
                                       d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
-                            <span class="hidden sm:block">Profile</span>
                         </a>
 
-                        <!-- Sign Out -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="nav-action-button text-gray-600 hover:text-red-600 hover:bg-red-50">
+                            <button type="submit" 
+                                    class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all"
+                                    title="Sign Out">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
                                           d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                                 </svg>
-                                <span class="hidden sm:block">Sign Out</span>
                             </button>
                         </form>
                     @else
                         <a href="{{ route('login') }}" 
-                           class="nav-action-button animate-fade-in delay-100">
+                           class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all animate-fade-in"
+                           title="Sign In">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
                                       d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
                             </svg>
-                            <span class="hidden sm:block">Sign In</span>
                         </a>
-                        <a href="{{ route('register') }}" 
-                           class="nav-action-button-primary animate-fade-in delay-200">
+                        <a href=" " 
+                           class="p-2 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all animate-fade-in"
+                           title="Create Account">
                             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
                                       d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
                             </svg>
-                            <span class="hidden sm:block">Create Account</span>
                         </a>
                     @endauth
                 </div>
@@ -104,7 +103,7 @@
 
         <!-- Breadcrumbs -->
         @if(isset($breadcrumbs) && count($breadcrumbs) > 0)
-            <div class="bg-gray-50/50">
+            <div>
                 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <nav class="flex py-4" aria-label="Breadcrumb">
                         <div class="breadcrumbs-container animate-slide-in">
