@@ -12,10 +12,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\Hash;
 
 final class UserController extends Controller
 {
-    //////////////////////////////////////////////////////////////////
 
     protected $authService;
     protected $auth;
@@ -23,15 +23,11 @@ final class UserController extends Controller
     private const HOME_ROUTE = 'home';
     private const LOGIN_FAILED_MESSAGE = 'Login failed. Please check your email and password.';
 
-    //////////////////////////////////////////////////////////////////
-
     public function __construct(AuthService $authService, Auth $auth)
     {
         $this->authService = $authService;
         $this->auth = $auth;
     }
-
-    //////////////////////////////////////////////////////////////////
 
     public function login(LoginRequest $request): RedirectResponse
     {
@@ -83,8 +79,6 @@ final class UserController extends Controller
         }
     }
 
-    //////////////////////////////////////////////////////////////////
-
     public function logout(Request $request)
     {
         $this->authService->logout();
@@ -99,6 +93,54 @@ final class UserController extends Controller
         return view('user.profile', compact('user'));
     }
 
-    //////////////////////////////////////////////////////////////////
+    public function showChangePassword(): View
+    {
+        return view('pages.user.change-password');
+    }
+
+    public function changePassword(Request $request): RedirectResponse
+    {
+        try {
+            $request->validate([
+                'current_password' => ['required', 'string'],
+                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'password_confirmation' => ['required']
+            ]);
+
+            $user = Auth::user();
+            if (!$user) {
+                throw new \RuntimeException('User not found');
+            }
+
+            // Verify current password
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors([
+                    'current_password' => 'The provided password does not match your current password.'
+                ]);
+            }
+
+            // Update password
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            Log::info('Password changed successfully', [
+                'user_id' => $user->id
+            ]);
+
+            return redirect()
+                ->route('profile')
+                ->with('success', 'Password has been updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Password change error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()
+                ->withErrors(['error' => 'Failed to update password.'])
+                ->withInput();
+        }
+    }
 
 }

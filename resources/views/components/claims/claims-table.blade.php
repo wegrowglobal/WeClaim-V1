@@ -10,7 +10,7 @@
         <div class="relative focus-within:shadow-sm">
             <input type="text" 
                    id="searchInput"
-                   class="w-fit pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-wgg-border"
+                   class="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-wgg-border"
                    placeholder="Search claims...">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,10 +72,7 @@
                         <td class="px-4 py-3 text-gray-600">{{ $claim->submitted_at->format('d/m/y') }}</td>
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
-                                <div class="h-6 w-6 rounded-full flex items-center justify-center text-white text-xs"
-                                     style="background-color: {{ '#' . substr(md5($claim->user->first_name), 0, 6) }}">
-                                    {{ strtoupper(substr($claim->user->first_name, 0, 1)) }}
-                                </div>
+                                <x-profile.profile-picture :user="$claim->user" size="sm" />
                                 <span class="text-gray-600">{{ $claim->user->first_name }}</span>
                             </div>
                         </td>
@@ -130,5 +127,13 @@
 </div>
 
 @push('scripts')
-    @vite(['resources/js/filter.js'])
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initializeTableSorting === 'function') {
+            initializeTableSorting();
+        } else {
+            console.error('Table sorting functionality not loaded');
+        }
+    });
+</script>
 @endpush

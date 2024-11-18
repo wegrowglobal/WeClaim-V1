@@ -25,14 +25,20 @@
             <div class="flex flex-wrap gap-2">
                 <button type="button"
                         data-status="all"
-                        class="status-filter-btn active"
+                        class="status-filter-btn active px-3 py-1.5 border border-gray-200 text-gray-700 bg-white"
                         onclick="toggleStatusFilter(this, 'all')">
-                    <span class="text-sm">All Claims</span>
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        <span class="text-sm">All Claims</span>
+                    </div>
                 </button>
+
                 @foreach(['SUBMITTED', 'APPROVED_ADMIN', 'APPROVED_DATUK', 'APPROVED_HR', 'APPROVED_FINANCE', 'REJECTED', 'DONE'] as $status)
                     <button type="button"
                             data-status="{{ $status }}"
-                            class="status-filter-btn"
+                            class="status-filter-btn border border-transparent"
                             onclick="toggleStatusFilter(this, '{{ $status }}')">
                         <x-status-badge :status="$status" />
                     </button>

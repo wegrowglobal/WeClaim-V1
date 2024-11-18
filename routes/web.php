@@ -99,6 +99,12 @@ Route::middleware(['auth'])->group(function () {
     // Reports & Settings Routes
     Route::view('/report', 'pages.reports')->name('reports');
     Route::view('/settings', 'pages.settings')->name('settings');
+
+    // Password Change Routes
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/change-password', [UserController::class, 'showChangePassword'])->name('password.change');
+        Route::post('/change-password', [UserController::class, 'changePassword']);
+    });
 });
 
 // Logout Route

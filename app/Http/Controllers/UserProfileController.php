@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\BankingInstitutionService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class UserProfileController extends Controller
 {
@@ -48,47 +50,82 @@ class UserProfileController extends Controller
 
     public function update(Request $request)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'second_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . auth()->id(),
-            'phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'city' => 'required|string',
-            'state' => 'required|string',
-            'zip_code' => 'required|string',
-            'country' => 'required|string',
-            'bank_name' => 'required|string',
-            'account_holder' => 'required|string',
-            'account_number' => 'required|string',
-            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+        try {
+            $user = Auth::user();
 
-        $user = auth()->user();
+            $request->validate([
+                'profile_picture' => 'nullable|image|max:2048',
+                'first_name' => 'required|string|max:255',
+                'second_name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $user->id,
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string',
+                'city' => 'required|string',
+                'state' => 'required|string',
+                'zip_code' => 'required|string',
+                'country' => 'required|string',
+                'bank_name' => 'required|string',
+                'account_holder' => 'required|string',
+                'account_number' => 'required|string'
+            ]);
 
-        // Handle profile picture
-        if ($request->hasFile('profile_picture')) {
-            if ($user->profile_picture) {
-                Storage::disk('public')->delete($user->profile_picture);
+            Log::info('Starting profile update', [
+                'user_id' => $user->id,
+                'has_file' => $request->hasFile('profile_picture')
+            ]);
+
+            if ($request->hasFile('profile_picture')) {
+                $file = $request->file('profile_picture');
+                
+                // Delete old profile picture if exists
+                if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                    Storage::disk('public')->delete($user->profile_picture);
+                }
+
+                // Store new profile picture
+                $fileName = time() . '_' . $file->getClientOriginalName();
+                $path = $file->storeAs('profile-pictures', $fileName, 'public');
+                
+                // Update user profile picture path
+                $user->profile_picture = $path;
+                $user->save();
             }
-            $path = $request->file('profile_picture')->store('profile-pictures', 'public');
-            $validated['profile_picture'] = $path;
+
+            // Update user information
+            $user->update($request->only([
+                'first_name',
+                'second_name',
+                'email',
+                'phone',
+                'address',
+                'city',
+                'state',
+                'zip_code',
+                'country'
+            ]));
+
+            // Update banking information
+            $user->bankingInformation()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'bank_name' => $request->bank_name,
+                    'account_holder' => $request->account_holder,
+                    'account_number' => $request->account_number
+                ]
+            );
+
+            Log::info('Profile update completed successfully');
+
+            return redirect()->route('profile')->with('success', 'Profile updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Profile update error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->withErrors(['error' => 'Failed to update profile.'])->withInput();
         }
-
-        // Update user information (excluding banking details)
-        $user->update(collect($validated)->except(['bank_name', 'account_holder', 'account_number'])->toArray());
-
-        // Update or create banking information
-        $user->bankingInformation()->updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'bank_name' => $validated['bank_name'],
-                'account_holder' => $validated['account_holder'],
-                'account_number' => $validated['account_number']
-            ]
-        );
-
-        return redirect()->route('profile')->with('success', 'Profile updated successfully');
     }
 
     //////////////////////////////////////////////////////////////////

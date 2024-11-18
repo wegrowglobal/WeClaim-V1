@@ -8,6 +8,11 @@
         <p class="text-gray-600 mt-1">Manage your account information and preferences</p>
     </div>
 
+    <!-- Add this right after the opening content section -->
+    @if(session('success'))
+        <div data-success-message="{{ session('success') }}"></div>
+    @endif
+
     <!-- Profile Form -->
     <div class="bg-white rounded-xl shadow-sm ring-1 ring-black/5 animate-slide-in delay-100">
         <form action="{{ route('profile.update') }}" 
@@ -20,16 +25,8 @@
             <!-- Photo Upload Section -->
             <div class="p-6">
                 <div class="flex items-center gap-6">
-                    <div class="profile-picture relative h-24 w-24 rounded-full ring-1 ring-gray-200/50 bg-gray-50 shadow-sm">
-                        @if(auth()->user()->profile_picture)
-                            <img src="{{ Storage::url(auth()->user()->profile_picture) }}" 
-                                 alt="Profile picture" 
-                                 class="w-full h-full object-cover rounded-full">
-                        @else
-                            <div class="w-full h-full rounded-full flex items-center justify-center text-2xl font-medium text-gray-400 bg-gray-50">
-                                {{ strtoupper(substr(auth()->user()->first_name, 0, 1)) }}
-                            </div>
-                        @endif
+                    <div class="profile-picture relative h-24 w-24 rounded-full ring-1 ring-gray-200/50 bg-gray-50 shadow-sm cursor-pointer hover:ring-indigo-400 transition-all">
+                        <x-profile.profile-picture :user="auth()->user()" size="lg" />
                         
                         <label class="absolute -bottom-1 -right-1 p-2 rounded-full bg-white shadow-sm cursor-pointer hover:bg-gray-50 transition-colors ring-1 ring-gray-200/50">
                             <input type="file" 
@@ -131,7 +128,7 @@
                                       stroke-width="2" 
                                       d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <span>Lazy Mode</span>
+                            <span>Location Picker</span>
                             <span class="lazy-mode-indicator absolute -top-1 -right-1 flex h-3 w-3 opacity-0 transition-opacity duration-200">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
@@ -283,14 +280,15 @@
             <!-- Action Buttons Section -->
             <div class="p-6 bg-gray-50/50">
                 <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-                    <a href=" " 
-                       class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg border border-red-200 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
-                        <svg class="w-4 h-4 mr-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <button type="button" 
+                            onclick="Profile.showChangePasswordModal()"
+                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg border border-red-200 shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                   d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                         </svg>
-                        Reset Password
-                    </a>
+                        Change Password
+                    </button>
 
                     <button type="submit" 
                             class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
@@ -306,28 +304,7 @@
     </div>
 </div>
 
-<!-- Success Message Toast -->
-@if (session('success'))
-    <div class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-500 ease-in-out opacity-100 translate-y-0"
-        x-data="{ show: true }"
-        x-show="show"
-        x-init="setTimeout(() => show = false, 3000)"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 transform translate-y-2"
-        x-transition:enter-end="opacity-100 transform translate-y-0"
-        x-transition:leave="transition ease-in duration-300"
-        x-transition:leave-start="opacity-100 transform translate-y-0"
-        x-transition:leave-end="opacity-0 transform translate-y-2">
-        <div class="flex items-center space-x-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>{{ session('success') }}</span>
-        </div>
-    </div>
-@endif
-
-@vite(['resources/js/maps/profile-map.js'])
+@vite(['resources/js/maps/profile-map.js', 'resources/js/profile.js'])
 
 <script>
     function toggleVisibility(inputId) {

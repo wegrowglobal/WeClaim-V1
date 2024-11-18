@@ -30,7 +30,7 @@ class StoreClaimRequest extends FormRequest
             
             // File validations
             'toll_file' => 'required|file|mimes:pdf|max:10240', // 10MB max
-            'email_file' => 'required|file|mimes:pdf|max:10240', // 10MB max
+            'email_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
         ];
     }
 

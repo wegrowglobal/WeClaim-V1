@@ -36,7 +36,7 @@
         <div class="flex items-center gap-2">
             @if($notification->data['is_for_claim_owner'] ?? true)
                 @if(($notification->data['action'] ?? null) === 'rejected')
-                    <a href="{{ route('claims.resubmit.form', $notification->data['claim_id']) }}"
+                    <a href=" "
                        class="btn-secondary text-xs">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

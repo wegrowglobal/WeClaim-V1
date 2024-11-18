@@ -3,9 +3,51 @@
         <h2 class="text-base font-medium text-gray-900">Basic Information</h2>
         <p class="text-sm text-gray-500 mt-1">Fill in the basic claim details</p>
     </div>
+    
+    <!-- Info box for guide on how to select a company -->
+    <div class="bg-blue-50 p-6 rounded-lg shadow-sm border border-blue-200 relative mb-6">
+        <!-- Close button -->
+        <button type="button" class="absolute top-2 right-2 text-red-600 hover:text-red-800 bg-red-100/50 rounded-lg p-1" onclick="this.parentElement.style.display='none';">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <div class="absolute -top-3 -left-3 bg-blue-600 text-white py-2 px-4 rounded-lg text-xs font-medium uppercase tracking-wide">
+            Company Selection Guide
+        </div>
+        <p class="text-lg font-medium text-blue-700 mb-2 mt-2">How to choose the correct company?</p>
+        <div class="space-y-1">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mt-1">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12h.01M12 12a1 1 0 0 1 0-2 1 1 0 0 1 0 2z"/>
+                    </svg>
+                </div>
+                <span class="text-sm text-blue-600"><strong>WGG - Wegrow Global</strong> <svg class="inline-block w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg> For travel to Zoo Teruntum, Zoo Melaka & Silverlake Outlet</span>
+            </div>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mt-1">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12h.01M12 12a1 1 0 0 1 0-2 1 1 0 0 1 0 2z"/>
+                    </svg>
+                </div>
+                <span class="text-sm text-blue-600"><strong>WGE - Wegrow Edutainment (M)</strong> <svg class="inline-block w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg> For travel to Malaysia Heritage Studios, PSKT</span>
+            </div>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 mt-1">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12h.01M12 12a1 1 0 0 1 0-2 1 1 0 0 1 0 2z"/>
+                    </svg>
+                </div>
+                <span class="text-sm text-blue-600"><strong>Both (WGG & WGE)</strong> <svg class="inline-block w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg> If your travel involves locations from both companies</span>
+            </div>
+        </div>
+    </div>
 
     <!-- Date Range -->
     <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+
         <!-- Company Selection -->
         <div class="space-y-2">
             <label for="claim_company" class="block text-sm font-medium text-gray-700">Company</label>
