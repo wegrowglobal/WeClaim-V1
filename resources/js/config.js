@@ -1,5 +1,5 @@
 export const MAP_CONFIG = {
-    apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    apiKey: import.meta.env.GOOGLE_MAPS_API_KEY,
     mapOptions: {
         mapTypeControl: false,
         streetViewControl: false,

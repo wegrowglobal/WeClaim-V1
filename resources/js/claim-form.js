@@ -178,11 +178,59 @@ class ClaimForm {
             form.addEventListener('submit', (e) => this.handleSubmit(e));
         }
 
-        // Bind reset button
-        const resetBtn = document.querySelector('button[onclick="window.resetClaimForm()"]');
-        if (resetBtn) {
-            resetBtn.onclick = (e) => this.resetForm(e);
-        }
+        // Add beforeunload event listener for browser navigation
+        window.addEventListener('beforeunload', (e) => {
+            const draftData = document.getElementById('draftData')?.value;
+            const currentUrl = window.location.href;
+            
+            // Don't show prompt if navigating between claim form steps
+            if (currentUrl.includes('/claims/new')) {
+                return;
+            }
+            
+            if (draftData && draftData !== '{}') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Handle navigation clicks
+        document.addEventListener('click', async (e) => {
+            const target = e.target.closest('a, button[type="button"]');
+            if (!target) return;
+
+            const href = target.getAttribute('href');
+            const onClick = target.getAttribute('onclick')?.toString() || '';
+            
+            // Skip if it's internal navigation or form actions
+            if (onClick.includes('nextStep') || 
+                onClick.includes('previousStep') || 
+                onClick.includes('resetForm') ||
+                onClick.includes('handleSubmit') ||
+                !href || 
+                href.includes('/claims/new') ||
+                href.startsWith('#')) {
+                return;
+            }
+
+            // Check if we have draft data
+            const draftData = document.getElementById('draftData')?.value;
+            if (draftData && draftData !== '{}') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const shouldLeave = await this.confirmLeave();
+                if (shouldLeave) {
+                    // Reset form without confirmation
+                    const event = new Event('click');
+                    event.skipConfirmation = true;
+                    await this.resetForm(event);
+                    
+                    // Navigate away
+                    window.location.href = href;
+                }
+            }
+        });
     }
 
     async showContinuePrompt() {
@@ -339,138 +387,71 @@ class ClaimForm {
     async resetForm(e) {
         if (e) e.preventDefault();
         
-        // Show confirmation dialog first
-        const result = await Swal.fire({
-            title: 'Reset Form?',
-            text: 'This will clear all entered data. This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#DC2626',
-            cancelButtonColor: '#4F46E5',
-            confirmButtonText: 'Reset form',
-            cancelButtonText: 'Keep editing',
-            reverseButtons: true,
-            customClass: {
-                popup: 'rounded-lg shadow-xl border border-gray-200',
-                title: 'text-xl font-medium text-gray-900',
-                htmlContainer: 'text-base text-gray-600',
-                confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
-                cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
-            },
-            buttonsStyling: false
-        });
-
-        if (result.isConfirmed) {
-            const funnyMessages = [
-                "Unleashing the form-eating gremlins...",
-                "Sending your data on a one-way trip to the void...",
-                "Performing a magic trick: Watch your inputs disappear!",
-                "Initiating the great form purge of 2024...",
-                "Calling in the data demolition crew..."
-            ];
-
-            let currentMessageIndex = 0;
-
-            // Show loading state with timer
-            const loadingAlert = Swal.fire({
-                title: '<div class="flex items-center space-x-3"><div class="p-2 bg-indigo-50 rounded-lg"><svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div><span>Resetting Form</span></div>',
-                html: `<p class="text-gray-600">${funnyMessages[0]}</p>`,
-                allowOutsideClick: false,
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
+        // Skip confirmation if specified
+        if (!e?.skipConfirmation) {
+            const result = await Swal.fire({
+                title: 'Reset Form?',
+                text: 'This will clear all entered data. This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#DC2626',
+                cancelButtonColor: '#4F46E5',
+                confirmButtonText: 'Reset form',
+                cancelButtonText: 'Keep editing',
+                reverseButtons: true,
                 customClass: {
                     popup: 'rounded-lg shadow-xl border border-gray-200',
-                    title: 'text-xl font-medium text-gray-900 !flex !justify-center',
-                    htmlContainer: 'text-base text-center',
-                    timerProgressBar: 'bg-indigo-600'
+                    title: 'text-xl font-medium text-gray-900',
+                    htmlContainer: 'text-base text-gray-600',
+                    confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
+                    cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
                 },
-                didOpen: () => {
-                    Swal.showLoading();
-                    const messageInterval = setInterval(() => {
-                        currentMessageIndex = (currentMessageIndex + 1) % funnyMessages.length;
-                        const content = document.querySelector('.swal2-html-container');
-                        if (content) {
-                            content.innerHTML = `<p class="text-gray-600">${funnyMessages[currentMessageIndex]}</p>`;
-                        }
-                    }, 3000);
+                buttonsStyling: false
+            });
 
-                    // Store the interval ID
-                    Swal.messageInterval = messageInterval;
-                },
-                willClose: () => {
-                    clearInterval(Swal.messageInterval);
+            if (!result.isConfirmed) return;
+        }
+
+        try {
+            // Clear all stored data
+            localStorage.removeItem('claimFormData');
+            localStorage.removeItem('draftData');
+            sessionStorage.clear();
+            
+            // Clear the draft data input
+            const draftDataInput = document.getElementById('draftData');
+            if (draftDataInput) {
+                draftDataInput.value = '{}';
+            }
+
+            // Clear map data if exists
+            if (window.claimMap && typeof window.claimMap.clearMapData === 'function') {
+                window.claimMap.clearMapData();
+            }
+
+            // Make API call to clear server-side session
+            const response = await fetch('/claims/reset-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken
                 }
             });
 
-            // Perform reset operations after delay
-            setTimeout(async () => {
-                try {
-                    // Clear all stored data
-                    localStorage.removeItem('claimFormData');
-                    localStorage.removeItem('draftData');
-                    sessionStorage.clear();
-                    
-                    // Clear the draft data input
-                    const draftDataInput = document.getElementById('draftData');
-                    if (draftDataInput) {
-                        draftDataInput.value = '{}';
-                    }
+            if (!response.ok) {
+                throw new Error('Failed to reset session');
+            }
 
-                    // Clear map data if exists
-                    if (window.claimMap && typeof window.claimMap.clearMapData === 'function') {
-                        window.claimMap.clearMapData();
-                    }
-
-                    // Make API call to clear server-side session
-                    const response = await fetch('/claims/reset-session', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': this.csrfToken
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to reset session');
-                    }
-
-                    // Wait for loading animation to complete
-                    await loadingAlert;
-
-                    // Show success message
-                    await Swal.fire({
-                        title: '<div class="flex items-center space-x-3"><div class="p-2 bg-green-50 rounded-lg"><svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span>Form Reset Successfully</span></div>',
-                        html: '<p class="text-gray-600">Preparing a new claim form...</p>',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false,
-                        customClass: {
-                            popup: 'rounded-lg shadow-xl border border-gray-200',
-                            title: 'text-xl font-medium text-gray-900 !flex !justify-center',
-                            htmlContainer: 'text-base text-center'
-                        }
-                    });
-
-                    // Redirect to step 1
-                    window.location.href = '/claims/new?step=1&draft_data={}';
-                } catch (error) {
-                    console.error('Error resetting form:', error);
-                    Swal.fire({
-                        title: '<div class="flex items-center space-x-3"><div class="p-2 bg-red-50 rounded-lg"><svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span>Error</span></div>',
-                        html: '<p class="text-gray-600">Failed to reset form. Redirecting anyway...</p>',
-                        icon: 'error',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        customClass: {
-                            popup: 'rounded-lg shadow-xl border border-gray-200',
-                            title: 'text-xl font-medium text-gray-900 !flex !justify-center',
-                            htmlContainer: 'text-base text-center'
-                        }
-                    });
-                    window.location.href = '/claims/new?step=1&draft_data={}';
-                }
-            }, 15000); // Wait for the full animation duration
+            // Redirect to step 1 without any animation delays
+            window.location.href = '/claims/new?step=1&draft_data={}';
+        } catch (error) {
+            console.error('Error resetting form:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to reset form. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
         }
     }
 
@@ -872,6 +853,30 @@ class ClaimForm {
         } catch (error) {
             console.error('Error verifying draft data:', error);
         }
+    }
+
+    async confirmLeave() {
+        const result = await Swal.fire({
+            title: 'Leave Form?',
+            text: 'You have unsaved changes. Leaving this page will discard your form data.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Leave',
+            cancelButtonText: 'Stay',
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#4F46E5',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-lg shadow-xl border border-gray-200',
+                title: 'text-xl font-medium text-gray-900',
+                htmlContainer: 'text-base text-gray-600',
+                confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
+                cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
+            },
+            buttonsStyling: false
+        });
+
+        return result.isConfirmed;
     }
 }
 
