@@ -1,18 +1,19 @@
 import { BaseMap } from './base-map.js';
 import { RATE_PER_KM } from '../config.js';
+import ErrorHandler from '../utils/error-handler.js';
+import { RateLimiter } from '../utils/rate-limiter.js';
+import { SwalUtils } from '../utils/swal-utils';
+import { LocationManager } from '../utils/location-manager';
+import { RouteCalculator } from '../utils/route-calculator';
 
 export class ClaimMap extends BaseMap {
     constructor(options = {}) {
         super({ ...options, editable: true });
-        this.locationCount = 1;
-        this.MAX_WAYPOINTS = 10;
-        this.pendingRequests = 0;
-        this.routeColors = [
-            '#3B82F6', '#EF4444', '#22C55E', '#EAB308',
-            '#3B82F6', '#EF4444', '#22C55E', '#EAB308',
-            '#3B82F6', '#EF4444'
-        ];
+        this.locationManager = new LocationManager(10);
+        this.locationManager.setDeleteCallback((wrapper) => this.removeLocation(wrapper));
+        this.routeCalculator = new RouteCalculator(RATE_PER_KM);
         this.initialized = false;
+        this.rateLimiter = new RateLimiter(10, 1000);
     }
 
     async init() {
@@ -21,6 +22,8 @@ export class ClaimMap extends BaseMap {
             return;
         }
 
+        const mapContainer = document.getElementById('map');
+        
         try {
             await this.initialize();
             this.setupEventListeners();
@@ -31,7 +34,7 @@ export class ClaimMap extends BaseMap {
             return true;
         } catch (error) {
             console.error('Error initializing claim map:', error);
-            this.showError('Failed to initialize map');
+            await SwalUtils.showError('Failed to initialize map', mapContainer);
             return false;
         }
     }
@@ -55,23 +58,50 @@ export class ClaimMap extends BaseMap {
         const container = document.getElementById('location-inputs');
         if (container) {
             container.innerHTML = '';
-            this.addLocationInput();
-            this.addLocationInput();
-            this.loadSavedData(); // Add this line
+            // First two inputs without delete button
+            const firstWrapper = this.locationManager.createLocationInput(0, '', false);
+            const secondWrapper = this.locationManager.createLocationInput(1, '', false);
+            
+            container.appendChild(firstWrapper);
+            container.appendChild(secondWrapper);
+            
+            // Initialize autocomplete for both inputs
+            container.querySelectorAll('.location-input').forEach(input => {
+                this.initializeLocationAutocomplete(input);
+            });
+            
+            this.initializeSortable(container);
+            this.loadSavedData();
         }
     }
 
-    addLocationInput() {
-        console.log('addLocationInput called');
-        const locationInputs = document.querySelectorAll('.location-pair');
-        console.log('Current location inputs:', locationInputs.length);
+    initializeSortable(container) {
+        new Sortable(container, {
+            animation: 150,
+            handle: '.location-pair',
+            ghostClass: 'bg-gray-100',
+            onEnd: () => {
+                this.locationManager.reindexLocations();
+                this.updateRoute();
+            }
+        });
+    }
 
-        if (locationInputs.length >= this.MAX_WAYPOINTS) {
-            this.showError('Maximum number of locations reached');
+    addLocationInput() {
+        const locationInputs = document.querySelectorAll('.location-pair');
+        
+        if (locationInputs.length >= this.locationManager.MAX_WAYPOINTS) {
+            SwalUtils.showError('Maximum number of locations reached');
             return;
         }
 
-        const wrapper = this.createLocationInputElement(locationInputs.length);
+        const showDelete = locationInputs.length >= 2; // Show delete button for 3rd input onwards
+        const wrapper = this.locationManager.createLocationInput(
+            locationInputs.length,
+            '',
+            showDelete
+        );
+        
         const container = document.getElementById('location-inputs');
         
         if (container) {
@@ -80,94 +110,46 @@ export class ClaimMap extends BaseMap {
             if (newInput) {
                 this.initializeLocationAutocomplete(newInput);
             }
-            this.updateRemoveButtonState();
-            console.log('Location input added. New total:', document.querySelectorAll('.location-pair').length);
-        } else {
-            console.error('Location inputs container not found');
         }
     }
 
-    createLocationInputElement(index) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'location-pair relative';
-        
-        const letter = String.fromCharCode(65 + index);
-        const color = this.routeColors[index % this.routeColors.length];
-        
-        wrapper.innerHTML = `
-            <div class="form-group flex items-center gap-2">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Location ${index + 1}</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center"
-                                 style="background-color: ${color}">
-                                <span class="text-white text-xs font-medium">${letter}</span>
-                            </div>
-                        </div>
-                        <input type="text"
-                               class="location-input block w-full pl-12 pr-10 py-2 rounded-md border border-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                               placeholder="Enter location"
-                               required>
-                    </div>
-                </div>
-                ${index > 0 ? this.createDeleteButton() : ''}
-            </div>
-        `;
+    async initializeLocationAutocomplete(input) {
+        if (!input) return;
 
-        const deleteBtn = wrapper.querySelector('.delete-location-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => this.removeLocation(wrapper));
-        }
-
-        return wrapper;
-    }
-
-    createDeleteButton() {
-        return `
-            <button type="button" 
-                    class="delete-location-btn mt-6 p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors duration-150"
-                    title="Remove location">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-            </button>
-        `;
-    }
-
-    initializeLocationAutocomplete(input) {
         const autocomplete = new google.maps.places.Autocomplete(input, {
             componentRestrictions: { country: 'MY' },
-            fields: ['address_components', 'formatted_address', 'geometry', 'name'],
-            types: ['geocode', 'establishment']
+            fields: ['formatted_address', 'geometry']
         });
 
-        autocomplete.addListener('place_changed', () => {
+        autocomplete.addListener('place_changed', async () => {
+            await this.rateLimiter.acquire();
             const place = autocomplete.getPlace();
+            
             if (!place.geometry) {
-                input.value = '';
-                this.showError('Please select a valid location from the suggestions');
+                this.showError('Please select a location from the dropdown');
                 return;
             }
-            
-            input.value = place.formatted_address;
-            setTimeout(() => this.updateRoute(), 100);
+
+            await this.updateRoute();
         });
     }
 
     async updateRoute() {
-        const locations = Array.from(document.querySelectorAll('.location-input'))
-            .map(input => input.value.trim())
-            .filter(Boolean);
+        const locations = this.locationManager.getLocationInputs();
 
-        if (locations.length < 2) {
+        if (!this.locationManager.validateLocations(locations)) {
             this.clearRoute();
             return;
         }
 
+        const mapContainer = document.getElementById('map');
+        const loadingState = await SwalUtils.showMapLoading(mapContainer);
+        
         try {
+            await this.rateLimiter.acquire();
             await this.plotLocations(locations);
             const routeData = await this.calculateRoute(locations);
+            
             if (routeData) {
                 this.updateRouteDisplay(routeData);
                 this.updateSegmentInfo(routeData.routes[0]);
@@ -175,8 +157,9 @@ export class ClaimMap extends BaseMap {
             }
         } catch (error) {
             console.error('Error updating route:', error);
-            this.showError('Unable to calculate route');
+            await SwalUtils.showError('Unable to calculate route', mapContainer);
         } finally {
+            loadingState.close();
             this.updateNextButtonState();
         }
     }
@@ -188,21 +171,12 @@ export class ClaimMap extends BaseMap {
         for (let i = 0; i < locations.length; i++) {
             const position = await this.geocodeLocation(locations[i]);
             if (position) {
-                const color = this.routeColors[i % this.routeColors.length];
-                this.addMarker(position, {
-                    label: {
-                        text: String.fromCharCode(65 + i),
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        fontWeight: '500'
-                    },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: color,
-                        fillOpacity: 1,
-                        strokeWeight: 0,
-                        scale: 12
-                    }
+                await this.createMarker(position, {
+                    map: this.map,
+                    label: this.locationManager.getLabelForIndex(i),
+                    color: this.locationManager.getColorForIndex(i),
+                    id: `location-${i}`,
+                    title: locations[i]
                 });
                 bounds.extend(position);
             }
@@ -214,55 +188,43 @@ export class ClaimMap extends BaseMap {
     }
 
     async calculateRoute(locations) {
-        if (locations.length < 2) return null;
-
-        try {
-            const response = await new Promise((resolve, reject) => {
-                this.directionsService.route({
-                    origin: locations[0],
-                    destination: locations[locations.length - 1],
-                    waypoints: locations.slice(1, -1).map(location => ({
-                        location,
-                        stopover: true
-                    })),
-                    travelMode: google.maps.TravelMode.DRIVING,
-                    region: 'MY'
-                }, (result, status) => {
-                    if (status === 'OK') resolve(result);
-                    else reject(new Error(`Directions request failed: ${status}`));
-                });
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Error calculating route:', error);
-            return null;
-        }
+        return await this.routeCalculator.calculateRoute(this.directionsService, locations);
     }
 
-    updateRouteDisplay(routeData) {
+    async updateRouteDisplay(routeData) {
         this.directionsRenderer.setDirections(routeData);
-        
         const route = routeData.routes[0];
-        let totalDistance = 0;
-        let totalDuration = 0;
-
-        route.legs.forEach(leg => {
-            totalDistance += leg.distance.value;
-            totalDuration += leg.duration.value;
+        
+        // Calculate totals using RouteCalculator
+        const totals = this.routeCalculator.calculateTotals(route.legs);
+        
+        // Update displays
+        Object.entries(totals).forEach(([key, value]) => {
+            this.updateDisplay(`total-${key}`, value);
+            this.updateHiddenInput(`total-${key}-input`, value);
         });
+        
+        // Calculate and save segment data
+        const segmentsData = this.routeCalculator.calculateSegmentDetails(route.legs);
+        this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
+        
+        // Update locations data
+        const locations = this.createLocationsData(route.legs);
+        this.updateHiddenInput('locations', JSON.stringify(locations));
+        
+        this.updateNextButtonState();
+        this.updateSegmentInfo(route);
+    }
 
-        const distanceKm = totalDistance / 1000;
-        const cost = distanceKm * RATE_PER_KM;
-        const hours = Math.floor(totalDuration / 3600);
-        const minutes = Math.floor((totalDuration % 3600) / 60);
-
-        this.updateDisplay('total-distance', distanceKm.toFixed(2));
-        this.updateDisplay('total-duration', `${hours}h ${minutes}m`);
-        this.updateDisplay('total-cost', cost.toFixed(2));
-
-        this.updateHiddenInput('total-distance-input', distanceKm.toFixed(2));
-        this.updateHiddenInput('total-cost-input', cost.toFixed(2));
+    createLocationsData(legs) {
+        return Array.from(document.querySelectorAll('.location-input'))
+            .map((input, index) => ({
+                from_location: legs[index]?.start_address || input.value.trim(),
+                to_location: legs[index]?.end_address || '',
+                distance: (legs[index]?.distance.value || 0) / 1000,
+                order: index + 1
+            }))
+            .filter(loc => loc.from_location);
     }
 
     updateSegmentInfo(route) {
@@ -293,12 +255,12 @@ export class ClaimMap extends BaseMap {
                 <div class="space-y-3">
                     <div class="flex items-center space-x-3">
                         <span class="inline-flex items-center justify-center w-2 h-2 rounded-full" 
-                              style="background-color: ${this.routeColors[index % this.routeColors.length]}"></span>
+                              style="background-color: ${this.locationManager.routeColors[index % this.locationManager.routeColors.length]}"></span>
                         <span class="text-xs text-gray-700">${leg.start_address}</span>
                     </div>
                     <div class="flex items-center space-x-3">
                         <span class="inline-flex items-center justify-center w-2 h-2 rounded-full"
-                              style="background-color: ${this.routeColors[(index + 1) % this.routeColors.length]}"></span>
+                              style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
                         <span class="text-xs text-gray-700">${leg.end_address}</span>
                     </div>
                 </div>
@@ -415,137 +377,55 @@ export class ClaimMap extends BaseMap {
     }
 
     async loadLocations(locations) {
-        console.log('Loading locations:', locations);
-        const container = document.getElementById('location-inputs');
-        if (!container) {
-            console.error('Location container not found');
-            return;
-        }
-        
-        container.innerHTML = '';
-        this.clearMarkers();
-        
-        // Show Swal loading in map container
-        const mapContainer = document.getElementById('map');
-        Swal.fire({
-            title: 'Calculating Route',
-            html: 'Please wait while we calculate your route...',
-            timer: 3000,
-            timerProgressBar: true,
-            showConfirmButton: false,
-            target: mapContainer,
-            customClass: {
-                container: 'absolute inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-sm',
-                popup: 'bg-white rounded-lg shadow-lg p-4',
-                title: 'text-lg font-medium text-gray-900',
-                htmlContainer: 'text-sm text-gray-500',
-                timerProgressBar: 'bg-indigo-600'
-            },
-            didOpen: () => {
-                Swal.showLoading();
+        return await ErrorHandler.handle(async () => {
+            const container = document.getElementById('location-inputs');
+            if (!container) {
+                throw new Error('Location container not found');
             }
-        });
-    
-        // Create arrays to store promises and values
-        const geocodingPromises = [];
-        const locationValues = [];
-    
-        // Setup inputs and collect location values
-        locations.forEach((location, index) => {
-            this.addLocationInput();
-            const inputs = document.querySelectorAll('.location-input');
-            const input = inputs[inputs.length - 1];
-            
-            if (input) {
-                let locationValue;
-                if (typeof location === 'object') {
-                    locationValue = location.from_location;
-                    if (typeof locationValue === 'object') {
-                        locationValue = locationValue.address;
-                    }
-                } else {
-                    locationValue = location;
-                }
+
+            container.innerHTML = ''; // Clear existing inputs
+            this.clearMarkers();
+
+            // Create and populate location inputs
+            locations.forEach((loc, index) => {
+                const location = typeof loc === 'string' ? loc : loc.from_location;
+                const showDelete = index >= 2;
+                const wrapper = this.locationManager.createLocationInput(index, location, showDelete);
+                container.appendChild(wrapper);
                 
-                input.value = locationValue || '';
-                this.initializeLocationAutocomplete(input);
-                locationValues.push(locationValue);
-    
-                // Add geocoding promise without adding markers yet
-                geocodingPromises.push(
-                    new Promise((resolve) => {
-                        const geocoder = new google.maps.Geocoder();
-                        geocoder.geocode({ address: locationValue }, (results, status) => {
-                            if (status === 'OK' && results[0]) {
-                                resolve({
-                                    position: results[0].geometry.location,
-                                    index: index
-                                });
-                            } else {
-                                resolve(null);
-                            }
-                        });
-                    })
-                );
-            }
-        });
-    
-        try {
-            // Wait for all geocoding results
-            const positions = await Promise.all(geocodingPromises);
-            
-            // Wait for Swal timer to complete
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // After timer, add markers and calculate route
-            positions.forEach(result => {
-                if (result) {
-                    const color = this.routeColors[result.index % this.routeColors.length];
-                    this.addMarker(result.position, {
-                        label: {
-                            text: String.fromCharCode(65 + result.index),
-                            color: '#FFFFFF'
-                        },
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            fillColor: color,
-                            fillOpacity: 1,
-                            strokeWeight: 0,
-                            scale: 10
-                        }
-                    });
+                const input = wrapper.querySelector('.location-input');
+                if (input) {
+                    this.initializeLocationAutocomplete(input);
                 }
             });
-    
-            // Calculate and display route
-            const validLocationValues = locationValues.filter(Boolean);
-            if (validLocationValues.length >= 2) {
-                const routeData = await this.calculateRoute(validLocationValues);
-                if (routeData) {
-                    this.updateRouteDisplay(routeData);
-                    this.saveRouteData(routeData);
+
+            // Initialize sortable after creating inputs
+            this.initializeSortable(container);
+
+            const mapContainer = document.getElementById('map');
+            const loadingState = locations.length >= 2 ? 
+                await SwalUtils.showMapLoading(mapContainer) : 
+                null;
+
+            try {
+                await this.updateRoute(); // This will handle plotting and route calculation
+            } finally {
+                if (loadingState) {
+                    loadingState.close();
                 }
             }
-        } catch (error) {
-            console.error('Error in loadLocations:', error);
-            Swal.fire({
-                target: mapContainer,
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load locations and calculate route'
-            });
-        }
+        }, 'loading locations');
     }
 
     removeLocation(wrapper) {
         const locationInputs = document.querySelectorAll('.location-pair');
         if (locationInputs.length <= 2) {
-            this.showError('Minimum two locations required');
+            SwalUtils.showError('Minimum two locations required');
             return;
         }
 
         wrapper.remove();
-        this.updateRemoveButtonState();
+        this.locationManager.reindexLocations();
         this.updateRoute();
     }
 
@@ -624,6 +504,64 @@ export class ClaimMap extends BaseMap {
         
         // Add initial location inputs back
         this.addInitialLocationInputs();
+    }
+
+    chunkArray(array, size) {
+        const chunks = [];
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+        }
+        return chunks;
+    }
+
+    showLoadingState() {
+        return Swal.fire({
+            title: 'Calculating Route',
+            html: 'Please wait while we calculate your route...',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            target: document.getElementById('map'),
+            didOpen: () => Swal.showLoading()
+        });
+    }
+
+    async processLocation(location, index) {
+        if (!location || typeof location !== 'string') {
+            console.error('Invalid location:', location);
+            return null;
+        }
+    
+        try {
+            const position = await this.geocodeLocation(location);
+            if (!position) {
+                console.error('Failed to geocode location:', location);
+                return null;
+            }
+    
+            await this.createMarker(position, {
+                map: this.map,
+                label: this.locationManager.getLabelForIndex(index),
+                color: this.locationManager.getColorForIndex(index),
+                id: `location-${index}`,
+                title: location
+            });
+    
+            return {
+                address: location,
+                position: position
+            };
+        } catch (error) {
+            console.error('Error processing location:', error);
+            return null;
+        }
+    }
+
+    getValidLocationValues() {
+        const locationInputs = document.querySelectorAll('.location-input');
+        return Array.from(locationInputs)
+            .map(input => input.value.trim())
+            .filter(value => value.length > 0);
     }
 }
 

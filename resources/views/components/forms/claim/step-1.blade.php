@@ -7,11 +7,9 @@
     <!-- Info box for guide on how to select a company -->
     <div class="bg-blue-50 p-6 rounded-lg shadow-sm border border-blue-200 relative mb-6">
         <!-- Close button -->
-        <button type="button" class="absolute top-2 right-2 text-red-600 hover:text-red-800 bg-red-100/50 rounded-lg p-1" onclick="this.parentElement.style.display='none';">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-        </button>
+         <div class="absolute top-2 right-4">
+            <button type="button" class="text-gray-500 hover:text-gray-700 text-xl font-bold" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
         
         <div class="absolute -top-3 -left-3 bg-blue-600 text-white py-2 px-4 rounded-lg text-xs font-medium uppercase tracking-wide">
             Company Selection Guide

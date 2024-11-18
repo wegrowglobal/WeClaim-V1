@@ -1,4 +1,6 @@
 import { ClaimMap } from './maps/claim-map.js';
+import ErrorHandler from './utils/error-handler.js';
+import ValidationUtils from './utils/validation.js';
 
 class ClaimForm {
     constructor() {
@@ -14,8 +16,22 @@ class ClaimForm {
         this.resetForm = this.resetForm.bind(this);
         this.saveCurrentStep = this.saveCurrentStep.bind(this);
 
+        this.debouncedSave = this.debounce(this.saveCurrentStep, 500);
+
         // Initialize the instance
         this.init();
+    }
+
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func.apply(this, args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     async init() {
@@ -773,27 +789,38 @@ class ClaimForm {
         if (!form) return true;
 
         const requiredFields = form.querySelectorAll('[required]');
-        let isValid = true;
-        let firstInvalidField = null;
+        const invalidFields = [];
 
         requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                isValid = false;
-                field.classList.add('border-red-500');
-                if (!firstInvalidField) {
-                    firstInvalidField = field;
-                }
-            } else {
-                field.classList.remove('border-red-500');
+            const value = field.value.trim();
+            const isValid = ValidationUtils.isRequired(value) && 
+                          (field.type !== 'email' || ValidationUtils.isValidEmail(value)) &&
+                          (field.type !== 'number' || ValidationUtils.isValidNumber(value));
+
+            field.classList.toggle('border-red-500', !isValid);
+            if (!isValid) {
+                invalidFields.push(field);
             }
         });
 
-        if (firstInvalidField) {
-            firstInvalidField.focus();
-            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (invalidFields.length > 0) {
+            const firstInvalid = invalidFields[0];
+            firstInvalid.focus();
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            Swal.fire({
+                title: 'Validation Error',
+                text: 'Please fill in all required fields correctly',
+                icon: 'warning',
+                toast: true,
+                position: 'top-end',
+                timer: 3000
+            });
+            
+            return false;
         }
 
-        return isValid;
+        return true;
     }
 
     updateTotalCost(distance) {
@@ -830,11 +857,11 @@ class ClaimForm {
         this.updateTotalCost(distance);
     }
 
-    verifyDraftData() {
-        const draftDataInput = document.getElementById('draftData');
-        if (!draftDataInput) return;
+    async verifyDraftData() {
+        return await ErrorHandler.handle(async () => {
+            const draftDataInput = document.getElementById('draftData');
+            if (!draftDataInput) return;
 
-        try {
             const draftData = JSON.parse(draftDataInput.value);
             console.log('Current draft data:', {
                 step1: {
@@ -850,9 +877,8 @@ class ClaimForm {
                     segments_data: draftData.segments_data,
                 }
             });
-        } catch (error) {
-            console.error('Error verifying draft data:', error);
-        }
+            return true;
+        }, 'verifyDraftData');
     }
 
     async confirmLeave() {

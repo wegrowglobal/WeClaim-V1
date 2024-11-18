@@ -30,7 +30,21 @@
    }
 }
 
-@layer components {
+@keyframes progress {
+    0% { width: 0% }
+    100% { width: 100% }
+}
 
+.animate-progress {
+    animation: progress 3s linear;
+}
 
+.custom-marker {
+    cursor: pointer;
+    padding: 2px;
+}
+
+.custom-marker:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
 }

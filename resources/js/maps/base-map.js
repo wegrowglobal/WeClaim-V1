@@ -1,133 +1,68 @@
-import { MAP_CONFIG, MARKER_COLORS } from '../config.js';
+import { MapUtils } from '../utils/map-utils';
+import ErrorHandler from '../utils/error-handler';
+import { MarkerView } from '../utils/marker-view.js';
 
 export class BaseMap {
     constructor(options = {}) {
-        this.defaultCenter = { 
-            lat: 3.140853, 
-            lng: 101.693207  // Coordinates for Kuala Lumpur
-        };
-        this.defaultZoom = 7; // Zoom level to show more of Malaysia
-
-        this.map = null;
-        this.markers = [];
-        this.directionsService = null;
-        this.directionsRenderer = null;
-        this.geocoder = null;
-        this.infoWindows = [];
-        this.geocodeCache = new Map();
         this.options = {
-            elementId: 'map',
-            editable: false,
+            zoom: 12,
+            center: { lat: 3.1390, lng: 101.6869 }, // KL center
+            mapId: '6d6cdfc55d44d815',
             ...options
         };
-        this.directionsService = new google.maps.DirectionsService();
-        this.directionsRenderer = new google.maps.DirectionsRenderer();
+        this.markers = new Map();
+        this.markerView = new MarkerView();
+        this.directionsService = null;
+        this.directionsRenderer = null;
+        this.map = null;
+        this.geocoder = null;
     }
 
     async initialize() {
-        try {
-            const mapElement = document.getElementById(this.options.elementId);
-            if (!mapElement) {
-                console.error('Map element not found');
-                return;
-            }
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) throw new Error('Map container not found');
 
-            // Get coordinates from data attributes if they exist, otherwise use defaults
-            const centerLat = parseFloat(mapElement.dataset.centerLat) || this.defaultCenter.lat;
-            const centerLng = parseFloat(mapElement.dataset.centerLng) || this.defaultCenter.lng;
-            const zoom = parseInt(mapElement.dataset.zoom) || this.defaultZoom;
-
-            // Initialize map with Malaysia-specific settings
-            this.map = new google.maps.Map(mapElement, {
-                zoom: zoom,
-                center: { lat: centerLat, lng: centerLng },
-                disableDefaultUI: true,
-                zoomControl: true,
-                mapTypeControl: false,
-                streetViewControl: false,
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                // Add restrictions for Malaysia
-                restriction: {
-                    latLngBounds: {
-                        north: 7.363417, // Northern limit of Malaysia
-                        south: -3.974267, // Southern limit
-                        east: 119.267578, // Eastern limit
-                        west: 99.643066  // Western limit
-                    },
-                    strictBounds: false
-                }
-            });
-
-            // Initialize services
-            this.directionsService = new google.maps.DirectionsService();
-            this.directionsRenderer = new google.maps.DirectionsRenderer({
-                map: this.map,
-                suppressMarkers: true,
-                polylineOptions: {
-                    strokeColor: "#4285F4",
-                    strokeWeight: 5,
-                }
-            });
-            this.geocoder = new google.maps.Geocoder();
-
-            return true;
-        } catch (error) {
-            console.error('Error initializing map:', error);
-            return false;
-        }
-    }
-
-    clearMarkers() {
-        this.markers.forEach(marker => marker.setMap(null));
-        this.markers = [];
+        this.map = new google.maps.Map(mapContainer, this.options);
+        this.geocoder = new google.maps.Geocoder();
+        this.directionsService = new google.maps.DirectionsService();
+        this.directionsRenderer = new google.maps.DirectionsRenderer({
+            map: this.map,
+            suppressMarkers: true
+        });
     }
 
     async geocodeLocation(address) {
-        if (this.geocodeCache.has(address)) {
-            return this.geocodeCache.get(address);
-        }
-
-        try {
-            const result = await new Promise((resolve, reject) => {
-                this.geocoder.geocode({ address }, (results, status) => {
-                    if (status === "OK" && results[0]) {
-                        resolve(results[0].geometry.location);
-                    } else {
-                        reject(new Error(`Geocoding failed: ${status}`));
-                    }
-                });
-            });
-
-            this.geocodeCache.set(address, result);
-            return result;
-        } catch (error) {
-            console.error(`Error geocoding address: ${address}`, error);
-            return null;
-        }
+        return await ErrorHandler.handle(async () => {
+            const result = await MapUtils.geocodeWithRetry(this.geocoder, address);
+            return result.geometry.location;
+        }, 'geocoding');
     }
 
-    showError(message) {
-        const errorElement = document.createElement("div");
-        errorElement.className = "fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50";
-        errorElement.textContent = message;
-        document.body.appendChild(errorElement);
-        setTimeout(() => errorElement.remove(), 5000);
-    }
-
-    addMarker(position, options = {}) {
-        const marker = new google.maps.Marker({
+    async createMarker(position, options = {}) {
+        const { map = this.map, label, color = '#3B82F6' } = options;
+        
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+            map,
             position,
-            map: this.map,
-            ...options
+            content: this.markerView.createMarkerElement(label, color),
+            title: options.title || '',
         });
-        this.markers.push(marker);
+
+        if (options.id) {
+            this.markers.set(options.id, marker);
+        }
+
         return marker;
+    }
+
+    clearMarkers() {
+        this.markers.forEach(marker => marker.map = null);
+        this.markers.clear();
     }
 
     clearRoute() {
         if (this.directionsRenderer) {
             this.directionsRenderer.setDirections({ routes: [] });
         }
-        this.clearMarkers();
     }
 } 

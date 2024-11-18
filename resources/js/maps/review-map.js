@@ -1,11 +1,14 @@
 import { BaseMap } from './base-map.js';
-import { MARKER_COLORS } from '../config.js';
+import { LocationManager } from '../utils/location-manager';
+import { SwalUtils } from '../utils/swal-utils';
+import { RouteCalculator } from '../utils/route-calculator';
 
 export class ReviewMap extends BaseMap {
     constructor(locations, options = {}) {
         super(options);
         this.locations = locations;
-        this.routeColors = MARKER_COLORS;
+        this.locationManager = new LocationManager();
+        this.routeCalculator = new RouteCalculator();
         this.updateLocationDots();
     }
 
@@ -18,10 +21,10 @@ export class ReviewMap extends BaseMap {
                 const toDot = segment.querySelector('.to-location-dot');
                 
                 if (fromDot) {
-                    fromDot.style.backgroundColor = MARKER_COLORS[index * 2 % MARKER_COLORS.length];
+                    fromDot.style.backgroundColor = this.locationManager.routeColors[index * 2 % this.locationManager.routeColors.length];
                 }
                 if (toDot) {
-                    toDot.style.backgroundColor = MARKER_COLORS[(index * 2 + 1) % MARKER_COLORS.length];
+                    toDot.style.backgroundColor = this.locationManager.routeColors[(index * 2 + 1) % this.locationManager.routeColors.length];
                 }
             });
         }, 0);
@@ -39,56 +42,32 @@ export class ReviewMap extends BaseMap {
         try {
             await this.initialize();
             
-            // Configure DirectionsRenderer with custom colors after successful initialization
             if (this.directionsRenderer) {
                 this.directionsRenderer.setOptions({
                     polylineOptions: {
-                        strokeColor: MARKER_COLORS[0],
+                        strokeColor: this.locationManager.routeColors[0],
                         strokeWeight: 4
                     },
-                    suppressMarkers: true // We'll add our own custom markers
+                    suppressMarkers: true
                 });
             }
             
-            // Show loading state in map container
-            Swal.fire({
-                title: 'Calculating Route',
-                html: 'Please wait while we calculate your route...',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false,
-                target: mapContainer,
-                customClass: {
-                    container: 'relative flex items-center justify-center bg-gray-900/30 backdrop-blur-sm',
-                    popup: 'bg-white rounded-lg shadow-lg p-4',
-                    title: 'text-lg font-medium text-gray-900',
-                    htmlContainer: 'text-sm text-gray-500',
-                    timerProgressBar: 'bg-indigo-600'
-                },
-                didOpen: () => {
-                    Swal.showLoading();
-                }
-            });
-
-            // Prepare all data before rendering
-            const geocodingResults = await this.prepareLocations();
-            const routeData = await this.calculateRoute();
+            // Use the correct loading method
+            const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Loading route details...');
             
-            // Wait for Swal timer to complete
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // After timer, render everything
-            await this.renderMap(geocodingResults, routeData);
-            
+            try {
+                const geocodingResults = await this.prepareLocations();
+                const routeData = await this.calculateRoute();
+                await this.renderMap(geocodingResults, routeData);
+                loadingState.close();
+            } catch (error) {
+                loadingState.close();
+                await SwalUtils.showError('Failed to load locations and calculate route', mapContainer);
+                throw error;
+            }
         } catch (error) {
             console.error('Error initializing review map:', error);
-            
-            Swal.fire({
-                target: mapContainer,
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load locations and calculate route'
-            });
+            await SwalUtils.showError('Failed to initialize map', mapContainer);
         }
     }
 
@@ -125,19 +104,15 @@ export class ReviewMap extends BaseMap {
     async calculateRoute() {
         if (this.locations.length < 1) return null;
 
-        const origin = this.locations[0].from_location;
-        const destination = this.locations[this.locations.length - 1].to_location;
-        const waypoints = this.locations.slice(1, -1).map(loc => ({
-            location: loc.to_location,
-            stopover: true
-        }));
-
         try {
-            return await new Promise((resolve, reject) => {
+            const response = await new Promise((resolve, reject) => {
                 this.directionsService.route({
-                    origin,
-                    destination,
-                    waypoints,
+                    origin: this.locations[0].from_location,
+                    destination: this.locations[this.locations.length - 1].to_location,
+                    waypoints: this.locations.slice(1, -1).map(loc => ({
+                        location: loc.to_location,
+                        stopover: true
+                    })),
                     travelMode: google.maps.TravelMode.DRIVING,
                     region: 'MY'
                 }, (result, status) => {
@@ -145,6 +120,8 @@ export class ReviewMap extends BaseMap {
                     else reject(new Error(`Directions request failed: ${status}`));
                 });
             });
+
+            return response;
         } catch (error) {
             console.error('Error calculating route:', error);
             return null;
@@ -154,42 +131,25 @@ export class ReviewMap extends BaseMap {
     async renderMap(geocodingResults, routeData) {
         const bounds = new google.maps.LatLngBounds();
 
-        // Add markers with proper colors
         geocodingResults.forEach((result, index) => {
-            if (result && result.position) {
-                const color = MARKER_COLORS[index % MARKER_COLORS.length];
-                this.addMarker(result.position, {
-                    label: {
-                        text: String.fromCharCode(65 + index),
-                        color: '#FFFFFF',
-                        fontSize: '11px',
-                        fontWeight: '500'
-                    },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: color,
-                        fillOpacity: 1,
-                        strokeWeight: 0,
-                        scale: 12
-                    }
+            if (result?.position) {
+                const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
+                this.createMarker(result.position, {
+                    map: this.map,
+                    label: String.fromCharCode(65 + index),
+                    color: color,
+                    id: `location-${index}`,
+                    title: result.location
                 });
                 bounds.extend(result.position);
             }
         });
 
-        // Set map bounds
         if (!bounds.isEmpty()) {
             this.map.fitBounds(bounds);
         }
 
-        // Render route with custom color
         if (routeData) {
-            this.directionsRenderer.setOptions({
-                polylineOptions: {
-                    strokeColor: MARKER_COLORS[0],
-                    strokeWeight: 4
-                }
-            });
             this.directionsRenderer.setDirections(routeData);
         }
     }
