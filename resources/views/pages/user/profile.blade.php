@@ -110,16 +110,50 @@
                     <p class="text-sm text-gray-500 mt-1">Your residential address details</p>
                 </div>
 
-                <!-- Address Textarea -->
+                <!-- Address Input with Lazy Mode -->
                 <div class="form-group">
-                    <label for="address" class="block text-sm font-medium text-gray-600/80 mb-1">Street Address</label>
-                    <textarea 
-                        id="address" 
-                        name="address" 
-                        rows="3"
-                        class="p-4 form-textarea block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm resize-none"
-                        required
-                    >{{ auth()->user()->address }}</textarea>
+                    <div class="flex items-center justify-between mb-1">
+                        <label for="address" class="block text-sm font-medium text-gray-600/80">Street Address</label>
+                        <button type="button" 
+                                id="location-picker-btn" 
+                                class="group relative inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:text-indigo-600 bg-gray-50 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
+                                title="Toggle Lazy Locator">
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" 
+                                 fill="none" 
+                                 viewBox="0 0 24 24" 
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" 
+                                      stroke-linejoin="round" 
+                                      stroke-width="2" 
+                                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" 
+                                      stroke-linejoin="round" 
+                                      stroke-width="2" 
+                                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span>Lazy Mode</span>
+                            <span class="lazy-mode-indicator absolute -top-1 -right-1 flex h-3 w-3 opacity-0 transition-opacity duration-200">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="relative">
+                        <input type="text"
+                               id="address" 
+                               name="address" 
+                               value="{{ auth()->user()->address }}"
+                               class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm pr-10 lazy-mode-input"
+                               required>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none lazy-mode-icon opacity-0">
+                            <svg class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" 
+                                      stroke-linejoin="round" 
+                                      stroke-width="2" 
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- City and State -->
@@ -292,6 +326,8 @@
         </div>
     </div>
 @endif
+
+@vite(['resources/js/maps/profile-map.js'])
 
 <script>
     function toggleVisibility(inputId) {
