@@ -5,186 +5,194 @@ export class ReviewMap extends BaseMap {
     constructor(locations, options = {}) {
         super(options);
         this.locations = locations;
-        this.routeInfoPanel = null;
+        this.routeColors = MARKER_COLORS;
+        this.updateLocationDots();
+    }
+
+    updateLocationDots() {
+        // Wait for DOM to be ready
+        setTimeout(() => {
+            const segments = document.querySelectorAll('.segment-detail');
+            segments.forEach((segment, index) => {
+                const fromDot = segment.querySelector('.from-location-dot');
+                const toDot = segment.querySelector('.to-location-dot');
+                
+                if (fromDot) {
+                    fromDot.style.backgroundColor = MARKER_COLORS[index * 2 % MARKER_COLORS.length];
+                }
+                if (toDot) {
+                    toDot.style.backgroundColor = MARKER_COLORS[(index * 2 + 1) % MARKER_COLORS.length];
+                }
+            });
+        }, 0);
     }
 
     async init() {
         console.log('Initializing review map with locations:', this.locations);
-        this.showLoading();
+        const mapContainer = document.getElementById('map');
         
         try {
             await this.initialize();
-            await this.plotLocations();
             
-            if (this.locations.length > 0) {
-                await this.drawRoute();
-            } else {
-                console.log('Not enough locations to draw a route');
-            }
-        } catch (error) {
-            console.error('Error initializing review map:', error);
-            this.showError('An error occurred while initializing the map. Please try again.');
-        } finally {
-            this.hideLoading();
-        }
-    }
-
-    async plotLocations() {
-        const bounds = new google.maps.LatLngBounds();
-        const uniqueLocations = new Set();
-        
-        // Collect unique locations
-        this.locations.forEach(location => {
-            uniqueLocations.add(location.from_location);
-            uniqueLocations.add(location.to_location);
-        });
-
-        try {
-            // Create position map for quick lookup
-            const positionMap = new Map();
-            for (const address of uniqueLocations) {
-                const position = await this.geocodeLocation(address);
-                if (position) {
-                    positionMap.set(address, position);
-                }
-            }
-
-            // Add markers in correct order
-            this.locations.forEach((locationPair, index) => {
-                const fromPosition = positionMap.get(locationPair.from_location);
-                const toPosition = positionMap.get(locationPair.to_location);
-                
-                if (fromPosition && index === 0) {
-                    this.addMarker(fromPosition, {
-                        label: { text: '1', color: 'white' },
-                        icon: this.createMarkerIcon(0)
-                    });
-                    bounds.extend(fromPosition);
-                }
-                
-                if (toPosition) {
-                    this.addMarker(toPosition, {
-                        label: { text: (index + 2).toString(), color: 'white' },
-                        icon: this.createMarkerIcon(index + 1)
-                    });
-                    bounds.extend(toPosition);
+            // Configure DirectionsRenderer with custom colors after initialization
+            this.directionsRenderer.setOptions({
+                polylineOptions: {
+                    strokeColor: MARKER_COLORS[0],
+                    strokeWeight: 4
+                },
+                suppressMarkers: true // We'll add our own custom markers
+            });
+            
+            // Show loading state in map container
+            Swal.fire({
+                title: 'Calculating Route',
+                html: 'Please wait while we calculate your route...',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                target: mapContainer,
+                customClass: {
+                    container: 'relative flex items-center justify-center bg-gray-900/30 backdrop-blur-sm',
+                    popup: 'bg-white rounded-lg shadow-lg p-4',
+                    title: 'text-lg font-medium text-gray-900',
+                    htmlContainer: 'text-sm text-gray-500',
+                    timerProgressBar: 'bg-indigo-600'
+                },
+                didOpen: () => {
+                    Swal.showLoading();
+                    // Remove overflow hidden from body
+                    document.body.style.overflow = 'auto';
                 }
             });
 
-            this.map.fitBounds(bounds);
+            // Prepare all data before rendering
+            const geocodingResults = await this.prepareLocations();
+            const routeData = await this.calculateRoute();
+            
+            // Wait for Swal timer to complete
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // After timer, render everything
+            await this.renderMap(geocodingResults, routeData);
+            
         } catch (error) {
-            console.error('Error plotting locations:', error);
-            throw error;
+            console.error('Error initializing review map:', error);
+            
+            Swal.fire({
+                target: mapContainer,
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load locations and calculate route'
+            });
         }
     }
 
-    createMarkerIcon(index) {
-        return {
-            path: google.maps.SymbolPath.CIRCLE,
-            fillColor: MARKER_COLORS[index % MARKER_COLORS.length],
-            fillOpacity: 1,
-            strokeWeight: 0,
-            scale: 10
-        };
+    async prepareLocations() {
+        const geocodingPromises = [];
+
+        this.locations.forEach((location, index) => {
+            geocodingPromises.push(
+                this.geocodeLocation(location.from_location)
+                    .then(position => ({
+                        position,
+                        index,
+                        isStart: true,
+                        location: location.from_location
+                    }))
+            );
+
+            if (index === this.locations.length - 1) {
+                geocodingPromises.push(
+                    this.geocodeLocation(location.to_location)
+                        .then(position => ({
+                            position,
+                            index,
+                            isStart: false,
+                            location: location.to_location
+                        }))
+                );
+            }
+        });
+
+        return Promise.all(geocodingPromises);
     }
 
-    async drawRoute() {
-        if (this.locations.length < 1) {
-            console.error('Not enough locations to draw a route');
-            return;
-        }
+    async calculateRoute() {
+        if (this.locations.length < 1) return null;
 
         const origin = this.locations[0].from_location;
         const destination = this.locations[this.locations.length - 1].to_location;
-        const waypoints = this.locations.slice(0, -1).map(loc => ({
+        const waypoints = this.locations.slice(1, -1).map(loc => ({
             location: loc.to_location,
             stopover: true
         }));
 
         try {
-            const response = await new Promise((resolve, reject) => {
+            return await new Promise((resolve, reject) => {
                 this.directionsService.route({
                     origin,
                     destination,
                     waypoints,
                     travelMode: google.maps.TravelMode.DRIVING,
+                    region: 'MY'
                 }, (result, status) => {
-                    if (status === "OK") {
-                        resolve(result);
-                    } else {
-                        reject(new Error(`Direction service failed: ${status}`));
-                    }
+                    if (status === 'OK') resolve(result);
+                    else reject(new Error(`Directions request failed: ${status}`));
                 });
             });
-
-            this.directionsRenderer.setDirections(response);
-            this.addSegmentInfoBoxes(response.routes[0]);
         } catch (error) {
-            console.error('Error drawing route:', error);
-            this.showError('Unable to calculate route. Please check your locations and try again.');
+            console.error('Error calculating route:', error);
+            return null;
         }
     }
 
-    addSegmentInfoBoxes(route) {
-        if (this.routeInfoPanel) {
-            this.map.controls[google.maps.ControlPosition.TOP_RIGHT].pop();
+    async renderMap(geocodingResults, routeData) {
+        const bounds = new google.maps.LatLngBounds();
+
+        // Add markers with proper colors
+        geocodingResults.forEach((result, index) => {
+            if (result && result.position) {
+                const color = MARKER_COLORS[index % MARKER_COLORS.length];
+                this.addMarker(result.position, {
+                    label: {
+                        text: String.fromCharCode(65 + index),
+                        color: '#FFFFFF',
+                        fontSize: '11px',
+                        fontWeight: '500'
+                    },
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: color,
+                        fillOpacity: 1,
+                        strokeWeight: 0,
+                        scale: 12
+                    }
+                });
+                bounds.extend(result.position);
+            }
+        });
+
+        // Set map bounds
+        if (!bounds.isEmpty()) {
+            this.map.fitBounds(bounds);
         }
-        this.routeInfoPanel = this.createRouteInfoPanel(route);
-        this.map.controls[google.maps.ControlPosition.TOP_RIGHT].push(this.routeInfoPanel);
-    }
 
-    createRouteInfoPanel(route) {
-        const panel = document.createElement("div");
-        panel.className = "route-info-panel";
-        Object.assign(panel.style, {
-            backgroundColor: "white",
-            margin: "10px",
-            padding: "10px",
-            borderRadius: "2px",
-            maxHeight: "300px",
-            overflowY: "auto"
-        });
-
-        // Add segment details
-        route.legs.forEach((leg, i) => {
-            const segment = document.createElement("div");
-            segment.style.marginBottom = "10px";
-            const legDistance = leg.distance.value / 1000;
-            segment.innerHTML = `
-                <strong>Location ${i + 1} - Location ${i + 2}</strong><br>
-                Distance: ${legDistance.toFixed(2)} km<br>
-                Duration: ${leg.duration.text}
-            `;
-            panel.appendChild(segment);
-        });
-
-        // Add total information
-        const totalDistance = route.legs.reduce((total, leg) => total + leg.distance.value, 0) / 1000;
-        const totalDuration = route.legs.reduce((total, leg) => total + leg.duration.value, 0);
-        const totalHours = Math.floor(totalDuration / 3600);
-        const totalMinutes = Math.floor((totalDuration % 3600) / 60);
-
-        const totalInfo = document.createElement("div");
-        Object.assign(totalInfo.style, {
-            borderTop: "1px solid #ccc",
-            paddingTop: "10px",
-            marginTop: "10px"
-        });
-        totalInfo.innerHTML = `
-            <strong>Total Distance:</strong> ${totalDistance.toFixed(2)} km<br>
-            <strong>Total Duration:</strong> ${totalHours}h ${totalMinutes}m<br>
-            <strong>Total Cost:</strong> RM${(totalDistance * 0.6).toFixed(2)}
-        `;
-        panel.appendChild(totalInfo);
-
-        return panel;
+        // Render route with custom color
+        if (routeData) {
+            this.directionsRenderer.setOptions({
+                polylineOptions: {
+                    strokeColor: MARKER_COLORS[0],
+                    strokeWeight: 4
+                }
+            });
+            this.directionsRenderer.setDirections(routeData);
+        }
     }
 }
 
-// Initialize map when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
     if (typeof claimLocations !== "undefined") {
         const reviewMap = new ReviewMap(claimLocations);
         reviewMap.init();
     }
-}); 
+});

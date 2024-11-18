@@ -1140,4 +1140,18 @@ class ClaimController extends Controller
             ->with('success', 'Claim has been resubmitted successfully.');
     }
 
+    public function cancelClaim(Claim $claim)
+    {
+        // Check if the authenticated user is the owner of the claim
+        if (Auth::id() !== $claim->user_id) {
+            abort(403, 'Unauthorized action.');
+        }
+    
+        // Update the claim status to "Cancelled"
+        $claim->status = Claim::STATUS_CANCELLED;
+        $claim->save();
+    
+        return redirect()->route('claims.dashboard')->with('success', 'Claim has been cancelled.');
+    }
+
 }

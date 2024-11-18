@@ -165,8 +165,6 @@ export class ClaimMap extends BaseMap {
             return;
         }
 
-        this.showLoading();
-
         try {
             await this.plotLocations(locations);
             const routeData = await this.calculateRoute(locations);
@@ -179,7 +177,6 @@ export class ClaimMap extends BaseMap {
             console.error('Error updating route:', error);
             this.showError('Unable to calculate route');
         } finally {
-            this.hideLoading();
             this.updateNextButtonState();
         }
     }
@@ -537,8 +534,6 @@ export class ClaimMap extends BaseMap {
                 title: 'Error',
                 text: 'Failed to load locations and calculate route'
             });
-        } finally {
-            this.hideLoading();
         }
     }
 

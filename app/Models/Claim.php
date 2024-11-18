@@ -21,6 +21,7 @@ class Claim extends Model
     const STATUS_APPROVED_FINANCE = 'Approved Finance';
     const STATUS_REJECTED = 'Rejected';
     const STATUS_DONE = 'Done';
+    const STATUS_CANCELLED = 'Cancelled';
 
 
     protected $fillable = [

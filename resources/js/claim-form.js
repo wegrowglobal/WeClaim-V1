@@ -185,6 +185,33 @@ class ClaimForm {
         }
     }
 
+    async showContinuePrompt() {
+        const draftData = localStorage.getItem('draftData');
+        if (draftData) {
+            const result = await Swal.fire({
+                title: 'Continue where you left off?',
+                text: 'It looks like you have an unfinished claim. Do you want to continue from where you left off?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, continue',
+                cancelButtonText: 'No, start fresh',
+                customClass: {
+                    popup: 'rounded-lg shadow-xl border border-gray-200',
+                    title: 'text-xl font-medium text-gray-900',
+                    htmlContainer: 'text-base text-gray-600'
+                }
+            });
+
+            if (result.isConfirmed) {
+                return true;
+            } else {
+                localStorage.removeItem('draftData');
+                return false;
+            }
+        }
+        return false;
+    }
+
     async saveCurrentStep() {
         const form = document.getElementById('claimForm');
         if (!form) return true;

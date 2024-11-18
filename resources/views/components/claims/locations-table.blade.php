@@ -16,11 +16,11 @@
                         <!-- Location markers and addresses -->
                         <div class="space-y-3">
                             <div class="flex items-center space-x-3">
-                                <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span class="from-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full"></span>
                                 <span class="text-xs text-gray-700">{{ $location->from_location }}</span>
                             </div>
                             <div class="flex items-center space-x-3">
-                                <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-green-500"></span>
+                                <span class="to-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full"></span>
                                 <span class="text-xs text-gray-700">{{ $location->to_location }}</span>
                             </div>
                         </div>
@@ -64,7 +64,6 @@
                     </div>
                 </div>
             @endforeach
-            <div id="map" class="h-[400px] w-full rounded-lg"></div>
         </div>
     </div>
 </div>

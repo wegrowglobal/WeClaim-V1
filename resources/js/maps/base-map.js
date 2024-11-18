@@ -75,21 +75,6 @@ export class BaseMap {
         }
     }
 
-    // Shared utility methods
-    showLoading() {
-        const loadingElement = document.getElementById('map-loading-overlay');
-        if (loadingElement) {
-            loadingElement.classList.remove('hidden');
-        }
-    }
-
-    hideLoading() {
-        const loadingElement = document.getElementById('map-loading-overlay');
-        if (loadingElement) {
-            loadingElement.classList.add('hidden');
-        }
-    }
-
     clearMarkers() {
         this.markers.forEach(marker => marker.setMap(null));
         this.markers = [];

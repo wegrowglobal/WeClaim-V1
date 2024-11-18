@@ -14,9 +14,9 @@
                     class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm h-[38px]"
                     required>
                 <option value="">Select Company</option>
-                <option value="WGG" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'wegrow' ? 'selected' : '' }}>Wegrow Global Sdn. Bhd.</option>
-                <option value="WGE" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'myskill' ? 'selected' : '' }}>Wegrow Edutainment (M) Sdn. Bhd.</option>
-                <option value="WGG & WGE" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'others' ? 'selected' : '' }}>Both</option>
+                <option value="WGG" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'WGG' ? 'selected' : '' }}>Wegrow Global Sdn. Bhd.</option>
+                <option value="WGE" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'WGE' ? 'selected' : '' }}>Wegrow Edutainment (M) Sdn. Bhd.</option>
+                <option value="WGG & WGE" {{ old('claim_company', $draftData['claim_company'] ?? '') == 'WGG & WGE' ? 'selected' : '' }}>Both</option>
             </select>
         </div>
 

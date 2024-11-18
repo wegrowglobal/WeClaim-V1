@@ -6,7 +6,7 @@
 
 <div class="flex justify-end gap-4 mt-8">
     @if ($claim->status == Claim::STATUS_SUBMITTED && Auth::id() == $claim->user_id)
-        <form action="{{-- {{ route('claims.cancel', $claim->id) }} --}}" method="POST" class="inline">
+        <form action="{{ route('claims.cancel', $claim->id) }}" method="POST" class="inline">
             @csrf
             @method('PUT')
             <button type="submit" 

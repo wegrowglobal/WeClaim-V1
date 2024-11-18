@@ -101,6 +101,9 @@
                                             @case(Claim::STATUS_DONE)
                                                 Completed
                                                 @break
+                                            @case(Claim::STATUS_CANCELLED)
+                                                Cancelled
+                                                @break
                                             @case(Claim::STATUS_REJECTED)
                                                 Rejected
                                                 @break

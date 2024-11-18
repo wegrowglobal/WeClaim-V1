@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}/review', [ClaimController::class, 'reviewClaim'])->name('claims.review');
         Route::post('/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
         Route::post('/{claim}/export', [ClaimController::class, 'export'])->name('claims.export');
+        Route::put('/{claim}/cancel', [ClaimController::class, 'cancelClaim'])->name('claims.cancel');
         
         // Document Routes
         Route::get('/{claim}/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])

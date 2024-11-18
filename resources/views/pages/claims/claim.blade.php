@@ -16,6 +16,11 @@
             @include('components.claims.locations-table', ['locations' => $claim->locations])
         </div>
 
+        <!-- Map Container -->
+        <div class="relative">
+            <div id="map" class="h-[400px] w-full rounded-lg shadow-sm border border-gray-100"></div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="animate-slide-in delay-400">
             @include('components.claims.claim-action', ['claim' => $claim])
