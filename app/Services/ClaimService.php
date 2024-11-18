@@ -1,18 +1,15 @@
 <?php
 
 namespace App\Services;
-use App\Models\User;
+
 use App\Models\Claim;
+use App\Models\User;
 use App\Models\ClaimDocument;
 use App\Models\ClaimReview;
-use App\Mail\ClaimActionMail;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
-use Str;
-use Illuminate\Support\Arr;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Exception;
 
 class ClaimService
 {
@@ -21,12 +18,8 @@ class ClaimService
 
     private const PETROL_RATE = 0.6;
     private const CLAIM_TYPE_PETROL = 'Petrol';
-    private const CLAIM_TYPE_ITEMS = 'Items';
-    private const CLAIM_TYPE_PETTY_CASH = 'Petty Cash';
-    private const CLAIM_TYPE_OTHERS = 'Others';
     private const STATUS_SUBMITTED = 'Submitted';
     private const ROLE_ID_ADMIN = 2;
-    private const ROLE_ID_DATUK = 3;
     private const ROLE_ID_HR = 4;
     private const ROLE_ID_FINANCE = 5;
 
@@ -35,6 +28,114 @@ class ClaimService
     public function __construct()
     {
         Log::info('ClaimService instantiated');
+    }
+
+    public function createClaim(array $validatedData, int $userId): Claim
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Get initial admin reviewer
+            $initialReviewer = User::whereHas('role', function($query) {
+                $query->where('id', self::ROLE_ID_ADMIN);
+            })->first();
+
+            // Format numeric values
+            $claim = Claim::create([
+                'user_id' => $userId,
+                'title' => $validatedData['title'],
+                'description' => $validatedData['remarks'],
+                'petrol_amount' => (float) $validatedData['petrol_amount'],
+                'status' => $validatedData['status'],
+                'claim_type' => $validatedData['claim_type'],
+                'total_distance' => (float) $validatedData['total_distance'],
+                'submitted_at' => now(),
+                'claim_company' => $validatedData['claim_company'],
+                'toll_amount' => (float) $validatedData['toll_amount'],
+                'date_from' => $validatedData['date_from'],
+                'date_to' => $validatedData['date_to'],
+                'reviewer_id' => $initialReviewer ? $initialReviewer->id : null, // Set initial reviewer
+            ]);
+
+            // Create locations
+            $this->createClaimLocations($claim, $validatedData['locations']);
+
+            // Create documents
+            if (isset($validatedData['toll_file']) || isset($validatedData['email_file'])) {
+                $this->createClaimDocuments($claim, $validatedData, $userId);
+            }
+
+            DB::commit();
+            return $claim;
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function createClaimLocations(Claim $claim, string $locationsJson): void
+    {
+        $locations = json_decode($locationsJson, true);
+        
+        foreach ($locations as $location) {
+            // Ensure we have an order value
+            $order = $location['order'] ?? 0;
+            
+            $claim->locations()->create([
+                'from_location' => $location['from_location']['address'] ?? $location['from_location'],
+                'to_location' => $location['to_location']['address'] ?? $location['to_location'],
+                'distance' => (float) $location['distance'],
+                'order' => (int) $order
+            ]);
+        }
+    }
+
+    private function createClaimDocuments(Claim $claim, array $data, int $userId): void
+    {
+        $documents = [];
+
+        if (isset($data['toll_file'])) {
+            $tollPath = $data['toll_file']->store('claims/toll', 'public');
+            $documents['toll_file_name'] = $data['toll_file']->getClientOriginalName();
+            $documents['toll_file_path'] = $tollPath;
+        }
+
+        if (isset($data['email_file'])) {
+            $emailPath = $data['email_file']->store('claims/email', 'public');
+            $documents['email_file_name'] = $data['email_file']->getClientOriginalName();
+            $documents['email_file_path'] = $emailPath;
+        }
+
+        if (!empty($documents)) {
+            $documents['uploaded_by'] = $userId;
+            $claim->documents()->create($documents);
+        }
+    }
+
+    public function deleteClaim(Claim $claim): void
+    {
+        DB::beginTransaction();
+        
+        try {
+            // Delete associated documents from storage
+            foreach ($claim->documents as $document) {
+                if ($document->toll_file_path) {
+                    Storage::disk('public')->delete($document->toll_file_path);
+                }
+                if ($document->email_file_path) {
+                    Storage::disk('public')->delete($document->email_file_path);
+                }
+            }
+
+            // The actual records will be deleted by the database cascade
+            $claim->delete();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     //////////////////////////////////////////////////////////////////
@@ -331,29 +432,25 @@ class ClaimService
 
     //////////////////////////////////////////////////////////////////
 
-    public function canReviewClaim(User $user, Claim $claim)
+    public function canReviewClaim(User $user, Claim $claim): bool
     {
-        Log::debug('Checking if user can review claim', [
-            'user_id' => $user->id,
-            'user_role' => $user->role->name,
-            'claim_id' => $claim->id,
-            'claim_status' => $claim->status
-        ]);
+        // If claim is not in submitted status, no one can review
+        if ($claim->status === Claim::STATUS_DONE || $claim->status === Claim::STATUS_REJECTED) {
+            return false;
+        }
 
-        $canReview = match ($user->role->name) {
-            'Admin' => in_array($claim->status, [Claim::STATUS_SUBMITTED, Claim::STATUS_APPROVED_ADMIN]),
-            'HR' => $claim->status === Claim::STATUS_APPROVED_DATUK,
-            'Finance' => in_array($claim->status, [Claim::STATUS_APPROVED_HR, Claim::STATUS_APPROVED_FINANCE]),
+        // Get user's role name
+        $roleName = $user->role->name;
+
+        // Define the review flow
+        return match ($claim->status) {
+            Claim::STATUS_SUBMITTED => $roleName === 'Admin',
+            Claim::STATUS_APPROVED_ADMIN => $roleName === 'Admin',
+            Claim::STATUS_APPROVED_DATUK => $roleName === 'HR',
+            Claim::STATUS_APPROVED_HR => $roleName === 'Finance',
+            Claim::STATUS_DONE => false,
             default => false
         };
-
-        Log::info('Review permission check result', [
-            'user_id' => $user->id,
-            'claim_id' => $claim->id,
-            'can_review' => $canReview
-        ]);
-
-        return $canReview;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -373,19 +470,23 @@ class ClaimService
 
             switch ($user->role->name) {
                 case 'Admin':
-                    if ($claim->status === Claim::STATUS_SUBMITTED) {
-                        $claim->status = Claim::STATUS_APPROVED_ADMIN;
-                        $claim->reviewer_id = $user->id;
-                    } elseif ($claim->status === Claim::STATUS_APPROVED_ADMIN) {
-                        $claim->status = Claim::STATUS_APPROVED_DATUK;
-                        $nextReviewer = User::whereHas('role', function($query) {
-                            $query->where('id', self::ROLE_ID_HR);
-                        })->first();
+                    // Admin can handle both SUBMITTED and APPROVED_ADMIN status
+                    if ($claim->status === Claim::STATUS_SUBMITTED || $claim->status === Claim::STATUS_APPROVED_ADMIN) {
+                        if ($claim->status === Claim::STATUS_SUBMITTED) {
+                            $claim->status = Claim::STATUS_APPROVED_ADMIN;
+                        } else {
+                            $claim->status = Claim::STATUS_APPROVED_DATUK;
+                            // Get HR as next reviewer after Admin approves to Datuk
+                            $nextReviewer = User::whereHas('role', function($query) {
+                                $query->where('id', self::ROLE_ID_HR);
+                            })->first();
+                        }
                     }
                     break;
                 case 'HR':
                     if ($claim->status === Claim::STATUS_APPROVED_DATUK) {
                         $claim->status = Claim::STATUS_APPROVED_HR;
+                        // Get Finance as next reviewer
                         $nextReviewer = User::whereHas('role', function($query) {
                             $query->where('id', self::ROLE_ID_FINANCE);
                         })->first();
@@ -394,16 +495,10 @@ class ClaimService
                 case 'Finance':
                     if ($claim->status === Claim::STATUS_APPROVED_HR) {
                         $claim->status = Claim::STATUS_APPROVED_FINANCE;
-                    } elseif ($claim->status === Claim::STATUS_APPROVED_FINANCE) {
                         $claim->status = Claim::STATUS_DONE;
+                        $nextReviewer = null; // No next reviewer needed
                     }
                     break;
-                default:
-                    Log::warning('Unauthorized role attempting to approve claim', [
-                        'user_role' => $user->role->name,
-                        'claim_id' => $claim->id
-                    ]);
-                    return $claim;
             }
 
             if ($nextReviewer) {

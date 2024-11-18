@@ -71,7 +71,7 @@
     <div class="flex justify-end space-x-3">
         <button type="button" 
                 id="next-step-button"
-                onclick="window.nextStep(1)"
+                onclick="window.claimForm.nextStep(1)"
                 class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
             Next Step
             <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -58,9 +58,9 @@ export const MARKER_COLORS = [
 ];
 
 // Add constants for distance calculations
-export const RATE_PER_KM = 0.80; // RM per kilometer
+export const RATE_PER_KM = 0.60; // RM per kilometer
 export const MIN_DISTANCE = 0; // Minimum distance in km
-export const MAX_DISTANCE = 1000; // Maximum distance in km
+export const MAX_DISTANCE = 5000; // Maximum distance in km
 
 // Add constants for map markers
 export const MARKER_ICONS = {

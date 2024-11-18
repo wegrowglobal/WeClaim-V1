@@ -60,7 +60,6 @@
     <div class="flex gap-3">
         <button type="button" 
                 id="add-location-btn"
-                data-action="add-location"
                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
             <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -73,25 +72,7 @@
     <div class="space-y-4 rounded-lg overflow-hidden">
         <div class="relative">
             <div id="map" 
-                 class="h-[400px] w-full rounded-lg shadow-sm border border-gray-100"
-                 data-center-lat="3.140853"
-                 data-center-lng="101.693207"
-                 data-zoom="12">
-            </div>
-            <!-- Map Loading Overlay (Updated positioning) -->
-            <div id="map-loading-overlay" 
-                 class="hidden absolute inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center">
-                <div class="bg-white rounded-lg p-4 shadow-lg flex items-center space-x-3">
-                    <div class="relative">
-                        <!-- Outer circle -->
-                        <div class="w-6 h-6 border-2 border-indigo-600/20 rounded-full"></div>
-                        <!-- Inner spinning circle -->
-                        <div class="absolute top-0 left-0 w-6 h-6">
-                            <div class="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                    </div>
-                    <span class="text-gray-900 font-medium text-sm">Updating Route...</span>
-                </div>
+                 class="h-[400px] w-full rounded-lg shadow-sm border border-gray-100">
             </div>
         </div>
         
@@ -165,7 +146,7 @@
 <!-- Action Buttons -->
 <div class="px-6 flex justify-between">
     <button type="button" 
-            onclick="window.previousStep(2)"
+            onclick="window.claimForm.previousStep(2)"
             class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
@@ -175,7 +156,7 @@
 
     <button type="button" 
             id="next-step-button"
-            onclick="window.nextStep(2)"
+            onclick="window.claimForm.nextStep(2)"
             class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
         Next Step
         <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

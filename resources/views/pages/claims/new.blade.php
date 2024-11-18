@@ -4,7 +4,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <!-- Main Container -->
-<div class="min-h-screen">
+<div>
 
     <!-- Content Area -->
     <div class="py-6">
@@ -13,8 +13,12 @@
             <div class="animate-slide-in">
                 <div class="flex items-center justify-between mb-14">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">Submit New Claim</h1>
-                        <p class="text-gray-600 mt-1">Create a new petrol claim request</p>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ isset($resubmitClaim) ? 'Resubmit Claim' : 'Submit New Claim' }}
+                        </h1>
+                        <p class="text-gray-600 mt-1">
+                            {{ isset($resubmitClaim) ? 'Update and resubmit your rejected claim' : 'Create a new petrol claim request' }}
+                        </p>
                     </div>
                     <div class="flex gap-2">
                         <button type="button" 
@@ -35,6 +39,16 @@
                     </div>
                 </div>
             </div>
+
+            @if(isset($resubmitClaim))
+                <script>
+                    window.resubmitClaimData = @json([
+                        'claim' => $resubmitClaim,
+                        'locations' => $resubmitClaim->locations,
+                        'documents' => $resubmitClaim->documents
+                    ]);
+                </script>
+            @endif
 
             @if(isset($currentStep))
                 <!-- Progress Steps Container -->
@@ -67,7 +81,7 @@
 @push('scripts')
     
     {{-- Add your application scripts --}}
-    @vite(['resources/js/claim-form.js', 'resources/js/claim-map.js'])
+    @vite(['resources/js/claim-form.js', 'resources/js/maps/claim-map.js'])
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {

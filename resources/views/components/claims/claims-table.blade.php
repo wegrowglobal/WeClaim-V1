@@ -21,8 +21,8 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table id="claimsTable" class="min-w-full divide-y divide-gray-200 text-xs">
-            <thead>
+        <table class="min-w-full divide-y divide-gray-200" id="claimsTable">
+            <thead class="text-xs bg-gray-50">
                 <tr>
                     <th scope="col" class="w-16 px-3 py-2 text-left text-gray-500 font-medium" data-sort="id">
                         <div class="flex items-center gap-1 cursor-pointer">
@@ -30,11 +30,6 @@
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    @if(Auth::user()->role->name === 'Admin' || Auth::user()->role->name === 'Finance')
-                    <th scope="col" class="w-10 px-3 py-2 text-left text-gray-500 font-medium">
-                        <span class="sr-only">Export</span>
-                    </th>
-                    @endif
                     <th scope="col" class="w-24 px-3 py-2 text-left text-gray-500 font-medium" data-sort="submitted">
                         <div class="flex items-center gap-1 cursor-pointer">
                             Date
@@ -70,56 +65,29 @@
                     </th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200">
+            <tbody class="divide-y divide-gray-200 bg-white">
                 @foreach ($claims as $claim)
-                    <tr class="hover:bg-gray-50/50 transition-colors duration-200">
-
-                        <!-- ID -->
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-600">{{ $claim->id }}</td>
-                        @if(Auth::user()->role->name === 'Admin' || Auth::user()->role->name === 'Finance')
-
-                        <!-- Export -->
-                        <td class="px-4 py-3 whitespace-nowrap">
-                            <button type="submit" class="text-green-600 hover:text-green-900">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                </svg>
-                            </button>
-                        </td>
-                        @endif
-
-                        <!-- Date -->
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-600">
-                            {{ $claim->submitted_at->format('d/m/y') }}
-                        </td>
-
-                        <!-- By -->
-                        <td class="px-4 py-3 whitespace-nowrap">
+                    <tr class="text-xs hover:bg-gray-50/50">
+                        <td class="px-4 py-3 text-gray-600">{{ $claim->id }}</td>
+                        <td class="px-4 py-3 text-gray-600">{{ $claim->submitted_at->format('d/m/y') }}</td>
+                        <td class="px-4 py-3">
                             <div class="flex items-center gap-2">
-                                <div class="h-6 w-6 rounded-full flex items-center justify-center text-white text-xs" 
+                                <div class="h-6 w-6 rounded-full flex items-center justify-center text-white text-xs"
                                      style="background-color: {{ '#' . substr(md5($claim->user->first_name), 0, 6) }}">
                                     {{ strtoupper(substr($claim->user->first_name, 0, 1)) }}
                                 </div>
-                                <span class="hidden sm:inline text-gray-600">{{ $claim->user->first_name }}</span>
+                                <span class="text-gray-600">{{ $claim->user->first_name }}</span>
                             </div>
                         </td>
-
-                        <!-- Title -->
                         <td class="px-4 py-3">
-                            <div class="max-w-[150px] truncate text-gray-600">{{ $claim->title }}</div>
+                            <div class="max-w-[250px] truncate text-gray-600">{{ $claim->title }}</div>
                         </td>
-
-                        <!-- Period -->
                         <td class="px-4 py-3 whitespace-nowrap text-gray-600">
                             {{ $claim->date_from->format('d/m/y') }} - {{ $claim->date_to->format('d/m/y') }}
                         </td>
-
-                        <!-- Status -->
                         <td class="px-4 py-3 whitespace-nowrap">
                             <x-status-badge :status="$claim->status" />
                         </td>
-
-                        <!-- Actions -->
                         <td class="px-4 py-3 whitespace-nowrap text-right">
                             @if ($actions === 'approval')
                                 @if ($claimService->canReviewClaim(Auth::user(), $claim))
@@ -128,12 +96,26 @@
                                         Review
                                     </a>
                                 @else
-                                    <span class="text-xs text-gray-500">Pending</span>
+                                    <span class="text-xs text-gray-500">
+                                        @switch($claim->status)
+                                            @case(Claim::STATUS_DONE)
+                                                Completed
+                                                @break
+                                            @case(Claim::STATUS_REJECTED)
+                                                Rejected
+                                                @break
+                                            @case(Claim::STATUS_APPROVED_FINANCE)
+                                                Ready for Payment
+                                                @break
+                                            @default
+                                                Pending
+                                        @endswitch
+                                    </span>
                                 @endif
                             @elseif ($actions === 'dashboard')
                                 <a href="{{ route('claims.view', $claim->id) }}" 
                                    class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
-                                    View
+                                    View Details
                                 </a>
                             @endif
                         </td>
@@ -143,3 +125,15 @@
         </table>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Initialize sorting functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure the filter.js is loaded
+        if (typeof initializeTableSorting === 'undefined') {
+            console.error('Table sorting functionality not loaded');
+        }
+    });
+</script>
+@endpush

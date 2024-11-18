@@ -1,4 +1,4 @@
-import { LocationManager } from './claim-map.js';
+import { ClaimMap } from './maps/claim-map.js';
 
 class ClaimForm {
     constructor() {
@@ -8,10 +8,32 @@ class ClaimForm {
         this.csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         this.draftData = this.loadDraftData();
 
+        // Bind methods to this instance
+        this.nextStep = this.nextStep.bind(this);
+        this.previousStep = this.previousStep.bind(this);
+        this.resetForm = this.resetForm.bind(this);
+        this.saveCurrentStep = this.saveCurrentStep.bind(this);
+
+        // Initialize the instance
+        this.init();
+    }
+
+    async init() {
+        // Set up the global instance
+        window.claimForm = {
+            nextStep: this.nextStep,
+            previousStep: this.previousStep,
+            resetForm: this.resetForm,
+            saveCurrentStep: this.saveCurrentStep
+        };
+
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            window.claimMap = new ClaimMap();
+            window.claimMap.init();
+        }
+
         this.bindEvents();
-        window.nextStep = this.nextStep.bind(this);
-        window.previousStep = this.previousStep.bind(this);
-        window.resetClaimForm = this.resetForm.bind(this);
         this.verifyDraftData();
     }
 
@@ -55,6 +77,8 @@ class ClaimForm {
     }
 
     populateStep1(data) {
+        console.log('populateStep1 called with data:', data);
+
         if (data.claim_company) {
             document.getElementById('claim_company').value = data.claim_company;
         }
@@ -70,12 +94,52 @@ class ClaimForm {
     }
 
     populateStep2(data) {
-        if (this.locationManager && data.locations) {
-            this.locationManager.loadSavedData();
+        console.log('populateStep2 called with data:', data);
+        
+        if (!window.claimMap) {
+            console.warn('Map not initialized');
+            return;
         }
+    
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('map-loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('hidden');
+        }
+    
+        // Wait for map initialization
+        const checkMapAndPopulate = () => {
+            console.log('Checking map initialization...');
+            if (window.claimMap.initialized) {
+                console.log('Map is initialized');
+                
+                // Check if there are any location inputs
+                const locationInputs = document.querySelectorAll('.location-input');
+                if (locationInputs.length === 0) {
+                    console.log('No location inputs found, adding initial inputs');
+                    window.claimMap.addInitialLocationInputs();
+                } else {
+                    console.log('Location inputs already exist, loading saved data');
+                    window.claimMap.loadSavedData();
+                }
+    
+                // Hide loading overlay after a short delay
+                setTimeout(() => {
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('hidden');
+                    }
+                }, 500);
+            } else {
+                console.log('Map not initialized yet, retrying...');
+                setTimeout(checkMapAndPopulate, 100);
+            }
+        };
+    
+        checkMapAndPopulate();
     }
 
     populateStep3(data) {
+        console.log('populateStep3 called with data:', data);
         // Get the elements
         const totalDistanceEl = document.querySelector('[data-summary="distance"]');
         const petrolClaimEl = document.querySelector('[data-summary="petrol"]');
@@ -248,94 +312,311 @@ class ClaimForm {
     async resetForm(e) {
         if (e) e.preventDefault();
         
-        try {
-            const response = await fetch('/claims/reset-session', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': this.csrfToken,
-                    'Content-Type': 'application/json',
+        // Show confirmation dialog first
+        const result = await Swal.fire({
+            title: 'Reset Form?',
+            text: 'This will clear all entered data. This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#DC2626',
+            cancelButtonColor: '#4F46E5',
+            confirmButtonText: 'Reset form',
+            cancelButtonText: 'Keep editing',
+            reverseButtons: true,
+            customClass: {
+                popup: 'rounded-lg shadow-xl border border-gray-200',
+                title: 'text-xl font-medium text-gray-900',
+                htmlContainer: 'text-base text-gray-600',
+                confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
+                cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
+            },
+            buttonsStyling: false
+        });
+
+        if (result.isConfirmed) {
+            const funnyMessages = [
+                "Unleashing the form-eating gremlins...",
+                "Sending your data on a one-way trip to the void...",
+                "Performing a magic trick: Watch your inputs disappear!",
+                "Initiating the great form purge of 2024...",
+                "Calling in the data demolition crew..."
+            ];
+
+            let currentMessageIndex = 0;
+
+            // Show loading state with timer
+            const loadingAlert = Swal.fire({
+                title: '<div class="flex items-center space-x-3"><div class="p-2 bg-indigo-50 rounded-lg"><svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></div><span>Resetting Form</span></div>',
+                html: `<p class="text-gray-600">${funnyMessages[0]}</p>`,
+                allowOutsideClick: false,
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                customClass: {
+                    popup: 'rounded-lg shadow-xl border border-gray-200',
+                    title: 'text-xl font-medium text-gray-900 !flex !justify-center',
+                    htmlContainer: 'text-base text-center',
+                    timerProgressBar: 'bg-indigo-600'
                 },
+                didOpen: () => {
+                    Swal.showLoading();
+                    const messageInterval = setInterval(() => {
+                        currentMessageIndex = (currentMessageIndex + 1) % funnyMessages.length;
+                        const content = document.querySelector('.swal2-html-container');
+                        if (content) {
+                            content.innerHTML = `<p class="text-gray-600">${funnyMessages[currentMessageIndex]}</p>`;
+                        }
+                    }, 3000);
+
+                    // Store the interval ID
+                    Swal.messageInterval = messageInterval;
+                },
+                willClose: () => {
+                    clearInterval(Swal.messageInterval);
+                }
             });
 
-            if (!response.ok) throw new Error('Failed to reset form');
+            // Perform reset operations after delay
+            setTimeout(async () => {
+                try {
+                    // Clear all stored data
+                    localStorage.removeItem('claimFormData');
+                    localStorage.removeItem('draftData');
+                    sessionStorage.clear();
+                    
+                    // Clear the draft data input
+                    const draftDataInput = document.getElementById('draftData');
+                    if (draftDataInput) {
+                        draftDataInput.value = '{}';
+                    }
 
-            window.location.href = '/claims/new?step=1';
-        } catch (error) {
-            console.error('Error resetting form:', error);
+                    // Clear map data if exists
+                    if (window.claimMap && typeof window.claimMap.clearMapData === 'function') {
+                        window.claimMap.clearMapData();
+                    }
+
+                    // Make API call to clear server-side session
+                    const response = await fetch('/claims/reset-session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to reset session');
+                    }
+
+                    // Wait for loading animation to complete
+                    await loadingAlert;
+
+                    // Show success message
+                    await Swal.fire({
+                        title: '<div class="flex items-center space-x-3"><div class="p-2 bg-green-50 rounded-lg"><svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></div><span>Form Reset Successfully</span></div>',
+                        html: '<p class="text-gray-600">Preparing a new claim form...</p>',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        customClass: {
+                            popup: 'rounded-lg shadow-xl border border-gray-200',
+                            title: 'text-xl font-medium text-gray-900 !flex !justify-center',
+                            htmlContainer: 'text-base text-center'
+                        }
+                    });
+
+                    // Redirect to step 1
+                    window.location.href = '/claims/new?step=1&draft_data={}';
+                } catch (error) {
+                    console.error('Error resetting form:', error);
+                    Swal.fire({
+                        title: '<div class="flex items-center space-x-3"><div class="p-2 bg-red-50 rounded-lg"><svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span>Error</span></div>',
+                        html: '<p class="text-gray-600">Failed to reset form. Redirecting anyway...</p>',
+                        icon: 'error',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        customClass: {
+                            popup: 'rounded-lg shadow-xl border border-gray-200',
+                            title: 'text-xl font-medium text-gray-900 !flex !justify-center',
+                            htmlContainer: 'text-base text-center'
+                        }
+                    });
+                    window.location.href = '/claims/new?step=1&draft_data={}';
+                }
+            }, 15000); // Wait for the full animation duration
         }
     }
 
     async handleSubmit(e) {
         e.preventDefault();
         
-        // Load current draft data from hidden input
+        console.group('Claim Form Submission Debug');
+        
+        // Get form and draft data
+        const form = document.getElementById('claimForm');
+        const formData = new FormData(form);
         const draftDataInput = document.getElementById('draftData');
         let draftData = {};
+        
         try {
             draftData = JSON.parse(draftDataInput?.value || '{}');
-            console.log('Loaded draft data from input:', draftData);
+            console.log('Parsed Draft Data:', draftData);
         } catch (error) {
             console.error('Error parsing draft data:', error);
         }
 
-        // Get current form data
-        const form = document.getElementById('claimForm');
-        const formData = new FormData(form);
-        
-        // Get segments data
-        const segmentsData = document.getElementById('segments-data')?.value || '[]';
-        let parsedSegments = [];
+        // Get segments data and locations
+        const segmentsDataElement = document.getElementById('segments-data');
+        let locations = [];
         try {
-            parsedSegments = JSON.parse(segmentsData);
+            const parsedSegments = JSON.parse(segmentsDataElement?.value || '[]');
+            console.log('Parsed Segments Data:', parsedSegments);
+            
+            locations = parsedSegments.map(segment => ({
+                from_location: segment.from_location,
+                to_location: segment.to_location,
+                distance: parseFloat(segment.distance),
+                order: segment.order
+            }));
         } catch (error) {
             console.error('Error parsing segments:', error);
         }
 
-        // Merge draft data with current form data
-        const mergedData = {
-            // Step 1 data (from draft)
-            claim_company: draftData.claim_company || formData.get('claim_company') || '',
-            date_from: draftData.date_from || formData.get('date_from') || '',
-            date_to: draftData.date_to || formData.get('date_to') || '',
-            remarks: draftData.remarks || formData.get('remarks') || '',
-            
-            // Step 2 data (from current form or draft)
-            total_distance: formData.get('total_distance') || draftData.total_distance || '0',
-            total_cost: formData.get('total_cost') || draftData.total_cost || '0',
-            
-            // Status and user data
-            status: 'draft',
-            user_id: document.querySelector('meta[name="user-id"]')?.content
+        // Get total distance and cost from draft data
+        const totalDistance = draftData.total_distance || '0';
+        const totalCost = draftData.total_cost || '0';
+
+        console.log('Distance and Cost:', {
+            totalDistance,
+            totalCost
+        });
+
+        // Prepare the main claim data
+        const claimData = {
+            claim_company: formData.get('claim_company') || draftData.claim_company,
+            date_from: formData.get('date_from') || draftData.date_from,
+            date_to: formData.get('date_to') || draftData.date_to,
+            remarks: formData.get('remarks') || draftData.remarks,
+            total_distance: totalDistance,
+            petrol_amount: totalCost,
+            toll_amount: formData.get('toll_amount') || '0',
+            locations: locations,
+            status: 'Submitted',
+            title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
+            claim_type: 'Petrol',
         };
 
-        console.log('Merged data:', mergedData);
+        console.log('Final Claim Data:', claimData);
 
-        // Build debug data structure
-        const debugData = {
-            claim: mergedData,
-            locations: parsedSegments,
-            segments_data: parsedSegments,
-            documents: {
-                toll_receipt: {
-                    file: document.getElementById('toll_report')?.files[0],
-                    filename: document.getElementById('toll_report')?.files[0]?.name || '',
-                    amount: document.getElementById('toll_amount')?.value || '0'
-                },
-                approval_email: {
-                    file: document.getElementById('email_report')?.files[0],
-                    filename: document.getElementById('email_report')?.files[0]?.name || ''
-                }
-            },
-            raw: {
-                draftData: draftData,
-                currentFormData: Object.fromEntries(formData),
-                segmentsData: parsedSegments
+        // Create the final form data for submission
+        const submitFormData = new FormData();
+        
+        // Add claim data
+        Object.entries(claimData).forEach(([key, value]) => {
+            if (key === 'locations') {
+                submitFormData.append(key, JSON.stringify(value));
+            } else {
+                // Ensure we're sending strings and removing any whitespace
+                const cleanValue = typeof value === 'string' ? 
+                    value.trim() : 
+                    String(value).trim();
+                submitFormData.append(key, cleanValue);
             }
-        };
+        });
 
-        console.log('Final debug data:', debugData);
-        this.showDebugModal(debugData);
-        return false;
+        // Add files if they exist
+        const tollFile = document.getElementById('toll_report')?.files[0];
+        const emailFile = document.getElementById('email_report')?.files[0];
+        
+        if (tollFile) {
+            submitFormData.append('toll_file', tollFile);
+        }
+        if (emailFile) {
+            submitFormData.append('email_file', emailFile);
+        }
+
+        // Log the final FormData entries
+        console.log('Final FormData entries:');
+        for (let pair of submitFormData.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+
+        console.groupEnd();
+
+    // Show loading state
+    const submitButton = document.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.disabled = true;
+    submitButton.innerHTML = `
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Submitting...
+    `;
+
+        try {
+            console.log('Submitting FormData:', Object.fromEntries(submitFormData.entries()));
+
+            const response = await fetch('/claims/store', {
+                method: 'POST',
+                body: submitFormData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json' // Add this to ensure JSON response
+                }
+            });
+
+            const result = await response.json();
+            console.log('Server Response:', result);
+
+            if (!response.ok) {
+                // Log validation errors if they exist
+                if (result.errors) {
+                    console.error('Validation Errors:', result.errors);
+                    throw new Error(Object.values(result.errors).flat().join('\n'));
+                }
+                throw new Error(result.message || 'Submission failed');
+            }
+
+            if (result.success) {
+                // Show success message
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Your claim has been submitted successfully.',
+                    icon: 'success',
+                    confirmButtonText: 'Go to Dashboard'
+                }).then((result) => {
+                    // Clear all stored data
+                    localStorage.removeItem('claimFormData');
+                    localStorage.removeItem('draftData');
+                    sessionStorage.clear();
+                    
+                    // Clear map data if exists
+                    if (window.claimMap) {
+                        window.claimMap.clearMapData();
+                    }
+
+                    if (result.isConfirmed) {
+                        window.location.href = '/claims/dashboard';
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error submitting claim:', error);
+            
+            // Show error message with more details
+            Swal.fire({
+                title: 'Error!',
+                text: error.message || 'Failed to submit claim. Please try again.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        } finally {
+            // Reset button state
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButtonText;
+        }
     }
 
     // Helper method to get location segments
@@ -567,7 +848,10 @@ class ClaimForm {
     }
 }
 
-// Initialize on DOMContentLoaded
+// Initialize single instance
 document.addEventListener('DOMContentLoaded', () => {
-    window.claimForm = new ClaimForm();
+    new ClaimForm();
 });
+
+// Export the class if needed
+export default ClaimForm;

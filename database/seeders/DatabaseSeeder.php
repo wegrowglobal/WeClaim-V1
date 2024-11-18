@@ -30,7 +30,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             DepartmentSeeder::class,
-            ClaimSeeder::class,
         ]);
 
         $adminRoleId = Role::where('name', 'SU')->value('id');

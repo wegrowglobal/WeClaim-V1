@@ -34,7 +34,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Authenticated Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth'])->group(function () {
     // Home Route
     Route::get('/', [ClaimController::class, 'home'])->name('home');
     
@@ -89,6 +89,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}', [ClaimController::class, 'show'])
             ->defaults('view', 'pages.claims.claim')
             ->name('claims.view');
+
+        // Resubmission Routes
+        Route::get('/{id}/resubmit', [ClaimController::class, 'resubmit'])->name('claims.resubmit');
+        Route::put('/{id}/resubmit', [ClaimController::class, 'processResubmission'])->name('claims.process-resubmission');
     });
 
     // Reports & Settings Routes

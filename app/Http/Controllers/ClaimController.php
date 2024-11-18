@@ -21,13 +21,12 @@ use Illuminate\Http\Request;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Http\JsonResponse;
+use App\Models\ClaimHistory;
 
 
 class ClaimController extends Controller
 {
-
-    //////////////////////////////////////////////////////////////////////////////////  
-
     protected $claimService;
     use AuthorizesRequests;
 
@@ -123,76 +122,49 @@ class ClaimController extends Controller
 
     //////////////////////////////////////////////////////////////////////////////////      
 
-    public function store(StoreClaimRequest $request)
+    public function store(StoreClaimRequest $request): JsonResponse
     {
         try {
-            Log::info('Starting claim submission', [
-                'user_id' => Auth::id(),
-                'draft_data' => session('claim_draft')
+            Log::info('Claim submission started', [
+                'user_id' => auth()->id(),
+                'data' => $request->except(['toll_file', 'email_file'])
             ]);
 
-            DB::transaction(function () use ($request) {
-                $validatedData = $request->validated();
-                $draftData = session('claim_draft', []);
-                $user = Auth::user();
+            $claim = $this->claimService->createClaim(
+                $request->validated(),
+                auth()->id()
+            );
 
-                if ($user instanceof User) {
-                    // Merge draft data with validated data
-                    $claimData = array_merge($draftData, $validatedData);
-                    
-                    // Create the claim
-                    $claim = $this->claimService->createOrUpdateClaim($claimData, $user, $request->claim_id);
-                    
-                    // Handle locations
-                    if (!empty($claimData['locations'])) {
-                        $locations = is_string($claimData['locations']) 
-                            ? json_decode($claimData['locations'], true) 
-                            : $claimData['locations'];
+            Log::info('Claim submitted successfully', ['claim_id' => $claim->id]);
 
-                        foreach ($locations as $index => $location) {
-                            ClaimLocation::create([
-                                'claim_id' => $claim->id,
-                                'order' => $index + 1,
-                                'from_location' => $location['from']['name'] ?? '',
-                                'from_latitude' => $location['from']['lat'] ?? null,
-                                'from_longitude' => $location['from']['lng'] ?? null,
-                                'to_location' => $location['to']['name'] ?? '',
-                                'to_latitude' => $location['to']['lat'] ?? null,
-                                'to_longitude' => $location['to']['lng'] ?? null,
-                                'distance' => $location['distance'] ?? 0
-                            ]);
-                        }
-                    }
+            // Clear all session data related to the claim
+            $request->session()->forget([
+                'claim_draft',
+                'claim_data',
+                'current_step',
+                'map_data',
+                // Add any other claim-related session keys
+            ]);
 
-                    // Handle file uploads
-                    $claim = $this->claimService->handleFileUploadsAndDocuments(
-                        $claim, 
-                        $request->file('toll_report'), 
-                        $request->file('email_report')
-                    );
+            return response()->json([
+                'success' => true,
+                'message' => 'Claim submitted successfully',
+                'claim_id' => $claim->id
+            ]);
 
-                    // Clear session data
-                    session()->forget([
-                        'claim_draft',
-                        'total_distance',
-                        'total_cost',
-                        'locations'
-                    ]);
-
-                    // Handle notifications
-                    $actionType = $request->claim_id ? 'resubmitted' : 'submitted';
-                    Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
-                    $this->notifyRoles($claim, $actionType);
-                }
-            });
-
-            return redirect()->route('claims.dashboard')->with('success', 'Claim submitted successfully!');
         } catch (\Exception $e) {
-            Log::error('Error submitting claim', [
+            Log::error('Claim submission failed:', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'data' => $request->except(['toll_file', 'email_file'])
             ]);
-            return redirect()->back()->with('error', 'An error occurred while submitting the claim. Please try again.');
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit claim: ' . $e->getMessage(),
+                'debug_message' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
         }
     }
 
@@ -1091,6 +1063,81 @@ class ClaimController extends Controller
         return view('components.forms.progress-steps', [
             'currentStep' => (int) $step
         ])->render();
+    }
+
+    public function resubmit(Claim $claim)
+    {
+        // Validate if user can resubmit
+        if ($claim->status !== Claim::STATUS_REJECTED || $claim->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // Pass the claim data to the form
+        return view('pages.claims.new', [
+            'currentStep' => 1,
+            'resubmitClaim' => $claim
+        ]);
+    }
+
+    public function processResubmission(Request $request, $id)
+    {
+        $claim = Claim::findOrFail($id);
+        
+        DB::transaction(function () use ($request, $claim) {
+            // Store current claim state in history
+            ClaimHistory::create([
+                'claim_id' => $claim->id,
+                'user_id' => auth()->id(),
+                'action' => 'rejected_version',
+                'details' => [
+                    'title' => $claim->title,
+                    'description' => $claim->description,
+                    'status' => $claim->status,
+                    'petrol_amount' => $claim->petrol_amount,
+                    'toll_amount' => $claim->toll_amount,
+                    'total_distance' => $claim->total_distance,
+                    'date_from' => $claim->date_from,
+                    'date_to' => $claim->date_to,
+                    'locations' => $claim->locations->toArray(),
+                    'reviews' => $claim->reviews->toArray(),
+                    'rejection_reason' => $claim->reviews()->where('status', Claim::STATUS_REJECTED)->latest()->first()?->remarks
+                ]
+            ]);
+
+            // Update claim with new data
+            $claim->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'claim_company' => $request->claim_company,
+                'petrol_amount' => $request->petrol_amount,
+                'toll_amount' => $request->toll_amount,
+                'total_distance' => $request->total_distance,
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to,
+                'status' => Claim::STATUS_SUBMITTED,
+                'submitted_at' => now()
+            ]);
+
+            // Clear old locations and create new ones
+            $claim->locations()->delete();
+            $locations = json_decode($request->locations, true);
+            foreach ($locations as $location) {
+                $claim->locations()->create($location);
+            }
+
+            // Create resubmission review record
+            $claim->reviews()->create([
+                'reviewer_id' => auth()->id(),
+                'remarks' => 'Claim resubmitted after rejection',
+                'department' => auth()->user()->role->name,
+                'review_order' => $claim->reviews()->count() + 1,
+                'status' => Claim::STATUS_SUBMITTED,
+                'reviewed_at' => now()
+            ]);
+        });
+
+        return redirect()->route('claims.dashboard')
+            ->with('success', 'Claim has been resubmitted successfully.');
     }
 
 }
