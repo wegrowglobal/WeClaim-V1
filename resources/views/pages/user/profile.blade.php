@@ -182,59 +182,64 @@
                     <p class="text-sm text-gray-500 mt-1">Your bank account details for reimbursements</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
                     <div class="form-group">
                         <label for="bank_name" class="block text-sm font-medium text-gray-600/80 mb-1">Bank Name</label>
-                        <input type="text" 
-                               id="bank_name" 
-                               name="bank_name" 
-                               value="{{ auth()->user()->bank_name }}"
-                               class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm"
-                               required>
+                        <select 
+                            id="bank_name" 
+                            name="bank_name" 
+                            class="form-select block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm h-[38px] px-3 py-2"
+                            required
+                        >
+                            <option value="Bank A" {{ auth()->user()->bankingInformation?->bank_name === 'Bank A' ? 'selected' : '' }}>Bank A</option>
+                            <option value="Bank B" {{ auth()->user()->bankingInformation?->bank_name === 'Bank B' ? 'selected' : '' }}>Bank B</option>
+                            <option value="Bank C" {{ auth()->user()->bankingInformation?->bank_name === 'Bank C' ? 'selected' : '' }}>Bank C</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
                         <label for="account_holder" class="block text-sm font-medium text-gray-600/80 mb-1">Account Holder Name</label>
-                        <input type="text" 
-                               id="account_holder" 
-                               name="account_holder" 
-                               value="{{ auth()->user()->account_holder }}"
-                               class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm"
-                               required>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="account_holder" 
+                                   name="account_holder" 
+                                   value="{{ auth()->user()->bankingInformation?->account_holder }}"
+                                   class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm pr-10"
+                                   required>
+                            <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="toggleVisibility('account_holder')">
+                                <svg id="showAccountHolderIcon" class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                </svg>
+                                <svg id="hideAccountHolderIcon" class="w-4 h-4 text-gray-600 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
+                                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group">
                         <label for="account_number" class="block text-sm font-medium text-gray-600/80 mb-1">Account Number</label>
-                        <input type="text" 
-                               id="account_number" 
-                               name="account_number" 
-                               value="{{ auth()->user()->account_number }}"
-                               class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm"
-                               required>
+                        <div class="relative">
+                            <input type="password" 
+                                   id="account_number" 
+                                   name="account_number" 
+                                   value="{{ auth()->user()->bankingInformation?->account_number }}"
+                                   class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm pr-10"
+                                   required>
+                            <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="toggleVisibility('account_number')">
+                                <svg id="showAccountNumberIcon" class="w-4 h-4 text-gray-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                </svg>
+                                <svg id="hideAccountNumberIcon" class="w-4 h-4 text-gray-600 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
+                                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="swift_code" class="block text-sm font-medium text-gray-600/80 mb-1">SWIFT/BIC Code</label>
-                        <input type="text" 
-                               id="swift_code" 
-                               name="swift_code" 
-                               value="{{ auth()->user()->swift_code }}"
-                               class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm"
-                               required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="bank_address" class="block text-sm font-medium text-gray-600/80 mb-1">Bank Branch Address</label>
-                    <textarea 
-                        id="bank_address" 
-                        name="bank_address" 
-                        rows="3"
-                        class="p-4 form-textarea block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm resize-none"
-                        required
-                    >{{ auth()->user()->bank_address }}</textarea>
                 </div>
             </div>
 
@@ -284,4 +289,22 @@
         </div>
     </div>
 @endif
+
+<script>
+    function toggleVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const showIcon = document.getElementById(`show${inputId.charAt(0).toUpperCase() + inputId.slice(1)}Icon`);
+        const hideIcon = document.getElementById(`hide${inputId.charAt(0).toUpperCase() + inputId.slice(1)}Icon`);
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            showIcon.classList.add('hidden');
+            hideIcon.classList.remove('hidden');
+        } else {
+            input.type = 'password';
+            showIcon.classList.remove('hidden');
+            hideIcon.classList.add('hidden');
+        }
+    }
+</script>
 @endsection

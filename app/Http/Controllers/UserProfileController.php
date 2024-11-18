@@ -47,13 +47,16 @@ class UserProfileController extends Controller
             'state' => 'required|string',
             'zip_code' => 'required|string',
             'country' => 'required|string',
-            'profile_picture' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
+            'bank_name' => 'required|string',
+            'account_holder' => 'required|string',
+            'account_number' => 'required|string',
+            'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
         $user = auth()->user();
 
+        // Handle profile picture
         if ($request->hasFile('profile_picture')) {
-            // Delete the old profile picture if it exists
             if ($user->profile_picture) {
                 Storage::disk('public')->delete($user->profile_picture);
             }
@@ -61,7 +64,18 @@ class UserProfileController extends Controller
             $validated['profile_picture'] = $path;
         }
 
-        $user->update($validated);
+        // Update user information (excluding banking details)
+        $user->update(collect($validated)->except(['bank_name', 'account_holder', 'account_number'])->toArray());
+
+        // Update or create banking information
+        $user->bankingInformation()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'bank_name' => $validated['bank_name'],
+                'account_holder' => $validated['account_holder'],
+                'account_number' => $validated['account_number']
+            ]
+        );
 
         return redirect()->route('profile')->with('success', 'Profile updated successfully');
     }

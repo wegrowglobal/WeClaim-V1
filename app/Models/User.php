@@ -21,8 +21,10 @@ class User extends Authenticatable
         'state',
         'zip_code',
         'country',
-        'profile_picture'
-
+        'profile_picture',
+        'bank_name',
+        'bank_account_holder',
+        'bank_account_number'
     ];
 
     protected $hidden = [
@@ -57,5 +59,10 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function bankingInformation()
+    {
+        return $this->hasOne(BankingInformation::class);
     }
 }
