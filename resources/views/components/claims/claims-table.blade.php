@@ -130,13 +130,5 @@
 </div>
 
 @push('scripts')
-<script>
-    // Initialize sorting functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ensure the filter.js is loaded
-        if (typeof initializeTableSorting === 'undefined') {
-            console.error('Table sorting functionality not loaded');
-        }
-    });
-</script>
+    @vite(['resources/js/filter.js'])
 @endpush
