@@ -20,6 +20,8 @@ export class BaseMap {
             editable: false,
             ...options
         };
+        this.directionsService = new google.maps.DirectionsService();
+        this.directionsRenderer = new google.maps.DirectionsRenderer();
     }
 
     async initialize() {

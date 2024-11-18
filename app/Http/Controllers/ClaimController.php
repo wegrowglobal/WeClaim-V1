@@ -236,7 +236,21 @@ class ClaimController extends Controller
 
             $reviews = $claim->reviews()->orderBy('department')->orderBy('review_order')->get();
             
-            return view('pages.claims.review', compact('claim', 'reviews'));
+            // Prepare location data for the map
+            $locationData = $claim->locations->map(function ($location) {
+                return [
+                    'order' => $location->order,
+                    'from_location' => $location->from_location,
+                    'to_location' => $location->to_location,
+                    'distance' => $location->distance,
+                    'from_latitude' => $location->from_latitude,
+                    'from_longitude' => $location->from_longitude,
+                    'to_latitude' => $location->to_latitude,
+                    'to_longitude' => $location->to_longitude,
+                ];
+            })->values()->all();
+
+            return view('pages.claims.review', compact('claim', 'reviews', 'locationData'));
         }
 
         Log::error('Invalid user instance during claim review');

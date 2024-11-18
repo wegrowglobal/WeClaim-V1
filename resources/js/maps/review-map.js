@@ -31,17 +31,24 @@ export class ReviewMap extends BaseMap {
         console.log('Initializing review map with locations:', this.locations);
         const mapContainer = document.getElementById('map');
         
+        if (!mapContainer) {
+            console.error('Map container not found');
+            return;
+        }
+        
         try {
             await this.initialize();
             
-            // Configure DirectionsRenderer with custom colors after initialization
-            this.directionsRenderer.setOptions({
-                polylineOptions: {
-                    strokeColor: MARKER_COLORS[0],
-                    strokeWeight: 4
-                },
-                suppressMarkers: true // We'll add our own custom markers
-            });
+            // Configure DirectionsRenderer with custom colors after successful initialization
+            if (this.directionsRenderer) {
+                this.directionsRenderer.setOptions({
+                    polylineOptions: {
+                        strokeColor: MARKER_COLORS[0],
+                        strokeWeight: 4
+                    },
+                    suppressMarkers: true // We'll add our own custom markers
+                });
+            }
             
             // Show loading state in map container
             Swal.fire({
@@ -60,8 +67,6 @@ export class ReviewMap extends BaseMap {
                 },
                 didOpen: () => {
                     Swal.showLoading();
-                    // Remove overflow hidden from body
-                    document.body.style.overflow = 'auto';
                 }
             });
 

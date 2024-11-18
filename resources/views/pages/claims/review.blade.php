@@ -24,6 +24,11 @@
             @include('components.claims.locations-table', ['locations' => $claim->locations])
         </div>
 
+        <!-- Map Container -->
+        <div class="relative">
+            <div id="map" class="h-[400px] w-full rounded-lg shadow-sm border border-gray-100"></div>
+        </div>
+
         <!-- Review Action -->
         @if($claim->status === Claim::STATUS_APPROVED_ADMIN && auth()->user()->role->name === 'Admin')
             <x-claims.admin-action :claim="$claim" />
@@ -40,7 +45,11 @@
             'from_location' => $location->from_location,
             'to_location' => $location->to_location,
             'order' => $location->order,
-            'distance' => $location->distance
+            'distance' => $location->distance,
+            'from_latitude' => $location->from_latitude,
+            'from_longitude' => $location->from_longitude,
+            'to_latitude' => $location->to_latitude,
+            'to_longitude' => $location->to_longitude,
         ])
         ->values()
         ->toArray();
@@ -51,4 +60,5 @@
 </script>
 
 @vite(['resources/js/maps/review-map.js'])
+
 @endsection
