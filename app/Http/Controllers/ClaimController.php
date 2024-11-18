@@ -25,6 +25,7 @@ use Illuminate\Http\JsonResponse;
 use App\Models\ClaimHistory;
 
 
+
 class ClaimController extends Controller
 {
     protected $claimService;
@@ -42,9 +43,6 @@ class ClaimController extends Controller
         Log::info('ClaimController instantiated', ['service' => get_class($claimService)]);
         $this->claimService = $claimService;
     }
-
-
-    //////////////////////////////////////////////////////////////////////////////////  
 
     public function index($view)
     {
@@ -74,8 +72,6 @@ class ClaimController extends Controller
             'claimService' => $this->claimService
         ]);
     }
-
-    //////////////////////////////////////////////////////////////////////////////////  
 
     public function show($id, $view)
     {
@@ -119,8 +115,6 @@ class ClaimController extends Controller
             'locationData' => $locationData
         ]);
     }
-
-    //////////////////////////////////////////////////////////////////////////////////      
 
     public function store(StoreClaimRequest $request): JsonResponse
     {
@@ -168,10 +162,6 @@ class ClaimController extends Controller
         }
     }
 
-
-    //////////////////////////////////////////////////////////////////////////////////  
-
-
     public function approvalScreen()
     {
         $userId = Auth::id();
@@ -204,9 +194,6 @@ class ClaimController extends Controller
             return redirect()->route('login');
         }
     }
-
-
-    //////////////////////////////////////////////////////////////////////////////////  
 
     public function reviewClaim($id)
     {
@@ -256,9 +243,6 @@ class ClaimController extends Controller
         Log::error('Invalid user instance during claim review');
         return route('login');
     }
-
-    //////////////////////////////////////////////////////////////////////////////////      
-
 
     public function updateClaim(Request $request, $id)
     {
@@ -327,8 +311,6 @@ class ClaimController extends Controller
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////////////
-
     private function notifyRoles(Claim $claim, string $actionType)
     {
         Log::info('Starting role notification process', [
@@ -391,10 +373,6 @@ class ClaimController extends Controller
         }
     }
 
-
-    //////////////////////////////////////////////////////////////////////////////////      
-
-
     public function approveClaim($id)
     {
         Log::info('Direct claim approval initiated', ['claim_id' => $id]);
@@ -424,8 +402,6 @@ class ClaimController extends Controller
             return route('login');
         }
     }
-
-    //////////////////////////////////////////////////////////////////////////////////  
 
     public function viewDocument(Claim $claim, $type, $filename)
     {
@@ -463,8 +439,6 @@ class ClaimController extends Controller
         return response()->file($filePath);
     }
 
-    //////////////////////////////////////////////////////////////////////////////////
-
     public function approval()
     {
         Log::info('Accessing approval overview page');
@@ -485,8 +459,6 @@ class ClaimController extends Controller
             'claimService' => $this->claimService,
         ]);
     }
-
-    //////////////////////////////////////////////////////////////////////////////////  
 
     public function dashboard()
     {
@@ -518,8 +490,6 @@ class ClaimController extends Controller
         ]);
     }
 
-    //////////////////////////////////////////////////////////////////////////////////  
-    
     public function sendToDatuk($id)
     {
         Log::info('Initiating send to Datuk process', ['claim_id' => $id]);
@@ -554,8 +524,6 @@ class ClaimController extends Controller
             return redirect()->route('claims.approval')->with('error', 'Failed to send claim to Datuk.');
         }
     }
-
-    ////////////////////////////////////////////////////////////////////////////////// 
 
     public function handleEmailAction(Request $request, $id)
     {
@@ -873,7 +841,6 @@ class ClaimController extends Controller
         }
     }
 
-    // Helper function to debug template placeholders
     private function debugTemplate($worksheet)
     {
         foreach ($worksheet->getRowIterator() as $row) {
@@ -891,7 +858,6 @@ class ClaimController extends Controller
         }
     }
 
-    // Get dashboard statistics for the home page
     public function getHomePageStatistics()
     {
         Log::info('Retrieving home page statistics');
@@ -951,7 +917,6 @@ class ClaimController extends Controller
         }
     }
 
-    // Display the home page with statistics
     public function home()
     {
         $statistics = $this->getHomePageStatistics();

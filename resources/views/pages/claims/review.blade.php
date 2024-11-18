@@ -59,6 +59,6 @@
     var claimLocations = @json($locationData);
 </script>
 
-@vite(['resources/js/maps/review-map.js'])
+@vite(['resources/js/maps/review-map.js', 'resources/js/claim-review.js'])
 
 @endsection

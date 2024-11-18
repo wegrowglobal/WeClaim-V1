@@ -13,6 +13,16 @@
     </div>
 
     <div class="space-y-4">
+        <!-- Remarks -->
+        <div class="space-y-2">
+            <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+            <textarea id="remarks" 
+                      name="remarks" 
+                      rows="3" 
+                      class="form-input p-4 block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm"
+                      placeholder="Enter your remarks"></textarea>
+        </div>
+
         @if($claim->status === Claim::STATUS_SUBMITTED)
             <div class="flex items-center gap-4">
                 <button 
@@ -32,7 +42,7 @@
                     Reject Claim
                 </button>
             </div>
-        @elseif($claim->status === laim::STATUS_APPROVED_ADMIN)
+        @elseif($claim->status === Claim::STATUS_APPROVED_ADMIN)
             <div class="flex items-center gap-4">
                 <button 
                     onclick="approveClaimDatuk({{ $claim->id }})"
