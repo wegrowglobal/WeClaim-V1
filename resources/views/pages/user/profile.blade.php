@@ -191,9 +191,12 @@
                             class="form-select block w-full rounded-lg border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 transition-all sm:text-sm h-[38px] px-3 py-2"
                             required
                         >
-                            <option value="Bank A" {{ auth()->user()->bankingInformation?->bank_name === 'Bank A' ? 'selected' : '' }}>Bank A</option>
-                            <option value="Bank B" {{ auth()->user()->bankingInformation?->bank_name === 'Bank B' ? 'selected' : '' }}>Bank B</option>
-                            <option value="Bank C" {{ auth()->user()->bankingInformation?->bank_name === 'Bank C' ? 'selected' : '' }}>Bank C</option>
+                            <option value="">Select a Bank</option>
+                            @foreach($banks as $bank)
+                                <option value="{{ $bank }}" {{ auth()->user()->bankingInformation?->bank_name === $bank ? 'selected' : '' }}>
+                                    {{ $bank }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 

@@ -4,33 +4,44 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Services\BankingInstitutionService;
 
 class UserProfileController extends Controller
 {
+    protected $bankingInstitutionService;
+
+    public function __construct(BankingInstitutionService $bankingInstitutionService)
+    {
+        $this->bankingInstitutionService = $bankingInstitutionService;
+    }
+
     //////////////////////////////////////////////////////////////////
 
     public function show()
     {
-        $stateOptions = [
-            'JHR' => 'Johor',
-            'KDH' => 'Kedah',
-            'KTN' => 'Kelantan',
-            'MLK' => 'Melaka',
-            'NSN' => 'Negeri Sembilan',
-            'PHG' => 'Pahang',
-            'PNG' => 'Penang',
-            'PRK' => 'Perak',
-            'PLS' => 'Perlis',
-            'SBH' => 'Sabah',
-            'SWK' => 'Sarawak',
-            'SGR' => 'Selangor',
-            'TRG' => 'Terengganu',
-            'KUL' => 'Kuala Lumpur',
-            'LBN' => 'Labuan',
-            'PJY' => 'Putrajaya'
-        ];
-
-        return view('pages.user.profile', compact('stateOptions'));
+        $banks = $this->bankingInstitutionService->getBankingInstitutions();
+        
+        return view('pages.user.profile', [
+            'banks' => $banks,
+            'stateOptions' => [
+                'JHR' => 'Johor',
+                'KDH' => 'Kedah',
+                'KTN' => 'Kelantan',
+                'MLK' => 'Melaka',
+                'NSN' => 'Negeri Sembilan',
+                'PHG' => 'Pahang',
+                'PNG' => 'Penang',
+                'PRK' => 'Perak',
+                'PLS' => 'Perlis',
+                'SBH' => 'Sabah',
+                'SWK' => 'Sarawak',
+                'SGR' => 'Selangor',
+                'TRG' => 'Terengganu',
+                'KUL' => 'Kuala Lumpur',
+                'LBN' => 'Labuan',
+                'PJY' => 'Putrajaya'
+            ]
+        ]);
     }
 
     //////////////////////////////////////////////////////////////////
