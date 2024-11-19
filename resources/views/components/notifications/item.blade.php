@@ -1,7 +1,7 @@
 @props(['notification'])
 
-<div class="group relative bg-white p-5 rounded-lg transition-all duration-200 hover:shadow-md {{ 
-    $notification->read_at ? 'opacity-75' : 'ring-1 ring-gray-200'
+<div class="group relative bg-white p-5 transition-all duration-200 hover:bg-gray-50 {{ 
+    $notification->read_at ? 'opacity-35' : 'ring-1 ring-gray-200'
 }}">
     <div class="flex items-start justify-between gap-4">
         <!-- Status Icon & Message -->
@@ -36,7 +36,7 @@
         <div class="flex items-center gap-2">
             @if($notification->data['is_for_claim_owner'] ?? true)
                 @if(($notification->data['action'] ?? null) === 'rejected')
-                    <a href=" "
+                    <a href="{{ route('claims.resubmit', $notification->data['claim_id']) }}"
                        class="btn-secondary text-xs">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 

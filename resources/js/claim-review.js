@@ -21,7 +21,7 @@ window.approveClaim = function(claimId) {
             .then(response => {
                 Swal.fire('Approved!', 'The claim has been approved.', 'success')
                     .then(() => {
-                        location.reload();
+                        window.location.href = '/claims/approval';
                     });
             })
             .catch(error => {

@@ -84,12 +84,17 @@ Route::middleware(['auth'])->group(function () {
             ->name('claims.mail.to.datuk');
         Route::get('/email-action/{id}', [ClaimController::class, 'handleEmailAction'])
             ->name('claims.email.action');
+
+        // Resubmission Routes
+        Route::get('/{claim}/resubmit', [ClaimController::class, 'resubmit'])->name('claims.resubmit');
+        Route::post('/{claim}/resubmit', [ClaimController::class, 'processResubmission'])
+            ->name('claims.process-resubmission');
             
         // View Claim
         Route::get('/{id}', [ClaimController::class, 'show'])
             ->defaults('view', 'pages.claims.claim')
             ->name('claims.view');
-            
+
         // Claim Review Actions
         Route::post('/{id}/update', [ClaimController::class, 'updateClaim'])->name('claims.update');
     });

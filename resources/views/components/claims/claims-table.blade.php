@@ -114,8 +114,8 @@
                                 @endif
                             @elseif ($actions === 'dashboard')
                                 @if ($claim->status === Claim::STATUS_REJECTED)
-                                    <a href=" "
-                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                    <a href="{{ route('claims.resubmit', $claim->id) }}"
+                                       class="text-xs font-medium text-red-600 hover:text-red-900">
                                         Resubmit
                                     </a>
                                 @else

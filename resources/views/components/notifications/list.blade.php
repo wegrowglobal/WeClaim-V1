@@ -2,7 +2,7 @@
 
 <div class="divide-y divide-gray-100">
     @forelse($notifications as $notification)
-        <div class="py-4 first:pt-0 last:pb-0">
+        <div class="first:pt-0 last:pb-0">
             <x-notifications.item :notification="$notification" />
         </div>
     @empty

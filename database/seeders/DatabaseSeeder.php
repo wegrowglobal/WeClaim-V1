@@ -7,11 +7,23 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\Department;
 use Illuminate\Support\Facades\Schema;
-
+use Illuminate\Support\Facades\Artisan;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Create storage directories if they don't exist
+        if (!file_exists(storage_path('app/public/claims/toll'))) {
+            mkdir(storage_path('app/public/claims/toll'), 0755, true);
+        }
+        if (!file_exists(storage_path('app/public/claims/email'))) {
+            mkdir(storage_path('app/public/claims/email'), 0755, true);
+        }
+
+        // Create a dummy PDF file to copy
+        $dummyPdfContent = '%PDF-1.4' . PHP_EOL . '%%EOF';
+        file_put_contents(storage_path('app/public/dummy.pdf'), $dummyPdfContent);
+
         // Disable foreign key checks
         Schema::disableForeignKeyConstraints();
 
@@ -30,39 +42,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             DepartmentSeeder::class,
+            UserSeeder::class,
+            ClaimSeeder::class,
         ]);
 
-        $adminRoleId = Role::where('name', 'SU')->value('id');
-        $staffRoleId = Role::where('name', 'Staff')->value('id');
-        $allDepartmentId = Department::where('name', 'All')->value('id');
-        $randomDepartmentId = Department::where('name', '!=', 'All')->inRandomOrder()->value('id');
-
-        if (is_null($allDepartmentId)) {
-            throw new \Exception('Department "All" not found in the departments table.');
+        // Create the symbolic link if it doesn't exist
+        if (!file_exists(public_path('storage'))) {
+            Artisan::call('storage:link');
         }
 
-        // Create admin user if not exists
-        User::firstOrCreate(
-            ['email' => 'admin@localhost'],
-            [
-                'first_name' => 'Admin',
-                'second_name' => 'Admin',
-                'password' => bcrypt('iCt@123./'),
-                'role_id' => $adminRoleId,
-                'department_id' => $allDepartmentId,
-            ]
-        );
-
-        // Create test user if not exists
-        User::firstOrCreate(
-            ['email' => 'ammar@wegrow-global.com'],
-            [
-                'first_name' => 'Ammar',
-                'second_name' => 'Hafiy',
-                'password' => bcrypt('080808'),
-                'role_id' => $staffRoleId,
-                'department_id' => $randomDepartmentId,
-            ]
-        );
     }
 }

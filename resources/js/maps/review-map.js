@@ -116,8 +116,17 @@ export class ReviewMap extends BaseMap {
                     travelMode: google.maps.TravelMode.DRIVING,
                     region: 'MY'
                 }, (result, status) => {
-                    if (status === 'OK') resolve(result);
-                    else reject(new Error(`Directions request failed: ${status}`));
+                    if (status === 'OK') {
+                        // Calculate all metrics at once
+                        const totals = this.routeCalculator.calculateTotals(result.routes[0].legs);
+                        
+                        // Update all UI elements synchronously
+                        this.updateAllMetrics(result.routes[0].legs, totals);
+                        
+                        resolve(result);
+                    } else {
+                        reject(new Error(`Directions request failed: ${status}`));
+                    }
                 });
             });
 
@@ -126,6 +135,32 @@ export class ReviewMap extends BaseMap {
             console.error('Error calculating route:', error);
             return null;
         }
+    }
+
+    updateAllMetrics(legs, totals) {
+        // Update segment details
+        const durationElements = document.querySelectorAll('.segment-detail');
+        legs.forEach((leg, index) => {
+            const segment = durationElements[index];
+            if (segment) {
+                const durationEl = segment.querySelector('[data-duration]');
+                const distanceEl = segment.querySelector('[data-distance]');
+                const costEl = segment.querySelector('[data-cost]');
+
+                if (durationEl) durationEl.textContent = this.routeCalculator.formatDuration(leg.duration.value);
+                if (distanceEl) distanceEl.textContent = `${(leg.distance.value / 1000).toFixed(2)} km`;
+                if (costEl) costEl.textContent = `RM ${((leg.distance.value / 1000) * this.routeCalculator.ratePerKm).toFixed(2)}`;
+            }
+        });
+
+        // Update totals
+        const totalDurationEl = document.getElementById('total-duration');
+        const totalDistanceEl = document.getElementById('total-distance');
+        const totalCostEl = document.getElementById('total-cost');
+
+        if (totalDurationEl) totalDurationEl.textContent = totals.duration;
+        if (totalDistanceEl) totalDistanceEl.textContent = totals.distance;
+        if (totalCostEl) totalCostEl.textContent = `RM ${totals.cost}`;
     }
 
     async renderMap(geocodingResults, routeData) {

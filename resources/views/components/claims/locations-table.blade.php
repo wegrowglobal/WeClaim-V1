@@ -35,7 +35,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Distance</p>
-                                    <p class="text-xs font-medium text-gray-900">{{ $location->distance }} km</p>
+                                    <p class="text-xs font-medium text-gray-900" data-distance>{{ $location->distance }} km</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -46,7 +46,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Duration</p>
-                                    <p class="text-xs font-medium text-gray-900">{{ $location->duration }}</p>
+                                    <p class="text-xs font-medium text-gray-900" data-duration>{{ $location->duration }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
@@ -57,7 +57,7 @@
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Cost</p>
-                                    <p class="text-xs font-medium text-gray-900">RM {{ number_format($location->distance * 0.60, 2) }}</p>
+                                    <p class="text-xs font-medium text-gray-900" data-cost>RM {{ number_format($location->distance * 0.60, 2) }}</p>
                                 </div>
                             </div>
                         </div>

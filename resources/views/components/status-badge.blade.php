@@ -41,6 +41,7 @@
             return match ($word) {
                 'hr' => 'HR',
                 'admin' => 'Admin',
+                'finance' => 'Finance',
                 default => ucfirst($word)
             };
         })
@@ -48,6 +49,8 @@
 
     if ($status === Claim::STATUS_APPROVED_ADMIN) {
         $statusText = 'Approved Admin';
+    } elseif ($status === Claim::STATUS_APPROVED_FINANCE) {
+        $statusText = 'Approved Finance';
     }
 @endphp
 

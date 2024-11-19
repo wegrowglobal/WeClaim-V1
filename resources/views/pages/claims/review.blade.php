@@ -30,11 +30,7 @@
         </div>
 
         <!-- Review Action -->
-        @if($claim->status === Claim::STATUS_APPROVED_ADMIN && auth()->user()->role->name === 'Admin')
-            <x-claims.admin-action :claim="$claim" />
-        @else
-            <x-claims.review-action :claim="$claim" />
-        @endif
+        <x-claims.review-action :claim="$claim" />
     </div>
 </div>
 

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\ClaimStatusNotification;
 
 class ClaimService
 {
@@ -688,6 +690,77 @@ class ClaimService
                 'trace' => $e->getTraceAsString()
             ]);
             throw $e;
+        }
+    }
+
+    public function handleResubmission(Claim $claim, array $data)
+    {
+        return DB::transaction(function () use ($claim, $data) {
+            // Get the previous non-rejected status
+            $previousStatus = $this->getPreviousNonRejectedStatus($claim) ?? Claim::STATUS_SUBMITTED;
+            
+            // Update claim with new data
+            $claim->update([
+                'description' => $data['description'],
+                'claim_company' => $data['claim_company'],
+                'petrol_amount' => $data['petrol_amount'],
+                'toll_amount' => $data['toll_amount'],
+                'total_distance' => $data['total_distance'],
+                'date_from' => $data['date_from'],
+                'date_to' => $data['date_to'],
+                'status' => $previousStatus,
+                'submitted_at' => now()
+            ]);
+
+            // Clear old locations and create new ones
+            $claim->locations()->delete();
+            $locations = json_decode($data['locations'], true);
+            foreach ($locations as $location) {
+                $claim->locations()->create($location);
+            }
+
+            // Create resubmission review record
+            $claim->reviews()->create([
+                'reviewer_id' => auth()->id(),
+                'remarks' => 'Claim resubmitted after rejection',
+                'department' => auth()->user()->role->name,
+                'review_order' => $claim->reviews()->count() + 1,
+                'status' => $previousStatus,
+                'reviewed_at' => now()
+            ]);
+
+            // Send notifications
+            $this->notifyRelevantUsers($claim, 'resubmitted');
+
+            return true;
+        });
+    }
+
+    private function notifyRelevantUsers(Claim $claim, string $action)
+    {
+        // Notify claim owner
+        Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $action));
+
+        // Determine who to notify based on the claim status
+        $roleToNotify = match ($claim->status) {
+            Claim::STATUS_SUBMITTED => 'Admin',
+            Claim::STATUS_APPROVED_ADMIN => 'Admin',
+            Claim::STATUS_APPROVED_DATUK => 'HR',
+            Claim::STATUS_APPROVED_HR => 'Finance',
+            default => null
+        };
+
+        if ($roleToNotify) {
+            $reviewers = User::whereHas('role', function($query) use ($roleToNotify) {
+                $query->where('name', $roleToNotify);
+            })->get();
+
+            Notification::send($reviewers, new ClaimStatusNotification(
+                $claim,
+                $claim->status,
+                'pending_review',
+                false
+            ));
         }
     }
 

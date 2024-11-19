@@ -1004,44 +1004,23 @@ class ClaimController extends Controller
     {
         // Validate if user can resubmit
         if ($claim->status !== Claim::STATUS_REJECTED || $claim->user_id !== auth()->id()) {
-            abort(403);
+            return redirect()->route('claims.dashboard')
+                ->with('error', 'You cannot resubmit this claim.');
         }
-
-        // Pass the claim data to the form
-        return view('pages.claims.new', [
-            'currentStep' => 1,
-            'resubmitClaim' => $claim
+    
+        return view('pages.claims.resubmit', [
+            'claim' => $claim,
+            'rejectionReason' => $claim->reviews()
+                ->where('status', Claim::STATUS_REJECTED)
+                ->latest()
+                ->first()?->remarks
         ]);
     }
 
-    public function processResubmission(Request $request, $id)
+    public function processResubmission(Request $request, Claim $claim)
     {
-        $claim = Claim::findOrFail($id);
-        
-        DB::transaction(function () use ($request, $claim) {
-            // Store current claim state in history
-            ClaimHistory::create([
-                'claim_id' => $claim->id,
-                'user_id' => auth()->id(),
-                'action' => 'rejected_version',
-                'details' => [
-                    'title' => $claim->title,
-                    'description' => $claim->description,
-                    'status' => $claim->status,
-                    'petrol_amount' => $claim->petrol_amount,
-                    'toll_amount' => $claim->toll_amount,
-                    'total_distance' => $claim->total_distance,
-                    'date_from' => $claim->date_from,
-                    'date_to' => $claim->date_to,
-                    'locations' => $claim->locations->toArray(),
-                    'reviews' => $claim->reviews->toArray(),
-                    'rejection_reason' => $claim->reviews()->where('status', Claim::STATUS_REJECTED)->latest()->first()?->remarks
-                ]
-            ]);
-
-            // Update claim with new data
-            $claim->update([
-                'title' => $request->title,
+        try {
+            $this->claimService->handleResubmission($claim, [
                 'description' => $request->description,
                 'claim_company' => $request->claim_company,
                 'petrol_amount' => $request->petrol_amount,
@@ -1049,30 +1028,27 @@ class ClaimController extends Controller
                 'total_distance' => $request->total_distance,
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to,
-                'status' => Claim::STATUS_SUBMITTED,
-                'submitted_at' => now()
+                'locations' => $request->locations
             ]);
 
-            // Clear old locations and create new ones
-            $claim->locations()->delete();
-            $locations = json_decode($request->locations, true);
-            foreach ($locations as $location) {
-                $claim->locations()->create($location);
-            }
-
-            // Create resubmission review record
-            $claim->reviews()->create([
-                'reviewer_id' => auth()->id(),
-                'remarks' => 'Claim resubmitted after rejection',
-                'department' => auth()->user()->role->name,
-                'review_order' => $claim->reviews()->count() + 1,
-                'status' => Claim::STATUS_SUBMITTED,
-                'reviewed_at' => now()
+            return response()->json([
+                'success' => true,
+                'message' => 'Claim resubmitted successfully'
             ]);
-        });
 
-        return redirect()->route('claims.dashboard')
-            ->with('success', 'Claim has been resubmitted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Claim resubmission failed:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'claim_id' => $claim->id
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to resubmit claim: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function cancelClaim(Claim $claim)

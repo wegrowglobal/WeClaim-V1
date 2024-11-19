@@ -52,7 +52,35 @@ export default class TableSorter {
     }
 
     sortTable(column) {
-        // Add your existing sorting logic here
+        const tbody = this.table.querySelector("tbody");
+        const rows = Array.from(tbody.querySelectorAll("tr"));
+        const currentDirection = this.sortDirection[column] || 'asc';
+        
+        rows.sort((a, b) => {
+            let aValue = a.querySelector(`td:nth-child(${this.getColumnIndex(column)})`).textContent.trim();
+            let bValue = b.querySelector(`td:nth-child(${this.getColumnIndex(column)})`).textContent.trim();
+            
+            if (column === 'status') {
+                aValue = this.statusPriority[aValue] || 999;
+                bValue = this.statusPriority[bValue] || 999;
+            }
+            
+            if (currentDirection === 'asc') {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+        
+        tbody.innerHTML = '';
+        rows.forEach(row => tbody.appendChild(row));
+        
+        this.sortDirection[column] = currentDirection === 'asc' ? 'desc' : 'asc';
+    }
+
+    getColumnIndex(column) {
+        const headers = Array.from(this.table.querySelectorAll('th'));
+        return headers.findIndex(header => header.dataset.sort === column) + 1;
     }
 
     updateSortIcons(clickedHeader) {
@@ -60,7 +88,12 @@ export default class TableSorter {
     }
 }
 
+// Add global initialization function
+window.initializeTableSorting = function() {
+    new TableSorter();
+};
+
 // Initialize when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new TableSorter();
+    window.initializeTableSorting();
 });
