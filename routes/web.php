@@ -72,7 +72,6 @@ Route::middleware(['auth'])->group(function () {
         // Claim Actions
         Route::post('/store', [ClaimController::class, 'store'])->name('claims.store');
         Route::get('/{id}/review', [ClaimController::class, 'reviewClaim'])->name('claims.review');
-        Route::post('/{id}', [ClaimController::class, 'updateClaim'])->name('claims.update');
         Route::post('/{claim}/export', [ClaimController::class, 'export'])->name('claims.export');
         Route::put('/{claim}/cancel', [ClaimController::class, 'cancelClaim'])->name('claims.cancel');
         
@@ -90,10 +89,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{id}', [ClaimController::class, 'show'])
             ->defaults('view', 'pages.claims.claim')
             ->name('claims.view');
-
-        // Resubmission Routes
-        Route::get('/{id}/resubmit', [ClaimController::class, 'resubmit'])->name('claims.resubmit');
-        Route::put('/{id}/resubmit', [ClaimController::class, 'processResubmission'])->name('claims.process-resubmission');
+            
+        // Claim Review Actions
+        Route::post('/{id}/update', [ClaimController::class, 'updateClaim'])->name('claims.update');
     });
 
     // Reports & Settings Routes

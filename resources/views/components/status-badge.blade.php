@@ -38,9 +38,17 @@
 
     $statusText = collect(explode('_', strtolower($status)))
         ->map(function($word) {
-            return $word === 'hr' ? 'HR' : ucfirst($word);
+            return match ($word) {
+                'hr' => 'HR',
+                'admin' => 'Admin',
+                default => ucfirst($word)
+            };
         })
         ->join(' ');
+
+    if ($status === Claim::STATUS_APPROVED_ADMIN) {
+        $statusText = 'Approved Admin';
+    }
 @endphp
 
 <span class="status-badge inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium {{ $colors[$status]['class'] ?? 'bg-gray-50 text-gray-700' }}">

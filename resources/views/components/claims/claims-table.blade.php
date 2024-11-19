@@ -113,10 +113,17 @@
                                     </span>
                                 @endif
                             @elseif ($actions === 'dashboard')
-                                <a href="{{ route('claims.view', $claim->id) }}" 
-                                   class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
-                                    View Details
-                                </a>
+                                @if ($claim->status === Claim::STATUS_REJECTED)
+                                    <a href=" "
+                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                        Resubmit
+                                    </a>
+                                @else
+                                    <a href="{{ route('claims.view', $claim->id) }}"
+                                       class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                        View Details
+                                    </a>
+                                @endif
                             @endif
                         </td>
                     </tr>

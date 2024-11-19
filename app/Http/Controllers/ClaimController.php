@@ -246,22 +246,16 @@ class ClaimController extends Controller
 
     public function updateClaim(Request $request, $id)
     {
-        Log::info('Starting claim update process', [
-            'claim_id' => $id,
-            'action' => $request->action
-        ]);
+        try {
+            $claim = Claim::findOrFail($id);
+            $user = Auth::user();
 
-        $claim = Claim::findOrFail($id);
-        $user = Auth::user();
+            if (!$user instanceof User) {
+                throw new \Exception('Invalid user instance');
+            }
 
-        if ($user instanceof User) {
             if (!$this->claimService->canReviewClaim($user, $claim)) {
-                Log::warning('Unauthorized claim update attempt', [
-                    'user_id' => $user->id,
-                    'claim_id' => $id,
-                    'user_role' => $user->role->name
-                ]);
-                return redirect()->route('claims.approval')->with('error', 'You do not have permission to review this claim.');
+                throw new \Exception('You do not have permission to review this claim.');
             }
 
             $request->validate([
@@ -270,12 +264,6 @@ class ClaimController extends Controller
             ]);
 
             DB::transaction(function () use ($request, $user, $claim) {
-                Log::info('Processing claim update', [
-                    'claim_id' => $claim->id,
-                    'action' => $request->action,
-                    'reviewer_id' => $user->id
-                ]);
-
                 if ($request->action === 'approve') {
                     $this->claimService->approveClaim($user, $claim);
                     $actionType = 'approved';
@@ -285,29 +273,27 @@ class ClaimController extends Controller
                 }
 
                 $this->claimService->storeRemarks($user, $claim, $request->remarks);
-
                 $claim->refresh();
-
-                Log::info('Sending claim update notifications', [
-                    'claim_id' => $claim->id,
-                    'action_type' => $actionType,
-                    'status' => $claim->status
-                ]);
-
+                
                 Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $actionType));
-
                 $this->notifyRoles($claim, $actionType);
             });
 
-            Log::info('Claim update completed successfully', [
-                'claim_id' => $claim->id,
-                'final_status' => $claim->status
+            return response()->json([
+                'success' => true,
+                'message' => 'Claim ' . $request->action . 'd successfully'
             ]);
 
-            return redirect()->route('claims.approval')->with('success', 'Claim ' . $request->action . ' successfully.');
-        } else {
-            Log::error('Invalid user instance during claim update');
-            return route('login');
+        } catch (\Exception $e) {
+            Log::error('Error updating claim', [
+                'claim_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
         }
     }
 
@@ -370,36 +356,6 @@ class ClaimController extends Controller
             foreach ($usersToNotify as $userToNotify) {
                 Notification::send($userToNotify, new ClaimStatusNotification($claim, $claim->status, $actionType, false));
             }
-        }
-    }
-
-    public function approveClaim($id)
-    {
-        Log::info('Direct claim approval initiated', ['claim_id' => $id]);
-
-        $user = Auth::user();
-        $claim = Claim::findOrFail($id);
-
-        if ($user instanceof User) {
-            if (!$this->claimService->canReviewClaim($user, $claim)) {
-                Log::warning('Unauthorized direct claim approval attempt', [
-                    'user_id' => $user->id,
-                    'claim_id' => $id,
-                    'user_role' => $user->role->name
-                ]);
-                return redirect()->route('claims.approval')->with('error', 'You do not have permission to approve this claim.');
-            }
-
-            $updatedClaim = $this->claimService->approveClaim($user, $claim);
-            Log::info('Claim approved successfully', [
-                'claim_id' => $id,
-                'new_status' => $updatedClaim->status
-            ]);
-
-            return redirect()->route('claims.approval')->with('success', 'Claim approved successfully.');
-        } else {
-            Log::error('Invalid user instance during direct claim approval');
-            return route('login');
         }
     }
 
