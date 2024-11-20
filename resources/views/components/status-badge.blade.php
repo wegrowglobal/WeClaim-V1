@@ -36,21 +36,16 @@
         ]
     ];
 
-    $statusText = collect(explode('_', strtolower($status)))
-        ->map(function($word) {
-            return match ($word) {
-                'hr' => 'HR',
-                'admin' => 'Admin',
-                'finance' => 'Finance',
-                default => ucfirst($word)
-            };
-        })
-        ->join(' ');
-
     if ($status === Claim::STATUS_APPROVED_ADMIN) {
         $statusText = 'Approved Admin';
     } elseif ($status === Claim::STATUS_APPROVED_FINANCE) {
         $statusText = 'Approved Finance';
+    } elseif ($status === Claim::STATUS_APPROVED_HR) {
+        $statusText = 'Approved HR';
+    } elseif ($status === Claim::STATUS_APPROVED_DATUK) {
+        $statusText = 'Approved Datuk';
+    } else {
+        $statusText = ucfirst(str_replace('_', ' ', strtolower($status)));
     }
 @endphp
 

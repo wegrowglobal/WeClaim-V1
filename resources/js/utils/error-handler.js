@@ -1,9 +1,11 @@
+import Logger from './logger.js';
+
 class ErrorHandler {
     static async handle(operation, context) {
         try {
             return await operation();
         } catch (error) {
-            console.error(`Error in ${context}:`, error);
+            Logger.error(`Error in ${context}`, error);
             
             // Show user-friendly error message
             Swal.fire({

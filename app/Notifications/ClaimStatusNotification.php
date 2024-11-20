@@ -99,6 +99,7 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
             'approved_by_datuk' => "Your claim #{$this->claim->id} has been approved by Datuk and sent to HR for review.",
             'resubmitted' => "Your claim #{$this->claim->id} has been resubmitted.",
             'submitted' => "Your claim #{$this->claim->id} has been submitted.",
+            'completed' => "Your claim #{$this->claim->id} has been marked as done by Finance.",
         ];
 
         return $messages[$this->action] ?? "Your claim #{$this->claim->id} status changed to {$statusFormatted}.";
@@ -113,6 +114,7 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
             'submitted' => "Claim #{$this->claim->id} has been submitted and requires your review.",
             'returned_from_datuk' => "Claim #{$this->claim->id} has been rejected by Datuk and requires your review.",
             'pending_review' => "Claim #{$this->claim->id} requires your review.",
+            'completed' => "Claim #{$this->claim->id} has been marked as done by Finance.",
         ];
 
         return $messages[$this->action] ?? "Claim #{$this->claim->id} status changed to {$statusFormatted}.";

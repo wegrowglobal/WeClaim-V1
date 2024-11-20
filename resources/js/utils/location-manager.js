@@ -3,9 +3,14 @@ export class LocationManager {
         this.MAX_WAYPOINTS = maxWaypoints;
         this.onDelete = null;
         this.routeColors = [
-            '#3B82F6', '#EF4444', '#22C55E', '#EAB308',
-            '#3B82F6', '#EF4444', '#22C55E', '#EAB308',
-            '#3B82F6', '#EF4444'
+            '#4285F4', // Google Blue
+            '#DB4437', // Google Red
+            '#F4B400', // Google Yellow
+            '#0F9D58', // Google Green
+            '#AB47BC', // Purple
+            '#00ACC1', // Cyan
+            '#FF7043', // Deep Orange
+            '#9E9E9E', // Grey
         ];
     }
 

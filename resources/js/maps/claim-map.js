@@ -18,7 +18,6 @@ export class ClaimMap extends BaseMap {
 
     async init() {
         if (this.initialized) {
-            console.log('Already initialized, skipping...');
             return;
         }
 
@@ -29,7 +28,6 @@ export class ClaimMap extends BaseMap {
             this.setupEventListeners();
             this.addInitialLocationInputs();
             this.initialized = true;
-            console.log('ClaimMap initialized');
             
             return true;
         } catch (error) {
@@ -40,7 +38,6 @@ export class ClaimMap extends BaseMap {
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners');
         const addButton = document.getElementById('add-location-btn');
         
         if (addButton) {
@@ -48,9 +45,7 @@ export class ClaimMap extends BaseMap {
                 e.preventDefault();
                 this.addLocationInput();
             };
-            console.log('Add button listener attached');
         } else {
-            console.warn('Add location button not found');
         }
     }
 
@@ -152,7 +147,7 @@ export class ClaimMap extends BaseMap {
             
             if (routeData) {
                 this.updateRouteDisplay(routeData);
-                this.updateSegmentInfo(routeData.routes[0]);
+                this.updateSegmentInfo(routeData.legs);
                 this.saveRouteData(routeData);
             }
         } catch (error) {
@@ -188,32 +183,74 @@ export class ClaimMap extends BaseMap {
     }
 
     async calculateRoute(locations) {
-        return await this.routeCalculator.calculateRoute(this.directionsService, locations);
+        if (locations.length < 2) return null;
+
+        try {
+            // Clear existing renderers
+            if (this.directionsRenderers) {
+                this.directionsRenderers.forEach(renderer => renderer.setMap(null));
+            }
+            this.directionsRenderers = [];
+
+            const routes = [];
+            const legs = [];
+
+            // Calculate route for each segment
+            for (let i = 0; i < locations.length - 1; i++) {
+                const response = await new Promise((resolve, reject) => {
+                    this.directionsService.route({
+                        origin: locations[i],
+                        destination: locations[i + 1],
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        region: 'MY'
+                    }, (result, status) => {
+                        if (status === 'OK') {
+                            resolve(result);
+                            legs.push(...result.routes[0].legs);
+                        } else {
+                            reject(new Error(`Directions request failed: ${status}`));
+                        }
+                    });
+                });
+                routes.push(response);
+            }
+
+            return { routes, legs };
+        } catch (error) {
+            console.error('Error calculating route:', error);
+            return null;
+        }
     }
 
     async updateRouteDisplay(routeData) {
-        this.directionsRenderer.setDirections(routeData);
-        const route = routeData.routes[0];
-        
-        // Calculate totals using RouteCalculator
-        const totals = this.routeCalculator.calculateTotals(route.legs);
+        if (!routeData?.routes) return;
+
+        // Render each route segment with its corresponding color
+        routeData.routes.forEach((route, index) => {
+            const renderer = new google.maps.DirectionsRenderer({
+                map: this.map,
+                directions: route,
+                routeIndex: 0,
+                suppressMarkers: true,
+                polylineOptions: {
+                    strokeColor: this.locationManager.routeColors[index % this.locationManager.routeColors.length],
+                    strokeWeight: 4
+                }
+            });
+            this.directionsRenderers.push(renderer);
+        });
+
+        // Calculate totals using all legs
+        const totals = this.routeCalculator.calculateTotals(routeData.legs);
         
         // Update displays
         Object.entries(totals).forEach(([key, value]) => {
             this.updateDisplay(`total-${key}`, value);
             this.updateHiddenInput(`total-${key}-input`, value);
         });
-        
-        // Calculate and save segment data
-        const segmentsData = this.routeCalculator.calculateSegmentDetails(route.legs);
-        this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
-        
-        // Update locations data
-        const locations = this.createLocationsData(route.legs);
-        this.updateHiddenInput('locations', JSON.stringify(locations));
-        
+
+        this.updateSegmentInfo(routeData.legs);
         this.updateNextButtonState();
-        this.updateSegmentInfo(route);
     }
 
     createLocationsData(legs) {
@@ -227,82 +264,68 @@ export class ClaimMap extends BaseMap {
             .filter(loc => loc.from_location);
     }
 
-    updateSegmentInfo(route) {
+    updateSegmentInfo(legs) {
         const container = document.getElementById('segment-details');
         if (!container) return;
 
         container.innerHTML = '';
-        const ratePerKm = parseFloat(document.getElementById('rate-per-km')?.value || 0.60);
-
-        route.legs.forEach((leg, index) => {
-            const distance = leg.distance.value / 1000;
-            const cost = distance * ratePerKm;
-            container.appendChild(this.createSegmentElement(leg, index, distance, cost));
+        
+        legs.forEach((leg, index) => {
+            const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
+            const segmentHtml = `
+                <div class="segment-detail bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md border-2 border-indigo-200">
+                    <div class="flex flex-row justify-between items-center p-4">
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <span class="from-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${color}"></span>
+                                <span class="text-xs text-gray-700">${leg.start_address}</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <span class="to-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
+                                <span class="text-xs text-gray-700">${leg.end_address}</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="p-2 bg-blue-50 rounded-lg">
+                                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Distance</p>
+                                    <p class="text-xs font-medium text-gray-900" data-distance>${(leg.distance.value / 1000).toFixed(2)} km</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="p-2 bg-green-50 rounded-lg">
+                                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Duration</p>
+                                    <p class="text-xs font-medium text-gray-900">${leg.duration.text}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="p-2 bg-purple-50 rounded-lg">
+                                    <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Cost</p>
+                                    <p class="text-xs font-medium text-gray-900">RM ${leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60).toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', segmentHtml);
         });
 
-        const infoContainer = document.getElementById('location-pairs-info');
-        if (infoContainer) {
-            infoContainer.style.display = 'block';
-        }
-    }
-
-    createSegmentElement(leg, index, distance, cost) {
-        const element = document.createElement('div');
-        element.className = 'segment-detail bg-white rounded-lg shadow-sm mb-4 overflow-hidden transition-all duration-200 hover:shadow-md border-2 border-indigo-200';
-        
-        element.innerHTML = `
-            <div class="flex flex-row justify-between items-center p-4">
-                <div class="space-y-3">
-                    <div class="flex items-center space-x-3">
-                        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full" 
-                              style="background-color: ${this.locationManager.routeColors[index % this.locationManager.routeColors.length]}"></span>
-                        <span class="text-xs text-gray-700">${leg.start_address}</span>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full"
-                              style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
-                        <span class="text-xs text-gray-700">${leg.end_address}</span>
-                    </div>
-                </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="flex items-center space-x-2">
-                        <div class="p-2 bg-blue-50 rounded-lg">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Distance</p>
-                            <p class="text-xs font-medium text-gray-900">${distance.toFixed(2)} km</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="p-2 bg-green-50 rounded-lg">
-                            <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Duration</p>
-                            <p class="text-xs font-medium text-gray-900">${leg.duration.text}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="p-2 bg-purple-50 rounded-lg">
-                            <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-500">Cost</p>
-                            <p class="text-xs font-medium text-gray-900">RM ${cost.toFixed(2)}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return element;
+        document.getElementById('location-pairs-info').style.display = 'block';
     }
 
     updateDisplay(elementId, value) {
@@ -354,25 +377,18 @@ export class ClaimMap extends BaseMap {
     
         try {
             const draftData = JSON.parse(draftDataElement.value);
-            console.log('Parsed draft data:', draftData);
             
             if (draftData.locations) {
                 const locations = typeof draftData.locations === 'string' 
                     ? JSON.parse(draftData.locations) 
                     : draftData.locations;
-                
-                console.log('Processed locations:', locations);
     
                 if (Array.isArray(locations) && locations.length > 0) {
                     this.loadLocations(locations);
-                } else {
-                    console.warn('No valid locations found in draft data');
                 }
-            } else {
-                console.warn('No locations found in draft data');
             }
         } catch (error) {
-            console.error('Error loading saved data:', error);
+
         }
     }
 
@@ -430,23 +446,22 @@ export class ClaimMap extends BaseMap {
     }
 
     saveRouteData(routeData) {
-        if (!routeData || !routeData.routes || !routeData.routes[0]) return;
-    
-        const route = routeData.routes[0];
-        const legs = route.legs;
-    
+        if (!routeData || !routeData.legs) return;
+
+        const legs = routeData.legs;
+        
         const totalDistance = legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
         const totalDuration = legs.reduce((sum, leg) => sum + leg.duration.value, 0);
         const totalCost = totalDistance * parseFloat(document.getElementById('rate-per-km')?.value || 0.60);
-    
+
         this.updateDisplay('total-distance', totalDistance.toFixed(2));
         this.updateDisplay('total-duration', this.formatDuration(totalDuration));
         this.updateDisplay('total-cost', totalCost.toFixed(2));
-    
+
         this.updateHiddenInput('total-distance-input', totalDistance.toFixed(2));
         this.updateHiddenInput('total-duration-input', this.formatDuration(totalDuration));
         this.updateHiddenInput('total-cost-input', totalCost.toFixed(2));
-    
+
         const locations = Array.from(document.querySelectorAll('.location-input'))
             .map((input, index) => ({
                 from_location: legs[index]?.start_address || input.value.trim(),
@@ -455,9 +470,9 @@ export class ClaimMap extends BaseMap {
                 order: index + 1
             }))
             .filter(loc => loc.from_location);
-    
+
         this.updateHiddenInput('locations', JSON.stringify(locations));
-    
+
         const segmentsData = legs.map((leg, index) => ({
             from_location: leg.start_address,
             to_location: leg.end_address,
@@ -466,10 +481,9 @@ export class ClaimMap extends BaseMap {
             cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
             order: index + 1
         }));
+        
         this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
-    
         this.updateNextButtonState();
-        this.updateSegmentInfo(route);
     }
 
     formatDuration(seconds) {

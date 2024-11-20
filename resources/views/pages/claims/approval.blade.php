@@ -61,8 +61,10 @@
         </div>
     </div>
 </div>
-
-@vite(['resources/js/filter.js', 'resources/js/card-filter.js', 'resources/js/claims-view-toggle.js'])
+@push('scripts')
+    @vite(['resources/js/filter.js', 'resources/js/card-filter.js', 'resources/js/claims-view-toggle.js', 'resources/js/claim-review.js'])
+    window.userId = {{ Auth::id() }};
+@endpush
 
 
 @endsection

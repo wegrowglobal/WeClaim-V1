@@ -1,6 +1,7 @@
 import { ClaimMap } from './maps/claim-map.js';
 import ErrorHandler from './utils/error-handler.js';
 import ValidationUtils from './utils/validation.js';
+import Logger from './utils/logger.js';
 
 class ClaimForm {
     constructor() {
@@ -15,6 +16,7 @@ class ClaimForm {
         this.previousStep = this.previousStep.bind(this);
         this.resetForm = this.resetForm.bind(this);
         this.saveCurrentStep = this.saveCurrentStep.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
 
         this.debouncedSave = this.debounce(this.saveCurrentStep, 500);
 
@@ -40,7 +42,8 @@ class ClaimForm {
             nextStep: this.nextStep,
             previousStep: this.previousStep,
             resetForm: this.resetForm,
-            saveCurrentStep: this.saveCurrentStep
+            saveCurrentStep: this.saveCurrentStep,
+            handleSubmit: this.handleSubmit
         };
 
         const mapElement = document.getElementById('map');
@@ -59,16 +62,15 @@ class ClaimForm {
 
         try {
             const draftData = JSON.parse(draftDataInput.value);
-            console.log('Loaded draft data:', draftData);
+            Logger.log('Loaded draft data', draftData);
             return draftData;
         } catch (error) {
-            console.error('Error loading draft data:', error);
+            Logger.error('Error loading draft data', error);
             return {};
         }
     }
 
     populateFormFields(data) {
-        console.log('Populating fields with:', data); // Debug log
         
         // Get the current step element
         const currentStep = document.querySelector('[data-step]');
@@ -93,7 +95,6 @@ class ClaimForm {
     }
 
     populateStep1(data) {
-        console.log('populateStep1 called with data:', data);
 
         if (data.claim_company) {
             document.getElementById('claim_company').value = data.claim_company;
@@ -110,7 +111,6 @@ class ClaimForm {
     }
 
     populateStep2(data) {
-        console.log('populateStep2 called with data:', data);
         
         if (!window.claimMap) {
             console.warn('Map not initialized');
@@ -125,17 +125,13 @@ class ClaimForm {
     
         // Wait for map initialization
         const checkMapAndPopulate = () => {
-            console.log('Checking map initialization...');
             if (window.claimMap.initialized) {
-                console.log('Map is initialized');
                 
                 // Check if there are any location inputs
                 const locationInputs = document.querySelectorAll('.location-input');
                 if (locationInputs.length === 0) {
-                    console.log('No location inputs found, adding initial inputs');
                     window.claimMap.addInitialLocationInputs();
                 } else {
-                    console.log('Location inputs already exist, loading saved data');
                     window.claimMap.loadSavedData();
                 }
     
@@ -146,7 +142,6 @@ class ClaimForm {
                     }
                 }, 500);
             } else {
-                console.log('Map not initialized yet, retrying...');
                 setTimeout(checkMapAndPopulate, 100);
             }
         };
@@ -155,7 +150,6 @@ class ClaimForm {
     }
 
     populateStep3(data) {
-        console.log('populateStep3 called with data:', data);
         // Get the elements
         const totalDistanceEl = document.querySelector('[data-summary="distance"]');
         const petrolClaimEl = document.querySelector('[data-summary="petrol"]');
@@ -285,9 +279,8 @@ class ClaimForm {
         let existingData = {};
         try {
             existingData = JSON.parse(draftDataInput?.value || '{}');
-            console.log('Existing draft data:', existingData);
         } catch (error) {
-            console.error('Error parsing existing draft data:', error);
+            
         }
 
         const formData = new FormData(form);
@@ -314,8 +307,6 @@ class ClaimForm {
             toll_amount: formData.get('toll_amount') || existingData.toll_amount || '0'
         };
 
-        console.log('Saving merged step data:', currentStepData);
-
         try {
             const response = await fetch('/claims/save-step', {
                 method: 'POST',
@@ -333,12 +324,11 @@ class ClaimForm {
             // Update the draft data input with merged data
             if (draftDataInput) {
                 draftDataInput.value = JSON.stringify(currentStepData);
-                console.log('Updated draft data input:', currentStepData);
             }
 
             return true;
         } catch (error) {
-            console.error('Error saving step:', error);
+            
             return false;
         }
     }
@@ -473,163 +463,112 @@ class ClaimForm {
 
     async handleSubmit(e) {
         e.preventDefault();
-        
-        console.group('Claim Form Submission Debug');
-        
-        // Get form and draft data
-        const form = document.getElementById('claimForm');
-        const formData = new FormData(form);
-        const draftDataInput = document.getElementById('draftData');
-        let draftData = {};
-        
-        try {
-            draftData = JSON.parse(draftDataInput?.value || '{}');
-            console.log('Parsed Draft Data:', draftData);
-        } catch (error) {
-            console.error('Error parsing draft data:', error);
-        }
+        Logger.group('Claim Form Submission');
 
-        // Get segments data and locations
-        const segmentsDataElement = document.getElementById('segments-data');
-        let locations = [];
+        // Show loading state
+        const submitButton = document.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Submitting...
+        `;
+
         try {
-            const parsedSegments = JSON.parse(segmentsDataElement?.value || '[]');
-            console.log('Parsed Segments Data:', parsedSegments);
+            const form = document.getElementById('claimForm');
+            const formData = new FormData(form);
+            const draftDataInput = document.getElementById('draftData');
+            let draftData = {};
             
-            locations = parsedSegments.map(segment => ({
-                from_location: segment.from_location,
-                to_location: segment.to_location,
-                distance: parseFloat(segment.distance),
-                order: segment.order
-            }));
-        } catch (error) {
-            console.error('Error parsing segments:', error);
-        }
-
-        // Get total distance and cost from draft data
-        const totalDistance = draftData.total_distance || '0';
-        const totalCost = draftData.total_cost || '0';
-
-        console.log('Distance and Cost:', {
-            totalDistance,
-            totalCost
-        });
-
-        // Prepare the main claim data
-        const claimData = {
-            claim_company: formData.get('claim_company') || draftData.claim_company,
-            date_from: formData.get('date_from') || draftData.date_from,
-            date_to: formData.get('date_to') || draftData.date_to,
-            remarks: formData.get('remarks') || draftData.remarks,
-            total_distance: totalDistance,
-            petrol_amount: totalCost,
-            toll_amount: formData.get('toll_amount') || '0',
-            locations: locations,
-            status: 'Submitted',
-            title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
-            claim_type: 'Petrol',
-        };
-
-        console.log('Final Claim Data:', claimData);
-
-        // Create the final form data for submission
-        const submitFormData = new FormData();
-        
-        // Add claim data
-        Object.entries(claimData).forEach(([key, value]) => {
-            if (key === 'locations') {
-                submitFormData.append(key, JSON.stringify(value));
-            } else {
-                // Ensure we're sending strings and removing any whitespace
-                const cleanValue = typeof value === 'string' ? 
-                    value.trim() : 
-                    String(value).trim();
-                submitFormData.append(key, cleanValue);
+            try {
+                draftData = JSON.parse(draftDataInput?.value || '{}');
+            } catch (error) {
+                Logger.error('Error parsing draft data', error);
             }
-        });
 
-        // Add files if they exist
-        const tollFile = document.getElementById('toll_report')?.files[0];
-        const emailFile = document.getElementById('email_report')?.files[0];
-        
-        if (tollFile) {
-            submitFormData.append('toll_file', tollFile);
-        }
-        if (emailFile) {
-            submitFormData.append('email_file', emailFile);
-        }
+            // Create the final form data for submission
+            const submitFormData = new FormData();
+            
+            // Add claim data
+            const claimData = {
+                claim_company: formData.get('claim_company') || draftData.claim_company,
+                date_from: formData.get('date_from') || draftData.date_from,
+                date_to: formData.get('date_to') || draftData.date_to,
+                remarks: formData.get('remarks') || draftData.remarks,
+                total_distance: draftData.total_distance || '0',
+                petrol_amount: draftData.total_cost || '0',
+                toll_amount: formData.get('toll_amount') || '0',
+                locations: draftData.locations || [],
+                status: 'Submitted',
+                title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
+                claim_type: 'Petrol',
+            };
 
-        // Log the final FormData entries
-        console.log('Final FormData entries:');
-        for (let pair of submitFormData.entries()) {
-            console.log(pair[0], pair[1]);
-        }
+            Object.entries(claimData).forEach(([key, value]) => {
+                if (key === 'locations') {
+                    submitFormData.append(key, JSON.stringify(value));
+                } else {
+                    const cleanValue = typeof value === 'string' ? 
+                        value.trim() : 
+                        String(value).trim();
+                    submitFormData.append(key, cleanValue);
+                }
+            });
 
-        console.groupEnd();
-
-    // Show loading state
-    const submitButton = document.querySelector('button[type="submit"]');
-    const originalButtonText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = `
-        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        Submitting...
-    `;
-
-        try {
-            console.log('Submitting FormData:', Object.fromEntries(submitFormData.entries()));
+            // Add files if they exist
+            const tollFile = document.getElementById('toll_report')?.files[0];
+            const emailFile = document.getElementById('email_report')?.files[0];
+            
+            if (tollFile) {
+                submitFormData.append('toll_file', tollFile);
+            }
+            if (emailFile) {
+                submitFormData.append('email_file', emailFile);
+            }
 
             const response = await fetch('/claims/store', {
                 method: 'POST',
                 body: submitFormData,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json' // Add this to ensure JSON response
+                    'Accept': 'application/json'
                 }
             });
 
             const result = await response.json();
-            console.log('Server Response:', result);
 
             if (!response.ok) {
-                // Log validation errors if they exist
                 if (result.errors) {
-                    console.error('Validation Errors:', result.errors);
                     throw new Error(Object.values(result.errors).flat().join('\n'));
                 }
                 throw new Error(result.message || 'Submission failed');
             }
 
             if (result.success) {
-                // Show success message
-                Swal.fire({
+                await Swal.fire({
                     title: 'Success!',
                     text: 'Your claim has been submitted successfully.',
                     icon: 'success',
                     confirmButtonText: 'Go to Dashboard'
-                }).then((result) => {
-                    // Clear all stored data
-                    localStorage.removeItem('claimFormData');
-                    localStorage.removeItem('draftData');
-                    sessionStorage.clear();
-                    
-                    // Clear map data if exists
-                    if (window.claimMap) {
-                        window.claimMap.clearMapData();
-                    }
-
-                    if (result.isConfirmed) {
-                        window.location.href = '/claims/dashboard';
-                    }
                 });
+
+                // Clear all stored data
+                localStorage.removeItem('claimFormData');
+                localStorage.removeItem('draftData');
+                sessionStorage.clear();
+                
+                // Clear map data if exists
+                if (window.claimMap) {
+                    window.claimMap.clearMapData();
+                }
+
+                window.location.href = '/claims/dashboard';
             }
         } catch (error) {
-            console.error('Error submitting claim:', error);
-            
-            // Show error message with more details
+            Logger.error('Submission error', error);
             Swal.fire({
                 title: 'Error!',
                 text: error.message || 'Failed to submit claim. Please try again.',
@@ -637,6 +576,7 @@ class ClaimForm {
                 confirmButtonText: 'OK'
             });
         } finally {
+            Logger.groupEnd();
             // Reset button state
             submitButton.disabled = false;
             submitButton.innerHTML = originalButtonText;
@@ -651,7 +591,7 @@ class ClaimForm {
             try {
                 const segments = JSON.parse(segmentsDataInput.value);
                 if (Array.isArray(segments) && segments.length > 0) {
-                    console.log('Found valid segments data:', segments);
+
                     return segments;
                 }
             } catch (error) {
@@ -675,7 +615,6 @@ class ClaimForm {
             }
         });
 
-        console.log('Collected segments from elements:', segments);
         return segments;
     }
 
@@ -863,20 +802,7 @@ class ClaimForm {
             if (!draftDataInput) return;
 
             const draftData = JSON.parse(draftDataInput.value);
-            console.log('Current draft data:', {
-                step1: {
-                    claim_company: draftData.claim_company,
-                    date_from: draftData.date_from,
-                    date_to: draftData.date_to,
-                    remarks: draftData.remarks,
-                },
-                step2: {
-                    total_distance: draftData.total_distance,
-                    total_cost: draftData.total_cost,
-                    locations: draftData.locations,
-                    segments_data: draftData.segments_data,
-                }
-            });
+
             return true;
         }, 'verifyDraftData');
     }

@@ -82,14 +82,30 @@
                     <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
                         <div class="text-xs text-gray-500">ID: {{ $claim->id }}</div>
                         @if ($actions === 'approval')
-                            @if ($claimService->canReviewClaim(Auth::user(), $claim))
-                                <a href="{{ route('claims.review', $claim->id) }}" 
-                                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
-                                    Review
-                                </a>
-                            @else
-                                <span class="text-xs text-gray-500">Pending</span>
-                            @endif
+                            <span class="text-xs text-gray-500">
+                                @switch($claim->status)
+                                    @case(Claim::STATUS_DONE)
+                                        Completed
+                                        @break
+                                    @case(Claim::STATUS_CANCELLED)
+                                        Cancelled
+                                        @break
+                                    @case(Claim::STATUS_REJECTED)
+                                        Rejected
+                                        @break
+                                    @case(Claim::STATUS_APPROVED_FINANCE)
+                                        <button onclick="approveClaim({{ $claim->id }})""
+                                           class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                            Mark as Done
+                                        </button>
+                                        @break
+                                    @default
+                                        <a href="{{ route('claims.review', $claim->id) }}" 
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                                            Review
+                                        </a>
+                                @endswitch
+                            </span>
                         @elseif ($actions === 'dashboard')
                             <a href="{{ route('claims.view', $claim->id) }}" 
                                class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-900">
@@ -97,7 +113,7 @@
                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
-                            </a>
+                            </button>
                         @endif
                     </div>
                 </div>

@@ -57,7 +57,6 @@ window.resubmitClaim = function(claimId) {
                     throw new Error(data.message || 'Failed to resubmit claim');
                 }
             } catch (error) {
-                console.error('Error resubmitting claim:', error);
                 const errorMessage = error.response?.data?.message || error.message || 'Failed to resubmit the claim. Please try again.';
                 SwalUtils.showError(errorMessage);
             }

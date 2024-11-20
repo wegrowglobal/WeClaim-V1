@@ -83,7 +83,7 @@
                             {{ $claim->date_from->format('d/m/y') }} - {{ $claim->date_to->format('d/m/y') }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <x-status-badge :status="$claim->status" />
+                            <x-status-badge :status="$claim->status" data-status="{{ $claim->status }}" />
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-right">
                             @if ($actions === 'approval')
@@ -105,7 +105,11 @@
                                                 Rejected
                                                 @break
                                             @case(Claim::STATUS_APPROVED_FINANCE)
-                                                Ready for Payment
+                                                <button onclick="approveClaim({{ $claim->id }}, true)"
+                                                   data-action="mark-as-done"
+                                                   class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                                    Mark as Done
+                                                </button>
                                                 @break
                                             @default
                                                 Pending

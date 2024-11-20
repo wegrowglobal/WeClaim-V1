@@ -13,7 +13,6 @@ export class ReviewMap extends BaseMap {
     }
 
     updateLocationDots() {
-        // Wait for DOM to be ready
         setTimeout(() => {
             const segments = document.querySelectorAll('.segment-detail');
             segments.forEach((segment, index) => {
@@ -21,10 +20,10 @@ export class ReviewMap extends BaseMap {
                 const toDot = segment.querySelector('.to-location-dot');
                 
                 if (fromDot) {
-                    fromDot.style.backgroundColor = this.locationManager.routeColors[index * 2 % this.locationManager.routeColors.length];
+                    fromDot.style.backgroundColor = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
                 }
                 if (toDot) {
-                    toDot.style.backgroundColor = this.locationManager.routeColors[(index * 2 + 1) % this.locationManager.routeColors.length];
+                    toDot.style.backgroundColor = this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length];
                 }
             });
         }, 0);
@@ -41,16 +40,6 @@ export class ReviewMap extends BaseMap {
         
         try {
             await this.initialize();
-            
-            if (this.directionsRenderer) {
-                this.directionsRenderer.setOptions({
-                    polylineOptions: {
-                        strokeColor: this.locationManager.routeColors[0],
-                        strokeWeight: 4
-                    },
-                    suppressMarkers: true
-                });
-            }
             
             // Use the correct loading method
             const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Loading route details...');
@@ -73,64 +62,92 @@ export class ReviewMap extends BaseMap {
 
     async prepareLocations() {
         const geocodingPromises = [];
+        
+        // Filter out incomplete locations
+        const validLocations = this.locations.filter(location => 
+            location.from_location && location.to_location
+        );
 
-        this.locations.forEach((location, index) => {
+        // Create markers for each unique location
+        const uniqueLocations = [];
+        validLocations.forEach((location, index) => {
+            // Only add from_location if it's not already added
+            if (index === 0 || location.from_location !== validLocations[index - 1].to_location) {
+                uniqueLocations.push({
+                    address: location.from_location,
+                    index: uniqueLocations.length
+                });
+            }
+            
+            // Add to_location
+            uniqueLocations.push({
+                address: location.to_location,
+                index: uniqueLocations.length
+            });
+        });
+
+        // Create geocoding promises for unique locations
+        uniqueLocations.forEach(loc => {
             geocodingPromises.push(
-                this.geocodeLocation(location.from_location)
+                this.geocodeLocation(loc.address)
                     .then(position => ({
                         position,
-                        index,
-                        isStart: true,
-                        location: location.from_location
+                        index: loc.index,
+                        location: loc.address
                     }))
             );
-
-            if (index === this.locations.length - 1) {
-                geocodingPromises.push(
-                    this.geocodeLocation(location.to_location)
-                        .then(position => ({
-                            position,
-                            index,
-                            isStart: false,
-                            location: location.to_location
-                        }))
-                );
-            }
         });
 
         return Promise.all(geocodingPromises);
     }
 
     async calculateRoute() {
-        if (this.locations.length < 1) return null;
+        const validLocations = this.locations.filter(location => 
+            location.from_location && location.to_location
+        );
+        
+        if (validLocations.length < 1) return null;
 
         try {
-            const response = await new Promise((resolve, reject) => {
-                this.directionsService.route({
-                    origin: this.locations[0].from_location,
-                    destination: this.locations[this.locations.length - 1].to_location,
-                    waypoints: this.locations.slice(1, -1).map(loc => ({
-                        location: loc.to_location,
-                        stopover: true
-                    })),
-                    travelMode: google.maps.TravelMode.DRIVING,
-                    region: 'MY'
-                }, (result, status) => {
-                    if (status === 'OK') {
-                        // Calculate all metrics at once
-                        const totals = this.routeCalculator.calculateTotals(result.routes[0].legs);
-                        
-                        // Update all UI elements synchronously
-                        this.updateAllMetrics(result.routes[0].legs, totals);
-                        
-                        resolve(result);
-                    } else {
-                        reject(new Error(`Directions request failed: ${status}`));
-                    }
-                });
-            });
+            // Clear existing renderers
+            if (this.directionsRenderers) {
+                this.directionsRenderers.forEach(renderer => renderer.setMap(null));
+            }
+            this.directionsRenderers = [];
 
-            return response;
+            const routes = [];
+            const legs = [];
+
+            // Calculate route for each segment, including the last one
+            for (let i = 0; i < validLocations.length; i++) {
+                if (i === validLocations.length - 1 && 
+                    validLocations[i].from_location === validLocations[0].from_location) {
+                    continue; // Skip if last location is same as first
+                }
+
+                const response = await new Promise((resolve, reject) => {
+                    this.directionsService.route({
+                        origin: validLocations[i].from_location,
+                        destination: validLocations[i].to_location,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        region: 'MY'
+                    }, (result, status) => {
+                        if (status === 'OK') {
+                            resolve(result);
+                        } else {
+                            reject(new Error(`Directions request failed: ${status}`));
+                        }
+                    });
+                });
+                routes.push(response);
+                legs.push(...response.routes[0].legs);
+            }
+
+            // Calculate totals from all legs
+            const totals = this.routeCalculator.calculateTotals(legs);
+            this.updateAllMetrics(legs, totals);
+
+            return routes;
         } catch (error) {
             console.error('Error calculating route:', error);
             return null;
@@ -165,17 +182,37 @@ export class ReviewMap extends BaseMap {
 
     async renderMap(geocodingResults, routeData) {
         const bounds = new google.maps.LatLngBounds();
+        const markerPositions = new Map();
 
+        // Create markers with offset for overlapping positions
         geocodingResults.forEach((result, index) => {
             if (result?.position) {
+                const posKey = `${result.position.lat()},${result.position.lng()}`;
+                let position = result.position;
+
+                // If position already exists, offset the marker slightly
+                if (markerPositions.has(posKey)) {
+                    const offset = 0.0001 * markerPositions.get(posKey);
+                    position = new google.maps.LatLng(
+                        result.position.lat() + offset,
+                        result.position.lng() + offset
+                    );
+                    markerPositions.set(posKey, markerPositions.get(posKey) + 1);
+                } else {
+                    markerPositions.set(posKey, 1);
+                }
+
+                const label = String.fromCharCode(65 + index);
                 const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
-                this.createMarker(result.position, {
+                
+                this.createMarker(position, {
                     map: this.map,
-                    label: String.fromCharCode(65 + index),
+                    label: label,
                     color: color,
                     id: `location-${index}`,
                     title: result.location
                 });
+                
                 bounds.extend(result.position);
             }
         });
@@ -184,8 +221,21 @@ export class ReviewMap extends BaseMap {
             this.map.fitBounds(bounds);
         }
 
-        if (routeData) {
-            this.directionsRenderer.setDirections(routeData);
+        // Render each route segment with its corresponding color
+        if (routeData && Array.isArray(routeData)) {
+            routeData.forEach((route, index) => {
+                const renderer = new google.maps.DirectionsRenderer({
+                    map: this.map,
+                    directions: route,
+                    routeIndex: 0,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: this.locationManager.routeColors[index % this.locationManager.routeColors.length],
+                        strokeWeight: 4
+                    }
+                });
+                this.directionsRenderers.push(renderer);
+            });
         }
     }
 }

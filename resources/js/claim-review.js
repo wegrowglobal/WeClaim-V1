@@ -25,7 +25,6 @@ window.approveClaim = function(claimId) {
                     });
             })
             .catch(error => {
-                console.error('Error approving claim:', error);
                 Swal.fire('Error', 'Failed to approve the claim. Please try again.', 'error');
             });
         }
@@ -59,11 +58,8 @@ window.rejectClaim = function(claimId) {
                     });
             })
             .catch(error => {
-                console.error('Error rejecting claim:', error);
                 Swal.fire('Error', 'Failed to reject the claim. Please try again.', 'error');
             });
         }
     });
 }
-
-console.log('claim-review.js loaded');
