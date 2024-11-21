@@ -27,20 +27,27 @@
                         data-status="all"
                         class="status-filter-btn active px-3 py-1.5 border border-gray-200 text-gray-700 bg-white"
                         onclick="toggleStatusFilter(this, 'all')">
-                    <div class="flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                        </svg>
-                        <span class="text-sm">All Claims</span>
-                    </div>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
                 </button>
 
-                @foreach(['SUBMITTED', 'APPROVED_ADMIN', 'APPROVED_DATUK', 'APPROVED_HR', 'APPROVED_FINANCE', 'REJECTED', 'DONE'] as $status)
+                @foreach([
+                    Claim::STATUS_SUBMITTED,
+                    Claim::STATUS_APPROVED_ADMIN,
+                    Claim::STATUS_APPROVED_DATUK,
+                    Claim::STATUS_APPROVED_HR,
+                    Claim::STATUS_APPROVED_FINANCE,
+                    Claim::STATUS_REJECTED,
+                    Claim::STATUS_DONE
+                ] as $status)
                     <button type="button"
                             data-status="{{ $status }}"
-                            class="status-filter-btn border border-transparent"
+                            class="status-filter-btn border border-gray-200 text-gray-300 hover:text-gray-500"
                             onclick="toggleStatusFilter(this, '{{ $status }}')">
-                        <x-claims.status-badge :status="$status" />
+                        <x-claims.status-badge 
+                            :status="$status" 
+                            class="inline-flex items-center" />
                     </button>
                 @endforeach
             </div>
@@ -64,13 +71,13 @@
                                 <div class="text-xs text-gray-500">{{ $claim->submitted_at->format('d M Y') }}</div>
                             </div>
                         </div>
-                        <x-claims.status-badge :status="$status" />
+                        <x-claims.status-badge :status="$claim->status" />
                     </div>
 
                     <!-- Content -->
                     <div class="space-y-2">
-                        <h3 class="text-sm font-medium text-gray-900 truncate">{{ $claim->title }}</h3>
-                        <div class="flex items-center gap-2 text-xs text-gray-500">
+                        <h3 class="text-sm font-medium text-gray-600 truncate">{{ $claim->title }}</h3>
+                        <div class="flex items-center gap-2 text-xs text-gray-400">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
@@ -115,7 +122,7 @@
                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
-                            </button>
+                            </a>
                         @endif
                     </div>
                 </div>

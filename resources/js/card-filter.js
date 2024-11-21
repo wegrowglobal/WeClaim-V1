@@ -12,7 +12,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const filteredCards = originalCards.filter(card => {
             const cardText = card.textContent.toLowerCase();
-            const cardStatus = card.querySelector('.status-badge').textContent.trim().toUpperCase().replace(/ /g, '_');
+            const statusBadge = card.querySelector('.status-badge');
+            const statusText = statusBadge.querySelector('span').textContent.trim();
+            
+            // Convert status text to match the Claim model format
+            let cardStatus;
+            if (statusText.startsWith('Approved')) {
+                cardStatus = 'Approved ' + statusText.split(' ')[1];
+            } else {
+                cardStatus = statusText;
+            }
             
             const matchesSearch = searchTerm === '' || cardText.includes(searchTerm);
             const matchesStatus = selectedStatuses.includes('all') || selectedStatuses.includes(cardStatus);
@@ -20,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return matchesSearch && matchesStatus;
         });
 
-        // Clear and re-append filtered cards
         claimsGrid.innerHTML = '';
         filteredCards.forEach(card => claimsGrid.appendChild(card.cloneNode(true)));
     }

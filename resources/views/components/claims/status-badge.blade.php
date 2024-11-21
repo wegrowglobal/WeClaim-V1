@@ -1,5 +1,3 @@
-@props(['status'])
-
 @php
     use App\Models\Claim;
     
@@ -52,7 +50,9 @@
     }
 @endphp
 
-<span {{ $attributes->merge(['class' => 'status-badge inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ' . ($colors[$status]['class'] ?? 'bg-gray-50 text-gray-700')]) }}>
-    {!! $colors[$status]['icon'] ?? '' !!}
-    {{ $statusText }}
+<span class="status-badge {{ $colors[$status]['class'] ?? '' }} {{ $attributes->get('class') }}">
+    <div class="inline-flex items-center gap-1.5">
+        {!! $colors[$status]['icon'] ?? '' !!}
+        <span>{{ $statusText }}</span>
+    </div>
 </span>
