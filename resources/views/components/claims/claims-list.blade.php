@@ -40,7 +40,7 @@
                             data-status="{{ $status }}"
                             class="status-filter-btn border border-transparent"
                             onclick="toggleStatusFilter(this, '{{ $status }}')">
-                        <x-status-badge :status="$status" />
+                        <x-claims.status-badge :status="$status" />
                     </button>
                 @endforeach
             </div>
@@ -64,7 +64,7 @@
                                 <div class="text-xs text-gray-500">{{ $claim->submitted_at->format('d M Y') }}</div>
                             </div>
                         </div>
-                        <x-status-badge :status="$claim->status" />
+                        <x-claims.status-badge :status="$status" />
                     </div>
 
                     <!-- Content -->
@@ -94,16 +94,18 @@
                                         Rejected
                                         @break
                                     @case(Claim::STATUS_APPROVED_FINANCE)
-                                        <button onclick="approveClaim({{ $claim->id }})""
-                                           class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
-                                            Mark as Done
-                                        </button>
+                                        @if ($claimService->canReviewClaim(Auth::user(), $claim))
+                                            <button onclick="approveClaim({{ $claim->id }}, true)"
+                                            data-action="mark-as-done"
+                                            class="text-xs font-medium text-indigo-600 hover:text-indigo-900">
+                                                Mark as Done
+                                            </button>
+                                        @else
+                                            Pending Completion
+                                        @endif
                                         @break
                                     @default
-                                        <a href="{{ route('claims.review', $claim->id) }}" 
-                                            class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
-                                            Review
-                                        </a>
+                                        Pending
                                 @endswitch
                             </span>
                         @elseif ($actions === 'dashboard')
