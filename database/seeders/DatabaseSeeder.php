@@ -43,7 +43,6 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             DepartmentSeeder::class,
             UserSeeder::class,
-            ClaimSeeder::class,
         ]);
 
         // Create the symbolic link if it doesn't exist

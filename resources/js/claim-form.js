@@ -763,7 +763,7 @@ class ClaimForm {
     }
 
     updateTotalCost(distance) {
-        const RATE_PER_KM = 0.50; // Update rate to RM 0.50 per kilometer
+        const RATE_PER_KM = 0.60; // Rate is RM 0.60 per kilometer
         const totalCost = (parseFloat(distance) * RATE_PER_KM).toFixed(2);
         
         // Update all cost displays on the page
@@ -782,18 +782,22 @@ class ClaimForm {
     }
 
     updateTotalDistance(distance) {
+        const formattedDistance = parseFloat(distance).toFixed(2);
+        
+        // Update display element
         const totalDistanceElement = document.getElementById('total-distance');
         if (totalDistanceElement) {
-            totalDistanceElement.textContent = parseFloat(distance).toFixed(2);
+            totalDistanceElement.textContent = formattedDistance;
         }
         
+        // Update hidden input
         const totalDistanceInput = document.getElementById('total-distance-input');
         if (totalDistanceInput) {
-            totalDistanceInput.value = distance;
+            totalDistanceInput.value = formattedDistance;
         }
         
         // Update cost whenever distance changes
-        this.updateTotalCost(distance);
+        this.updateTotalCost(formattedDistance);
     }
 
     async verifyDraftData() {

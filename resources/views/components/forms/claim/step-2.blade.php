@@ -88,7 +88,7 @@
                     <p class="text-sm font-medium text-gray-600">Total Distance</p>
                 </div>
                 <div class="flex items-baseline">
-                    <span id="total-distance" class="text-xl font-semibold text-gray-900">{{ number_format((float)$totalDistance, 2) }}</span>
+                    <span id="total-distance" class="text-xl font-semibold text-gray-900">{{ sprintf('%.2f', (float)$totalDistance) }}</span>
                     <span class="ml-1 text-base text-gray-500">km</span>
                 </div>
             </div>
@@ -120,7 +120,7 @@
                 </div>
                 <div class="flex items-baseline">
                     <span class="text-xl font-semibold text-gray-900">RM</span>
-                    <span id="total-cost" data-cost-display class="text-xl font-semibold text-gray-900 ml-1">{{ number_format((float)$totalCost, 2) }}</span>
+                    <span id="total-cost" data-cost-display class="text-xl font-semibold text-gray-900 ml-1">{{ sprintf('%.2f', (float)$totalCost) }}</span>
                 </div>
             </div>
         </div>

@@ -10,6 +10,8 @@
 
     <p>A claim has been submitted for your approval. Please review the details below and take the necessary action.</p>
 
+    <p><strong>Note:</strong> The approval/rejection buttons can only be used once. Please ensure you select the correct action.</p>
+
     <h3>Claim Details</h3>
     <div style="margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
         <div style="margin-bottom: 12px;">
@@ -22,7 +24,11 @@
         </div>
         <div style="margin-bottom: 12px;">
             <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">Submitted By:</span>
-            <span style="color: #333; font-size: 14px;">{{ $claim->user->first_name }} {{ $claim->user->second_name }}</span>
+            @if($claim->user)
+                <span style="color: #333; font-size: 14px;">{{ $claim->user->first_name }} {{ $claim->user->second_name }}</span>
+            @else
+                <span style="color: #333; font-size: 14px;">Unknown User</span>
+            @endif
         </div>
         <div style="margin-bottom: 12px;">
             <span style="font-weight: bold; display: inline-block; width: 120px; font-size: 14px;">Status:</span>
@@ -46,17 +52,43 @@
         </div>
     </div>
 
-    <h3>Locations</h3>
+    <h3>Trip Details</h3>
     <div style="margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px;">
-      <div style="margin-bottom: 12px;">
-        <p style="font-weight: bold;">Remarks</p>
-        <p style="color: #333; font-size: 14px;">{{ $claim->description }}</p>
-      </div>
-        @foreach($locations as $index => $location)
-            <div style="margin-bottom: 8px; padding: 8px;">
-                <span style="font-weight: bold; margin-right: 10px; font-size: 14px;">{{ $index + 1 }}.</span>
-                <span style="color: #333; font-size: 14px;">{{ $location->location }}</span>
-            </div>
+        <div style="margin-bottom: 12px;">
+            <p style="font-weight: bold;">Remarks</p>
+            <p style="color: #333; font-size: 14px;">{{ $claim->description }}</p>
+        </div>
+        
+        @foreach($locations as $location)
+            @if($location->from_location && $location->to_location)
+                <div style="margin-bottom: 16px; padding: 16px; border: 1px solid #e6e6e6; border-radius: 6px;">
+                    <!-- Location Pair -->
+                    <div style="margin-bottom: 12px;">
+                        <div style="margin-bottom: 8px;">
+                            <span style="display: inline-block; width: 6px; height: 6px; background-color: #4F46E5; border-radius: 50%; margin-right: 8px;"></span>
+                            <span style="color: #333; font-size: 14px;">{{ $location->from_location }}</span>
+                        </div>
+                        <div>
+                            <span style="display: inline-block; width: 6px; height: 6px; background-color: #4F46E5; border-radius: 50%; margin-right: 8px;"></span>
+                            <span style="color: #333; font-size: 14px;">{{ $location->to_location }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px;">
+                        <!-- Distance -->
+                        <div>
+                            <p style="color: #6B7280; font-size: 12px;">Distance</p>
+                            <p style="color: #111827; font-size: 14px; font-weight: 500;">{{ number_format($location->distance, 2) }} km</p>
+                        </div>
+                        <!-- Cost -->
+                        <div>
+                            <p style="color: #6B7280; font-size: 12px;">Cost</p>
+                            <p style="color: #111827; font-size: 14px; font-weight: 500;">RM {{ number_format($location->distance * 0.60, 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endforeach
     </div>
 

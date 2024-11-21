@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
             'id' => 1,
             'first_name' => 'Super',
             'second_name' => 'Admin',
-            'email' => 'admin@localhost',
+            'email' => 'system@wegrow-global.com',
             'password' => Hash::make('iCt@123./'),
             'role_id' => $suRoleId,
             'department_id' => $allDepartmentId,
@@ -42,33 +42,12 @@ class UserSeeder extends Seeder
             'country' => fake()->country(),
         ]);
 
-        // Reserve IDs 2-10 for future special users
-        for ($i = 2; $i <= 10; $i++) {
-            User::create([
-                'id' => $i,
-                'first_name' => 'Reserved',
-                'second_name' => 'User ' . $i,
-                'email' => "reserved{$i}@example.com",
-                'password' => Hash::make('password123'),
-                'role_id' => $adminRoleId,
-                'department_id' => $allDepartmentId,
-                'email_verified_at' => now(),
-                'remember_token' => Str::random(10),
-                'phone' => fake()->phoneNumber(),
-                'address' => fake()->streetAddress(),
-                'city' => fake()->city(),
-                'state' => fake()->state(),
-                'zip_code' => fake()->postcode(),
-                'country' => fake()->country(),
-            ]);
-        }
-
         // Create Admin users (2-3) starting from ID 11
         for ($i = 0; $i < rand(2, 3); $i++) {
             User::create([
                 'first_name' => fake()->firstName(),
                 'second_name' => fake()->lastName(),
-                'email' => "admin{$i}@example.com",
+                'email' => "admin{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $adminRoleId,
                 'department_id' => $allDepartmentId,
@@ -88,7 +67,7 @@ class UserSeeder extends Seeder
             User::create([
                 'first_name' => fake()->firstName(),
                 'second_name' => fake()->lastName(),
-                'email' => "hr{$i}@example.com",
+                'email' => "hr{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $hrRoleId,
                 'department_id' => $allDepartmentId,
@@ -108,7 +87,7 @@ class UserSeeder extends Seeder
             User::create([
                 'first_name' => fake()->firstName(),
                 'second_name' => fake()->lastName(),
-                'email' => "finance{$i}@example.com",
+                'email' => "finance{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $financeRoleId,
                 'department_id' => $allDepartmentId,
@@ -128,7 +107,7 @@ class UserSeeder extends Seeder
             User::create([
                 'first_name' => fake()->firstName(),
                 'second_name' => fake()->lastName(),
-                'email' => "staff{$i}@example.com",
+                'email' => "staff{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $staffRoleId,
                 'department_id' => fake()->randomElement($departments),

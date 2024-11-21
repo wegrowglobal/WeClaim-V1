@@ -316,7 +316,7 @@ export class ClaimMap extends BaseMap {
                                 </div>
                                 <div>
                                     <p class="text-xs text-gray-500">Cost</p>
-                                    <p class="text-xs font-medium text-gray-900">RM ${leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60).toFixed(2)}</p>
+                                    <p class="text-xs font-medium text-gray-900">RM ${((leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60))).toFixed(2)}</p>
                                 </div>
                             </div>
                         </div>

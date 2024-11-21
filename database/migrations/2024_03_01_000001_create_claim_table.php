@@ -32,6 +32,7 @@ return new class extends Migration
             $table->string('claim_type')->default('Petrol');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('reviewed_at')->nullable();
+            $table->timestamp('completed_at')->nullable();
             $table->timestamps();
         });
     }

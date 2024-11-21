@@ -56,29 +56,31 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
 
     private function createMessageForClaimOwner($statusFormatted)
     {
-        $reviewerInfo = $this->getReviewerInfo();
-        
         $messages = [
-            // Submission related
-            'submitted' => "Your claim #{$this->claim->id} has been submitted successfully.",
-            'resubmitted' => "Your claim #{$this->claim->id} has been resubmitted successfully.",
+            // Flow 1: Initial submission
+            'submitted' => "Your claim #{$this->claim->id} has been submitted and is pending Admin review.",
             
-            // Approval flow
-            'approved_admin' => "Your claim #{$this->claim->id} has been approved by Admin and sent to Datuk for review.",
-            'approved_datuk' => "Your claim #{$this->claim->id} has been approved by Datuk and sent to HR for review.",
-            'approved_hr' => "Your claim #{$this->claim->id} has been approved by HR and sent to Finance for review.",
+            // Flow 2: Admin to Datuk
+            'approved_admin' => "Your claim #{$this->claim->id} has been approved by Admin and will be sent to Datuk for review.",
+            'pending_datuk_review' => "Your claim #{$this->claim->id} has been sent to Datuk for review.",
+            
+            // Flow 3: Datuk to HR
+            'approved_datuk' => "Your claim #{$this->claim->id} has been approved by Datuk and is now pending HR review.",
+            
+            // Flow 4: HR to Finance
+            'approved_hr' => "Your claim #{$this->claim->id} has been approved by HR and is now pending Finance review.",
+            
+            // Flow 5: Finance completion
             'approved_finance' => "Your claim #{$this->claim->id} has been approved by Finance.",
+            'completed' => "Your claim #{$this->claim->id} has been fully processed and marked as completed.",
             
-            // Rejection flow
+            // Rejection messages
             'rejected_admin' => "Your claim #{$this->claim->id} has been rejected by Admin. Please review and resubmit.",
-            'rejected_datuk' => "Your claim #{$this->claim->id} has been rejected by Datuk and returned to Admin.",
-            'rejected_hr' => "Your claim #{$this->claim->id} has been rejected by HR. Please review with Admin.",
-            'rejected_finance' => "Your claim #{$this->claim->id} has been rejected by Finance. Please review with Admin.",
+            'rejected_datuk' => "Your claim #{$this->claim->id} has been rejected by Datuk.",
+            'rejected_hr' => "Your claim #{$this->claim->id} has been rejected by HR.",
+            'rejected_finance' => "Your claim #{$this->claim->id} has been rejected by Finance.",
             
-            // Completion
-            'completed' => "Your claim #{$this->claim->id} has been processed and marked as completed by Finance.",
-            
-            // Generic status change
+            // Default status update
             'status_update' => "Your claim #{$this->claim->id} status has been updated to {$statusFormatted}."
         ];
 
@@ -87,30 +89,45 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
 
     private function createMessageForReviewer($statusFormatted)
     {
+        $claimOwner = $this->claim->user;
+        $ownerName = $claimOwner ? ($claimOwner->first_name . ' ' . $claimOwner->second_name) : 'Unknown User';
+        
         $messages = [
-            // New submissions
-            'submitted' => "New claim #{$this->claim->id} requires your review.",
-            'resubmitted' => "Claim #{$this->claim->id} has been resubmitted and requires your review.",
+            // Flow 1: Initial submission to Admin
+            'pending_admin_review' => "Claim #{$this->claim->id} from {$ownerName} requires your review.",
             
-            // Review requests
-            'pending_review_admin' => "Claim #{$this->claim->id} requires Admin review.",
-            'pending_review_datuk' => "Claim #{$this->claim->id} requires Datuk's review.",
-            'pending_review_hr' => "Claim #{$this->claim->id} requires HR review.",
-            'pending_review_finance' => "Claim #{$this->claim->id} requires Finance review.",
+            // Flow 2: Admin to Datuk
+            'pending_review_datuk' => "Claim #{$this->claim->id} from {$ownerName} requires Datuk's review via email.",
+            'rejected_datuk_admin' => "Claim #{$this->claim->id} was rejected by Datuk and requires your attention.",
             
-            // Returns from rejection
-            'returned_from_datuk' => "Claim #{$this->claim->id} was rejected by Datuk and requires Admin review.",
-            'returned_from_hr' => "Claim #{$this->claim->id} was rejected by HR and requires review.",
-            'returned_from_finance' => "Claim #{$this->claim->id} was rejected by Finance and requires review.",
+            // Flow 3: Datuk to HR
+            'pending_review_hr' => "Claim #{$this->claim->id} from {$ownerName} requires HR review.",
             
-            // Completion
-            'completed' => "Claim #{$this->claim->id} has been marked as completed.",
+            // Flow 4: HR to Finance
+            'pending_review_finance' => $this->isResubmission($this->claim) ? 
+                "Resubmitted claim #{$this->claim->id} from {$ownerName} requires Finance review." :
+                "Claim #{$this->claim->id} from {$ownerName} requires Finance review.",
             
-            // Generic review request
-            'pending_review' => "Claim #{$this->claim->id} requires your review."
+            // Resubmission notifications
+            'resubmitted_admin' => "Claim #{$this->claim->id} has been resubmitted by {$ownerName} and requires your review.",
+            
+            // Default review message
+            'pending_review' => "Claim #{$this->claim->id} from {$ownerName} requires your review.",
+
+            'resubmitted_review' => "Resubmitted claim #{$this->claim->id} from {$ownerName} requires your review.",
+
+            // Finance specific messages
+            'approved_finance' => "Claim #{$this->claim->id} can be marked as done after payment has been processed.",
         ];
 
         return $messages[$this->action] ?? $messages['pending_review'];
+    }
+
+    private function isResubmission(Claim $claim): bool
+    {
+        return $claim->reviews()
+            ->where('status', Claim::STATUS_REJECTED)
+            ->exists();
     }
 
     public function via(object $notifiable): array
