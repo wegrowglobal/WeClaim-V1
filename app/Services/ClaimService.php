@@ -738,30 +738,8 @@ class ClaimService
 
     private function notifyRelevantUsers(Claim $claim, string $action)
     {
-        // Notify claim owner
-        Notification::send($claim->user, new ClaimStatusNotification($claim, $claim->status, $action));
-
-        // Determine who to notify based on the claim status
-        $roleToNotify = match ($claim->status) {
-            Claim::STATUS_SUBMITTED => 'Admin',
-            Claim::STATUS_APPROVED_ADMIN => 'Admin',
-            Claim::STATUS_APPROVED_DATUK => 'HR',
-            Claim::STATUS_APPROVED_HR => 'Finance',
-            default => null
-        };
-
-        if ($roleToNotify) {
-            $reviewers = User::whereHas('role', function($query) use ($roleToNotify) {
-                $query->where('name', $roleToNotify);
-            })->get();
-
-            Notification::send($reviewers, new ClaimStatusNotification(
-                $claim,
-                $claim->status,
-                'pending_review',
-                false
-            ));
-        }
+        $notificationService = app(NotificationService::class);
+        $notificationService->sendClaimStatusNotification($claim, $claim->status, $action);
     }
 
 }

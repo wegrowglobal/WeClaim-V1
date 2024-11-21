@@ -11,9 +11,10 @@
                     <span class="flex-shrink-0 h-2.5 w-2.5 rounded-full {{
                         isset($notification->data['action']) ?
                             match($notification->data['action']) {
-                                'rejected', 'rejected_by_datuk' => 'bg-red-500',
-                                'approved', 'approved_by_datuk' => 'bg-green-500',
+                                'rejected_admin', 'rejected_datuk', 'rejected_hr', 'rejected_finance' => 'bg-red-500',
+                                'approved_admin', 'approved_datuk', 'approved_hr', 'approved_finance' => 'bg-green-500',
                                 'resubmitted' => 'bg-yellow-500',
+                                'completed' => 'bg-purple-500',
                                 default => 'bg-blue-500'
                             }
                         : 'bg-blue-500'
@@ -24,18 +25,16 @@
                 </p>
             </div>
             <div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span>{{ $notification->created_at->diffForHumans() }}</span>
+                <time datetime="{{ $notification->created_at }}">
+                    {{ $notification->created_at->diffForHumans() }}
+                </time>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="flex items-center gap-2">
             @if($notification->data['is_for_claim_owner'] ?? true)
-                @if(($notification->data['action'] ?? null) === 'rejected')
+                @if(str_contains($notification->data['action'], 'rejected'))
                     <a href="{{ route('claims.resubmit', $notification->data['claim_id']) }}"
                        class="btn-secondary text-xs">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,20 +66,20 @@
                 </a>
             @endif
 
-            @if(!$notification->read_at)
-                <form action="{{ route('notifications.markAsRead', $notification->id) }}" 
-                      method="POST" 
-                      class="opacity-0 group-hover:opacity-100 transition-opacity">
+            @unless($notification->read_at)
+                <form action="{{ route('notifications.mark-as-read', $notification->id) }}" 
+                      method="POST" class="inline">
                     @csrf
                     <button type="submit" 
-                            class="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-50">
+                            class="btn-secondary text-xs inline-flex items-center gap-1.5">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                   d="M5 13l4 4L19 7"/>
                         </svg>
+                        <span>Mark as read</span>
                     </button>
                 </form>
-            @endif
+            @endunless
         </div>
     </div>
 </div>

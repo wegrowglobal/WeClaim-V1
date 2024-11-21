@@ -44,9 +44,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])
             ->name('notifications.mark-all-as-read');
         Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])
-            ->name('notifications.markAsRead');
+            ->name('notifications.mark-as-read');
         Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])
-            ->name('notifications.unreadCount');
+            ->name('notifications.unread-count');
     });
 
     // Profile Routes

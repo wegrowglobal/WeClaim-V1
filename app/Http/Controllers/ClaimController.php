@@ -23,6 +23,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\JsonResponse;
 use App\Models\ClaimHistory;
+use App\Services\NotificationService;
 
 
 
@@ -120,13 +121,13 @@ class ClaimController extends Controller
     {
         try {
             Log::info('Claim submission started', [
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'data' => $request->except(['toll_file', 'email_file'])
             ]);
 
             $claim = $this->claimService->createClaim(
                 $request->validated(),
-                auth()->id()
+                Auth::id()
             );
 
             Log::info('Claim submitted successfully', ['claim_id' => $claim->id]);
@@ -150,7 +151,7 @@ class ClaimController extends Controller
             Log::error('Claim submission failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'data' => $request->except(['toll_file', 'email_file'])
             ]);
 
@@ -591,11 +592,12 @@ class ClaimController extends Controller
                 $review = $claim->reviews()->create($reviewData);
                 Log::info('Review record created', ['review_id' => $review->id]);
 
-                Notification::send($claim->user, new ClaimStatusNotification(
-                    $claim, 
-                    $claim->status, 
+                $notificationService = app(NotificationService::class);
+                $notificationService->sendClaimStatusNotification(
+                    $claim,
+                    $claim->status,
                     $action === 'approve' ? 'approved_by_datuk' : 'rejected_by_datuk'
-                ));
+                );
 
                 if ($action === 'approve') {
                     User::whereHas('role', function($query) {
@@ -905,13 +907,6 @@ class ClaimController extends Controller
     {
         try {
             $draftData = Session::get('claim_draft', []);
-            
-            // Validate step access
-            if (!$this->claimFormService->canAccessStep($step, $draftData)) {
-                return response()->json([
-                    'error' => 'Cannot access this step yet'
-                ], 403);
-            }
 
             return view("components.forms.claim.step-{$step}", [
                 'draftData' => $draftData,
@@ -1003,7 +998,7 @@ class ClaimController extends Controller
     public function resubmit(Claim $claim)
     {
         // Validate if user can resubmit
-        if ($claim->status !== Claim::STATUS_REJECTED || $claim->user_id !== auth()->id()) {
+        if ($claim->status !== Claim::STATUS_REJECTED || $claim->user_id !== Auth::id()) {
             return redirect()->route('claims.dashboard')
                 ->with('error', 'You cannot resubmit this claim.');
         }
@@ -1040,7 +1035,7 @@ class ClaimController extends Controller
             Log::error('Claim resubmission failed:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'claim_id' => $claim->id
             ]);
 
