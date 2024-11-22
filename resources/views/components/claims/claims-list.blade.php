@@ -73,10 +73,7 @@
                         <!-- Header -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="h-8 w-8 rounded-full flex items-center justify-center text-white text-sm" 
-                                     style="background-color: {{ '#' . substr(md5($claim->user->first_name), 0, 6) }}">
-                                    {{ strtoupper(substr($claim->user->first_name, 0, 1)) }}
-                                </div>
+                                <x-profile.profile-picture :user="$claim->user" size="sm" />
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ $claim->user->first_name }}</div>
                                     <div class="text-xs text-gray-500">{{ $claim->submitted_at->format('d M Y') }}</div>

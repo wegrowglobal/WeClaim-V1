@@ -31,8 +31,7 @@ return [
     'connections' => [
 
         'pusher' => [
-            'driver' => 'redis',
-            'connection' => 'default',
+            // Remove or comment out the entire pusher configuration block
         ],
 
         'ably' => [

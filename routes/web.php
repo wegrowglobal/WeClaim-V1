@@ -1,5 +1,7 @@
 <?php
-
+use Illuminate\Support\Facades\Route;
+use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
+use Illuminate\Support\Facades\Broadcast;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NotificationController;
@@ -7,7 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\ForgotPasswordController;
-use Illuminate\Support\Facades\Route;
+
 
 // Guest Routes
 Route::middleware('guest')->group(function () {

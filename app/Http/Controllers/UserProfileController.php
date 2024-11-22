@@ -17,8 +17,6 @@ class UserProfileController extends Controller
         $this->bankingInstitutionService = $bankingInstitutionService;
     }
 
-    //////////////////////////////////////////////////////////////////
-
     public function show()
     {
         $banks = $this->bankingInstitutionService->getBankingInstitutions();
@@ -46,15 +44,13 @@ class UserProfileController extends Controller
         ]);
     }
 
-    //////////////////////////////////////////////////////////////////
-
     public function update(Request $request)
     {
         try {
             $user = Auth::user();
 
             $request->validate([
-                'profile_picture' => 'nullable|image|max:2048',
+                'profile_picture' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'first_name' => 'required|string|max:255',
                 'second_name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $user->id,
@@ -82,16 +78,21 @@ class UserProfileController extends Controller
                     Storage::disk('public')->delete($user->profile_picture);
                 }
 
-                // Store new profile picture
-                $fileName = time() . '_' . $file->getClientOriginalName();
+                // Store new profile picture with unique name
+                $fileName = 'profile-' . $user->id . '-' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('profile-pictures', $fileName, 'public');
                 
-                // Update user profile picture path
+                // Update user profile picture path directly
                 $user->profile_picture = $path;
                 $user->save();
+
+                Log::info('Profile picture updated', [
+                    'user_id' => $user->id,
+                    'file_path' => $path
+                ]);
             }
 
-            // Update user information
+            // Update other user information
             $user->update($request->only([
                 'first_name',
                 'second_name',
@@ -104,7 +105,7 @@ class UserProfileController extends Controller
                 'country'
             ]));
 
-            // Update banking information
+            // Handle banking information
             $user->bankingInformation()->updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -127,6 +128,4 @@ class UserProfileController extends Controller
             return back()->withErrors(['error' => 'Failed to update profile.'])->withInput();
         }
     }
-
-    //////////////////////////////////////////////////////////////////
 }

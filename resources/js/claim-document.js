@@ -91,7 +91,6 @@ class DocumentUpload {
                 summaryLocations.textContent = locations.length || '0';
             }
         } catch (error) {
-            console.error('Error parsing draft data:', error);
         }
     }
 

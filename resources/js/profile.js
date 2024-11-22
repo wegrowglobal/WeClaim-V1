@@ -94,23 +94,27 @@ class Profile {
         const reader = new FileReader();
         
         reader.onload = (e) => {
-            // Find or create the image element
-            let img = this.profilePictureContainer.querySelector('img');
-            if (!img) {
-                // Remove the initial content (if it's the default avatar)
-                while (this.profilePictureContainer.firstChild) {
-                    this.profilePictureContainer.removeChild(this.profilePictureContainer.firstChild);
+            // Find the existing profile picture component
+            const profilePictureComponent = this.profilePictureContainer.querySelector('div');
+            if (profilePictureComponent) {
+                let img = profilePictureComponent.querySelector('img');
+                if (!img) {
+                    // Remove only the default avatar div if it exists
+                    const defaultAvatar = profilePictureComponent.querySelector('.rounded-full:not(img)');
+                    if (defaultAvatar) {
+                        defaultAvatar.remove();
+                    }
+                    
+                    // Create new image element
+                    img = document.createElement('img');
+                    img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-full');
+                    profilePictureComponent.insertBefore(img, profilePictureComponent.firstChild);
                 }
                 
-                // Create new image element
-                img = document.createElement('img');
-                img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-full');
-                this.profilePictureContainer.appendChild(img);
+                // Update image attributes
+                img.src = e.target.result;
+                img.alt = 'Profile preview';
             }
-            
-            // Update image attributes
-            img.src = e.target.result;
-            img.alt = 'Profile preview';
         };
         
         reader.readAsDataURL(file);

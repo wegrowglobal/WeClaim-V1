@@ -71,7 +71,7 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
             'approved_hr' => "Your claim #{$this->claim->id} has been approved by HR and is now pending Finance review.",
             
             // Flow 5: Finance completion
-            'approved_finance' => "Your claim #{$this->claim->id} has been approved by Finance.",
+            'approved_finance' => "Your claim #{$this->claim->id} has been approved by Finance and is now waiting for payment.",
             'completed' => "Your claim #{$this->claim->id} has been fully processed and marked as completed.",
             
             // Rejection messages
@@ -148,7 +148,12 @@ class ClaimStatusNotification extends Notification implements ShouldBroadcast
 
     public function toBroadcast($notifiable)
     {
-        return new BroadcastMessage($this->toArray($notifiable));
+        return new BroadcastMessage([
+            'claim_id' => $this->claim->id,
+            'status' => $this->status,
+            'action' => $this->action,
+            'message' => $this->message,
+        ]);
     }
 
     public function toDatabase($notifiable)

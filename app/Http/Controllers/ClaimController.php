@@ -485,7 +485,7 @@ class ClaimController extends Controller
                                 $claim->status,
                                 'pending_review_hr',
                                 false
-                            ));
+                            ))->broadcast();
                         }
                     }
                 } else {

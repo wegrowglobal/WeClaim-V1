@@ -5,17 +5,22 @@
         "dev": "vite",
         "build": "vite build",
         "postinstall": "npm run build",
-        "start": "vite preview"
+        "start": "vite preview",
+        "websocket": "node resources/js/websocket-server.js"
     },
     "dependencies": {
         "@vitejs/plugin-vue": "^4.x.x",
         "autoprefixer": "^10.4.16",
         "axios": "^1.6.2",
+        "express": "^4.21.1",
+        "laravel-echo": "^1.17.0",
         "laravel-vite-plugin": "^1.0.0",
         "postcss": "^8.4.31",
+        "pusher-js": "^8.4.0-rc2",
         "tailwindcss": "^3.4.0",
         "vite": "^5.x.x",
-        "vue": "^3.x.x"
+        "vue": "^3.x.x",
+        "ws": "^8.18.0"
     },
     "devDependencies": {
         "postcss-import": "^16.1.0"
