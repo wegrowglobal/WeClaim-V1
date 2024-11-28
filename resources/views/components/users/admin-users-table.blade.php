@@ -138,7 +138,7 @@
     </div>
 
     @if ($users->hasPages())
-        <div class="border-t border-gray-200 px-4 py-3 sm:px-6">
+        <div class="border-t border-gray-200 py-3">
             <div class="flex items-center justify-between">
                 <div class="text-sm text-gray-700">
                     Showing <span class="font-medium">{{ $users->firstItem() }}</span>
@@ -149,24 +149,24 @@
                     @if ($users->onFirstPage())
                         <span
                             class="inline-flex cursor-not-allowed items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-400">
-                            <i class="fas fa-arrow-left mr-2"></i> Previous
+                            <i class="fas fa-arrow-left"></i>
                         </span>
                     @else
                         <a class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                             href="{{ $users->previousPageUrl() }}">
-                            <i class="fas fa-arrow-left mr-2"></i> Previous
+                            <i class="fas fa-arrow-left"></i>
                         </a>
                     @endif
 
                     @if ($users->hasMorePages())
                         <a class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                             href="{{ $users->nextPageUrl() }}">
-                            Next <i class="fas fa-arrow-right ml-2"></i>
+                            <i class="fas fa-arrow-right"></i>
                         </a>
                     @else
                         <span
                             class="inline-flex cursor-not-allowed items-center rounded-md bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-400">
-                            Next <i class="fas fa-arrow-right ml-2"></i>
+                            <i class="fas fa-arrow-right"></i>
                         </span>
                     @endif
                 </div>
