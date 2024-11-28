@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 final class UserController extends Controller
 {
@@ -46,7 +47,7 @@ final class UserController extends Controller
 
             $user = Auth::user();
             if (!$user) {
-                throw new \RuntimeException('User not found after successful login');
+                throw new RuntimeException('User not found after successful login');
             }
 
             $request->session()->regenerate();
@@ -55,8 +56,15 @@ final class UserController extends Controller
                 'user_department' => $user->department?->name
             ]);
 
-            return redirect()->intended(route(self::HOME_ROUTE));
+            if ($user->role_id === 1) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
 
+                return redirect()->route('coming-soon')->with('message', 'System is currently under maintenance for staff members.');
+            }
+
+            return redirect()->intended(route(self::HOME_ROUTE));
         } catch (AuthenticationException $e) {
             return back()
                 ->withErrors([
@@ -64,7 +72,6 @@ final class UserController extends Controller
                     'auth' => 'Invalid credentials provided.'
                 ])
                 ->withInput($request->only('email'));
-
         } catch (\Exception $e) {
             Log::error('Login error', [
                 'exception' => $e,
@@ -130,7 +137,6 @@ final class UserController extends Controller
             return redirect()
                 ->route('profile')
                 ->with('success', 'Password has been updated successfully!');
-
         } catch (\Exception $e) {
             Log::error('Password change error', [
                 'error' => $e->getMessage(),
@@ -142,5 +148,4 @@ final class UserController extends Controller
                 ->withInput();
         }
     }
-
 }

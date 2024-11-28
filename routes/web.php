@@ -156,3 +156,7 @@ Route::get('/set-password/{token}', [RegistrationRequestController::class, 'show
 
 Route::post('/set-password/{token}', [RegistrationRequestController::class, 'setPassword'])
     ->name('password.setup');
+
+Route::get('/coming-soon', function () {
+    return view('pages.coming-soon');
+})->name('coming-soon');
