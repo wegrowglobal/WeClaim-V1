@@ -170,14 +170,28 @@ export class ReviewMap extends BaseMap {
             }
         });
 
-        // Update totals
-        const totalDurationEl = document.getElementById('total-duration');
-        const totalDistanceEl = document.getElementById('total-distance');
-        const totalCostEl = document.getElementById('total-cost');
+        // Update distance displays
+        const distanceValue = `${totals.distance} km`;
+        document.getElementById('total-distance-mobile')?.textContent = distanceValue;
+        document.getElementById('total-distance-desktop')?.textContent = distanceValue;
 
-        if (totalDurationEl) totalDurationEl.textContent = totals.duration;
-        if (totalDistanceEl) totalDistanceEl.textContent = totals.distance;
-        if (totalCostEl) totalCostEl.textContent = `RM ${totals.cost}`;
+        // Update duration displays
+        document.getElementById('total-duration-mobile')?.textContent = totals.duration;
+        document.getElementById('total-duration-desktop')?.textContent = totals.duration;
+
+        // Update cost displays
+        const costValue = `RM ${totals.cost}`;
+        document.getElementById('total-cost-mobile')?.textContent = costValue;
+        document.getElementById('total-cost-desktop')?.textContent = costValue;
+
+        // Update hidden inputs
+        const totalDistanceInput = document.getElementById('total-distance-input');
+        const totalDurationInput = document.getElementById('total-duration-input');
+        const totalCostInput = document.getElementById('total-cost-input');
+
+        if (totalDistanceInput) totalDistanceInput.value = totals.distance;
+        if (totalDurationInput) totalDurationInput.value = totals.duration;
+        if (totalCostInput) totalCostInput.value = totals.cost;
     }
 
     async renderMap(geocodingResults, routeData) {
