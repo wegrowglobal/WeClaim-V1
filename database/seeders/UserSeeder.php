@@ -8,10 +8,14 @@ use App\Models\Department;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Faker\Factory as Faker;
+
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        $faker = Faker::create();
+
         // Get role IDs
         $adminRoleId = Role::where('name', 'Admin')->value('id');
         $hrRoleId = Role::where('name', 'HR')->value('id');
@@ -34,92 +38,92 @@ class UserSeeder extends Seeder
             'department_id' => $allDepartmentId,
             'email_verified_at' => now(),
             'remember_token' => Str::random(10),
-            'phone' => fake()->phoneNumber(),
-            'address' => fake()->streetAddress(),
-            'city' => fake()->city(),
-            'state' => fake()->state(),
-            'zip_code' => fake()->postcode(),
-            'country' => fake()->country(),
+            'phone' => $faker->phoneNumber(),
+            'address' => $faker->streetAddress(),
+            'city' => $faker->city(),
+            'state' => $faker->state(),
+            'zip_code' => $faker->postcode(),
+            'country' => $faker->country(),
         ]);
 
-        // Create Admin users (2-3) starting from ID 11
+        // Create Admin users (2-3)
         for ($i = 0; $i < rand(2, 3); $i++) {
             User::create([
-                'first_name' => fake()->firstName(),
-                'second_name' => fake()->lastName(),
+                'first_name' => $faker->firstName(),
+                'second_name' => $faker->lastName(),
                 'email' => "admin{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $adminRoleId,
                 'department_id' => $allDepartmentId,
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),
-                'phone' => fake()->phoneNumber(),
-                'address' => fake()->streetAddress(),
-                'city' => fake()->city(),
-                'state' => fake()->state(),
-                'zip_code' => fake()->postcode(),
-                'country' => fake()->country(),
+                'phone' => $faker->phoneNumber(),
+                'address' => $faker->streetAddress(),
+                'city' => $faker->city(),
+                'state' => $faker->state(),
+                'zip_code' => $faker->postcode(),
+                'country' => $faker->country(),
             ]);
         }
 
         // Create HR users (2-3)
         for ($i = 0; $i < rand(2, 3); $i++) {
             User::create([
-                'first_name' => fake()->firstName(),
-                'second_name' => fake()->lastName(),
+                'first_name' => $faker->firstName(),
+                'second_name' => $faker->lastName(),
                 'email' => "hr{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $hrRoleId,
                 'department_id' => $allDepartmentId,
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),
-                'phone' => fake()->phoneNumber(),
-                'address' => fake()->streetAddress(),
-                'city' => fake()->city(),
-                'state' => fake()->state(),
-                'zip_code' => fake()->postcode(),
-                'country' => fake()->country(),
+                'phone' => $faker->phoneNumber(),
+                'address' => $faker->streetAddress(),
+                'city' => $faker->city(),
+                'state' => $faker->state(),
+                'zip_code' => $faker->postcode(),
+                'country' => $faker->country(),
             ]);
         }
 
         // Create Finance users (2-3)
         for ($i = 0; $i < rand(2, 3); $i++) {
             User::create([
-                'first_name' => fake()->firstName(),
-                'second_name' => fake()->lastName(),
+                'first_name' => $faker->firstName(),
+                'second_name' => $faker->lastName(),
                 'email' => "finance{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $financeRoleId,
                 'department_id' => $allDepartmentId,
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),
-                'phone' => fake()->phoneNumber(),
-                'address' => fake()->streetAddress(),
-                'city' => fake()->city(),
-                'state' => fake()->state(),
-                'zip_code' => fake()->postcode(),
-                'country' => fake()->country(),
+                'phone' => $faker->phoneNumber(),
+                'address' => $faker->streetAddress(),
+                'city' => $faker->city(),
+                'state' => $faker->state(),
+                'zip_code' => $faker->postcode(),
+                'country' => $faker->country(),
             ]);
         }
 
         // Create Staff users (10-15)
         for ($i = 0; $i < rand(10, 15); $i++) {
             User::create([
-                'first_name' => fake()->firstName(),
-                'second_name' => fake()->lastName(),
+                'first_name' => $faker->firstName(),
+                'second_name' => $faker->lastName(),
                 'email' => "staff{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $staffRoleId,
-                'department_id' => fake()->randomElement($departments),
+                'department_id' => $faker->randomElement($departments),
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),
-                'phone' => fake()->phoneNumber(),
-                'address' => fake()->streetAddress(),
-                'city' => fake()->city(),
-                'state' => fake()->state(),
-                'zip_code' => fake()->postcode(),
-                'country' => fake()->country(),
+                'phone' => $faker->phoneNumber(),
+                'address' => $faker->streetAddress(),
+                'city' => $faker->city(),
+                'state' => $faker->state(),
+                'zip_code' => $faker->postcode(),
+                'country' => $faker->country(),
             ]);
         }
     }
-} 
+}
