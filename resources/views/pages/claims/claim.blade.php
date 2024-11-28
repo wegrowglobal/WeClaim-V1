@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
     <x-claims.claim-header 
         title="Claim Details"
         subtitle="View and manage claim information"

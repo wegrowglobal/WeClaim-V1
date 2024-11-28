@@ -274,18 +274,18 @@ export class ClaimMap extends BaseMap {
             const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
             const segmentHtml = `
                 <div class="segment-detail bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md border-2 border-indigo-200">
-                    <div class="flex flex-row justify-between items-center p-4">
-                        <div class="space-y-3">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 space-y-4 sm:space-y-0">
+                        <div class="space-y-3 w-full sm:w-auto">
                             <div class="flex items-center space-x-3">
                                 <span class="from-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${color}"></span>
-                                <span class="text-xs text-gray-700">${leg.start_address}</span>
+                                <span class="text-xs sm:text-sm text-gray-700 truncate max-w-[200px] sm:max-w-none">${leg.start_address}</span>
                             </div>
                             <div class="flex items-center space-x-3">
                                 <span class="to-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
-                                <span class="text-xs text-gray-700">${leg.end_address}</span>
+                                <span class="text-xs sm:text-sm text-gray-700 truncate max-w-[200px] sm:max-w-none">${leg.end_address}</span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-3 gap-4 w-full sm:w-auto">
                             <div class="flex items-center space-x-2">
                                 <div class="p-2 bg-blue-50 rounded-lg">
                                     <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

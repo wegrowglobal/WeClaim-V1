@@ -11,6 +11,10 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    protected $attributes = [
+        'role_id' => 2  // Default to Staff role
+    ];
+
     protected $fillable = [
         'first_name',
         'second_name',
@@ -24,7 +28,11 @@ class User extends Authenticatable
         'profile_picture',
         'bank_name',
         'bank_account_holder',
-        'bank_account_number'
+        'bank_account_number',
+        'department_id',
+        'password',
+        'password_setup_token',
+        'role_id'
     ];
 
     protected $hidden = [

@@ -5,7 +5,7 @@
 @endphp
 
 @section('content')
-<div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="w-full max-w-7xl mx-auto px-0 sm:px-6 lg:px-8">
     <div class="mb-8 animate-slide-in">
         <div class="flex items-center justify-between">
             <div>

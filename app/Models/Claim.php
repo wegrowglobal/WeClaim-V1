@@ -48,6 +48,13 @@ class Claim extends Model
         'total_distance' => 'decimal:2'
     ];
 
+    protected $dates = [
+        'date_from',
+        'date_to',
+        'created_at',
+        'updated_at'
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -80,7 +87,7 @@ class Claim extends Model
 
     public function getStatusBadgeClass(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_SUBMITTED => 'bg-amber-50 text-amber-700',
             self::STATUS_REJECTED => 'bg-red-50 text-red-700',
             default => 'bg-gray-50 text-gray-700'
@@ -89,7 +96,7 @@ class Claim extends Model
 
     public function getStatusIconClass(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             self::STATUS_SUBMITTED => 'text-amber-600',
             self::STATUS_REJECTED => 'text-red-600',
             default => 'text-gray-600'

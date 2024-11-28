@@ -25,7 +25,7 @@ class BreadcrumbsServiceProvider extends ServiceProvider
 
         $routeName = $route->getName();
         $parameters = $route->parameters();
-        
+
         // Start with Dashboard
         $breadcrumbs = [[
             'name' => 'Dashboard',
@@ -42,10 +42,19 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                 break;
 
             case 'claims.view':
-                $breadcrumbs[] = [
-                    'name' => 'Claims',
-                    'url' => route('claims.dashboard')
-                ];
+                // Check if coming from admin page using previous URL
+                if (url()->previous() === route('claims.admin')) {
+                    $breadcrumbs[] = [
+                        'name' => 'Claims Management',
+                        'url' => route('claims.admin')
+                    ];
+                } else {
+                    $breadcrumbs[] = [
+                        'name' => 'Claims',
+                        'url' => route('claims.dashboard')
+                    ];
+                }
+
                 if (isset($parameters['id'])) {
                     $breadcrumbs[] = [
                         'name' => 'Claim #' . $parameters['id'],
@@ -53,7 +62,7 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     ];
                 }
                 break;
-            
+
             case 'claims.review':
                 $breadcrumbs[] = [
                     'name' => 'Claims Approval',
@@ -94,6 +103,13 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     'url' => '#'
                 ];
                 break;
+
+            case 'claims.admin':
+                $breadcrumbs[] = [
+                    'name' => 'Claims Management',
+                    'url' => route('claims.admin')
+                ];
+                break;
         }
 
         return array_values(array_filter($breadcrumbs));
@@ -106,4 +122,4 @@ class BreadcrumbsServiceProvider extends ServiceProvider
             'url' => route('home')
         ]];
     }
-} 
+}

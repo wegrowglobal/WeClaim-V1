@@ -1,4 +1,4 @@
-<div class="p-6 space-y-6" data-step="3">
+<div class="p-0 sm:p-6 space-y-6" data-step="3">
     @php
         $draftData = $draftData ?? [];
         
@@ -35,78 +35,47 @@
     </div>
 
     <div>
-        <h2 class="text-base font-medium text-gray-900">Supporting Documents</h2>
+        <h2 class="text-lg font-medium text-gray-900">Supporting Documents</h2>
         <p class="text-sm text-gray-500 mt-1">Upload your toll receipts and approval emails</p>
     </div>
 
     <!-- Documents & Toll Section -->
-    <div class="space-y-8">
+    <div class="space-y-6">
         <!-- Trip Summary -->
-        <div class="bg-gray-50/50 rounded-xl p-6 hover:bg-gray-50 transition-all">
-            <div class="flex items-center space-x-3 mb-4">
-                <div class="p-2 bg-indigo-50 rounded-lg">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                    </svg>
-                </div>
-                <h3 class="text-sm font-medium text-gray-600">Trip Summary</h3>
-            </div>
+        <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-gray-600 mb-3">Trip Summary</h3>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="space-y-3">
                 <!-- Total Distance -->
-                <div class="bg-white rounded-lg p-4">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div class="p-2 bg-indigo-50 rounded-lg">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600">Total Distance</p>
-                    </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-600">Total Distance:</p>
                     <div class="flex items-baseline">
-                        <span data-summary="distance" class="text-xl font-medium text-gray-600">{{ number_format($totalDistance, 2) }}</span>
+                        <span data-summary="distance" class="text-base font-medium text-gray-600">{{ number_format($totalDistance, 2) }}</span>
                         <span class="ml-1 text-xs text-gray-500">km</span>
                     </div>
                 </div>
 
                 <!-- Petrol Claim -->
-                <div class="bg-white rounded-lg p-4">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div class="p-2 bg-indigo-50 rounded-lg">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600">Petrol Claim</p>
-                    </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-600">Petrol Claim:</p>
                     <div class="flex items-baseline">
-                        <span class="text-xl font-medium text-gray-600">RM</span>
-                        <span data-summary="petrol" class="text-xl font-medium text-gray-600 ml-1">{{ $totalCost }}</span>
-                        <span class="ml-1 text-xs text-gray-500">estimated</span>
+                        <span class="text-xs text-gray-500">RM</span>
+                        <span data-summary="petrol" class="text-base font-medium text-gray-600 ml-1">{{ $totalCost }}</span>
                     </div>
                 </div>
 
                 <!-- Total Locations -->
-                <div class="bg-white rounded-lg p-4">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div class="p-2 bg-indigo-50 rounded-lg">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-gray-600">Total Locations</p>
-                    </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-sm text-gray-600">Total Locations:</p>
                     <div class="flex items-baseline">
-                        <span data-summary="locations" class="text-xl font-medium text-gray-600">{{ count($draftData['locations'] ?? []) }}</span>
-                        <span class="ml-1 text-xs text-gray-500">locations</span>
+                        <span data-summary="locations" class="text-base font-medium text-gray-600">{{ count($draftData['locations'] ?? []) }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Toll Amount -->
-        <div class="bg-gray-50/50 rounded-xl p-6 hover:bg-gray-50 transition-all">
+        <div class="bg-gray-50/50 rounded-xl p-4 sm:p-6 hover:bg-gray-50 transition-all">
             <div class="flex items-center space-x-3 mb-4">
                 <div class="p-2 bg-indigo-50 rounded-lg">
                     <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -130,8 +99,8 @@
                        required>
             </div>
 
-            <div class="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 p-3 rounded-lg">
-                <svg class="h-5 w-5 text-blue-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <div class="flex items-start gap-2 text-sm text-blue-700 bg-blue-50 p-3 rounded-lg">
+                <svg class="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
                 </svg>
                 <p class="text-sm">
@@ -141,9 +110,9 @@
         </div>
 
         <!-- Document Upload Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <!-- Toll Receipt Upload -->
-            <div class="bg-gray-50/50 rounded-xl p-6 hover:bg-gray-50 transition-all">
+            <div class="bg-gray-50/50 rounded-xl p-4 sm:p-6 hover:bg-gray-50 transition-all">
                 <div class="flex items-center space-x-3 mb-4">
                     <div class="p-2 bg-indigo-50 rounded-lg">
                         <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -158,14 +127,14 @@
 
                 <div class="document-upload-area" id="toll-upload-area">
                     <input type="file" id="toll_report" name="toll_report" class="hidden" accept=".pdf,.jpg,.jpeg,.png" required>
-                    <label for="toll_report" class="document-upload-label block p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors cursor-pointer">
+                    <label for="toll_report" class="document-upload-label block p-4 sm:p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors cursor-pointer">
                         <div class="text-center space-y-2">
                             <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                             <div class="text-sm">
                                 <span class="text-indigo-600 font-medium">Click to upload</span>
-                                <span class="text-gray-500"> or drag and drop</span>
+                                <span class="text-gray-500 hidden sm:inline"> or drag and drop</span>
                             </div>
                         </div>
                     </label>
@@ -182,7 +151,7 @@
             </div>
 
             <!-- Email Approval Upload -->
-            <div class="bg-gray-50/50 rounded-xl p-6 hover:bg-gray-50 transition-all">
+            <div class="bg-gray-50/50 rounded-xl p-4 sm:p-6 hover:bg-gray-50 transition-all">
                 <div class="flex items-center space-x-3 mb-4">
                     <div class="p-2 bg-indigo-50 rounded-lg">
                         <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -197,14 +166,14 @@
 
                 <div class="document-upload-area" id="email-upload-area">
                     <input type="file" id="email_report" name="email_report" class="hidden" accept=".pdf" required>
-                    <label for="email_report" class="document-upload-label block p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors cursor-pointer">
+                    <label for="email_report" class="document-upload-label block p-4 sm:p-6 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 transition-colors cursor-pointer">
                         <div class="text-center space-y-2">
                             <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
                             <div class="text-sm">
                                 <span class="text-indigo-600 font-medium">Click to upload</span>
-                                <span class="text-gray-500"> or drag and drop</span>
+                                <span class="text-gray-500 hidden sm:inline"> or drag and drop</span>
                             </div>
                         </div>
                     </label>
@@ -230,18 +199,18 @@
 </div>
 
 <!-- Action Buttons -->
-<div class="px-6 flex justify-between">
+<div class="px-4 sm:px-6 flex flex-col sm:flex-row justify-between space-y-3 sm:space-y-0 sm:space-x-3">
     <button type="button" 
             onclick="window.claimForm.previousStep(3)"
-            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
-        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all">
+        <svg class="w-4 h-4 mr-2 hidden sm:inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
         </svg>
         Previous
     </button>
     <button type="submit" 
-            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
-        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+        <svg class="w-4 h-4 mr-2 hidden sm:inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
         Submit

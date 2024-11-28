@@ -1,37 +1,54 @@
-<nav class="bg-white">
-    <div class="w-full max-w-7xl mx-auto">
+<nav class="bg-white shadow-sm">
+    <div class="mx-auto w-full max-w-7xl">
         <div class="px-4 sm:px-6 lg:px-8">
-            <div class="flex h-16 items-center justify-between animate-slide-in-right">
+            <div class="animate-slide-in-right flex h-16 items-center justify-between">
                 <!-- Left Side -->
                 <div class="flex items-center gap-8">
                     <!-- Logo -->
-                    <a href="{{ route('home') }}" class="animate-fade-in">
-                        <svg width="32" height="32" viewBox="0 0 557 438" fill="none" xmlns="http://www.w3.org/2000/svg" 
-                             class="text-gray-900 transition-transform duration-300 hover:scale-110">
-                            <path d="M202.74 76.0002L126.74 152L177.407 202.667L228.074 253.333L240.74 240.667L253.407 228L215.407 190L177.407 152L240.74 88.6668L304.074 25.3335L291.407 12.6668L278.74 0.000149548L202.74 76.0002Z" fill="currentColor"/>
-                            <path d="M278.741 101.333L228.074 152L253.408 177.333L278.741 202.667L291.408 190L304.074 177.333L291.408 164.667L278.741 152L303.808 126.933L328.741 102L353.674 127.067L378.741 152L341.674 189.067C321.408 209.333 304.741 226.667 304.741 227.333C304.741 228.133 310.341 234.267 317.141 241.067L329.408 253.333L380.074 202.667L430.741 152L380.074 101.333L329.408 50.6668L278.741 101.333Z" fill="currentColor"/>
-                            <path d="M12.7409 266L0.0742188 278.666L76.0742 354.666L152.074 430.667L215.408 367.333L278.741 304L341.808 366.933L404.741 430L480.741 354L556.741 278L544.074 265.333L531.408 252.666L468.074 316L404.741 379.333L341.408 316L278.074 252.666L215.008 315.733L152.074 378.667L89.4076 316C55.0076 281.6 26.4742 253.333 26.0742 253.333C25.6742 253.333 19.6742 259.066 12.7409 266Z" fill="currentColor"/>
+                    <a class="animate-fade-in" href="{{ route('home') }}">
+                        <svg class="text-[#242424] transition-transform duration-300 hover:scale-110" width="32"
+                            height="32" viewBox="0 0 557 438" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M202.74 76.0002L126.74 152L177.407 202.667L228.074 253.333L240.74 240.667L253.407 228L215.407 190L177.407 152L240.74 88.6668L304.074 25.3335L291.407 12.6668L278.74 0.000149548L202.74 76.0002Z"
+                                fill="currentColor" />
+                            <path
+                                d="M278.741 101.333L228.074 152L253.408 177.333L278.741 202.667L291.408 190L304.074 177.333L291.408 164.667L278.741 152L303.808 126.933L328.741 102L353.674 127.067L378.741 152L341.674 189.067C321.408 209.333 304.741 226.667 304.741 227.333C304.741 228.133 310.341 234.267 317.141 241.067L329.408 253.333L380.074 202.667L430.741 152L380.074 101.333L329.408 50.6668L278.741 101.333Z"
+                                fill="currentColor" />
+                            <path
+                                d="M12.7409 266L0.0742188 278.666L76.0742 354.666L152.074 430.667L215.408 367.333L278.741 304L341.808 366.933L404.741 430L480.741 354L556.741 278L544.074 265.333L531.408 252.666L468.074 316L404.741 379.333L341.408 316L278.074 252.666L215.008 315.733L152.074 378.667L89.4076 316C55.0076 281.6 26.4742 253.333 26.0742 253.333C25.6742 253.333 19.6742 259.066 12.7409 266Z"
+                                fill="currentColor" />
                         </svg>
                     </a>
 
                     <!-- Navigation Links -->
-                    <div class="hidden md:flex items-center gap-2">
+                    <div class="hidden items-center gap-4 md:flex">
                         <!-- Each nav item with incremental delays -->
-                        <a href="{{ route('home') }}" 
-                           class="nav-link {{ request()->routeIs('home') ? 'nav-link-active' : '' }} animate-fade-in">
+                        <a class="nav-link {{ request()->routeIs('home') ? 'nav-link-active' : '' }} animate-fade-in px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-300 hover:text-indigo-600"
+                            href="{{ route('home') }}">
                             Home
                         </a>
 
                         @auth
-                            <a href="{{ route('claims.dashboard') }}" 
-                               class="nav-link {{ request()->routeIs('claims.dashboard') ? 'nav-link-active' : '' }} animate-fade-in">
+                            <a class="nav-link {{ request()->routeIs('claims.dashboard') ? 'nav-link-active' : '' }} animate-fade-in px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-300 hover:text-indigo-600"
+                                href="{{ route('claims.dashboard') }}">
                                 Claims
                             </a>
 
                             @if (Auth::user()->role->name != 'Staff')
-                                <a href="{{ route('claims.approval') }}" 
-                                   class="nav-link {{ request()->routeIs('claims.approval') ? 'nav-link-active' : '' }} animate-fade-in">
+                                <a class="nav-link {{ request()->routeIs('claims.approval') ? 'nav-link-active' : '' }} animate-fade-in px-3 py-2 text-sm font-medium text-gray-700 transition-all duration-300 hover:text-indigo-600"
+                                    href="{{ route('claims.approval') }}">
                                     Approval
+                                </a>
+                            @endif
+
+                            @if (Auth::user()->role_id === 5)
+                                <a class="animate-fade-in {{ request()->routeIs('claims.admin') ? 'ring-2 ring-offset-2 ring-purple-500' : '' }} relative inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:from-purple-700 hover:to-indigo-700"
+                                    href="{{ route('claims.admin') }}">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                    Claims Management
                                 </a>
                             @endif
                         @endauth
@@ -39,66 +56,94 @@
                 </div>
 
                 <!-- Right Side Actions -->
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-4">
                     @auth
-                        <a href="{{ route('claims.new') }}" 
-                           class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-green-100 text-green-600 hover:bg-green-200 transition-all animate-fade-in"
-                           title="New Claim">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/>
+                        <a class="animate-fade-in hidden items-center gap-2 rounded-md bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 lg:inline-flex"
+                            href="{{ route('claims.new') }}" title="New Claim">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M12 4v16m8-8H4" />
                             </svg>
-                            <span class="text-sm font-medium">New Claim</span>
+                            <span>New Claim</span>
                         </a>
 
-                        <a href="{{ route('notifications') }}" 
-                           class="relative p-2 rounded-md bg-gray-100 hover:bg-gray-200 transition-all animate-fade-in {{ Auth::user()->unreadNotifications->count() > 0 ? 'text-indigo-600' : 'text-gray-600' }}"
-                           title="Notifications">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        <div class="flex gap-4 lg:hidden">
+                            <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                href="{{ route('claims.new') }}" title="New Claim">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M12 4v16m8-8H4" />
+                                </svg>
+                            </a>
+                            <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                href="{{ route('claims.dashboard') }}" title="Claims">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </a>
+
+                            @if (Auth::user()->role->name != 'Staff')
+                                <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                    href="{{ route('claims.approval') }}" title="Approval">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </a>
+                            @endif
+
+                            @if (Auth::user()->role_id === 5)
+                                <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                    href="{{ route('claims.admin') }}" title="Claims Management">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                </a>
+                            @endif
+                        </div>
+
+                        <a class="animate-fade-in {{ Auth::user()->unreadNotifications->count() > 0 ? 'text-indigo-600' : 'text-gray-600' }} relative rounded-full p-2 transition-all hover:bg-gray-100"
+                            href="{{ route('notifications') }}" title="Notifications">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
-                            @if(Auth::user()->unreadNotifications->count() > 0)
-                                <span class="absolute top-0 right-0 inline-flex items-center justify-center w-2 h-2 text-red-100 transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full notification-indicator">
+                            @if (Auth::user()->unreadNotifications->count() > 0)
+                                <span
+                                    class="notification-indicator absolute right-0 top-0 inline-flex h-2 w-2 -translate-y-1/2 translate-x-1/2 transform items-center justify-center rounded-full bg-red-600 text-red-100">
                                 </span>
                             @endif
                         </a>
 
-                        <a href="{{ route('profile') }}" 
-                           class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all animate-fade-in"
-                           title="Profile">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                            href="{{ route('profile') }}" title="Profile">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                         </a>
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" 
-                                    class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all"
-                                    title="Sign Out">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            <button
+                                class="rounded-full p-2 text-gray-600 transition-all hover:bg-red-50 hover:text-red-600"
+                                type="submit" title="Sign Out">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                 </svg>
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" 
-                           class="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all animate-fade-in"
-                           title="Sign In">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                            </svg>
+                        <a class="animate-fade-in rounded-md bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100"
+                            href="{{ route('login') }}">
+                            Sign In
                         </a>
-                        <a href=" " 
-                           class="p-2 rounded-md bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-all animate-fade-in"
-                           title="Create Account">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                            </svg>
+                        <a class="animate-fade-in rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700"
+                            href=" ">
+                            Create Account
                         </a>
                     @endauth
                 </div>
@@ -106,23 +151,26 @@
         </div>
 
         <!-- Breadcrumbs -->
-        @if(isset($breadcrumbs) && count($breadcrumbs) > 0)
+        @if (isset($breadcrumbs) && count($breadcrumbs) > 0)
             <div>
-                <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <nav class="flex py-4" aria-label="Breadcrumb">
+                <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <nav class="flex py-3" aria-label="Breadcrumb">
                         <div class="breadcrumbs-container animate-slide-in">
                             <ol class="flex items-center space-x-2">
-                                @foreach($breadcrumbs as $index => $breadcrumb)
+                                @foreach ($breadcrumbs as $index => $breadcrumb)
                                     <li class="flex items-center">
-                                        @if($index > 0)
-                                            <svg class="flex-shrink-0 h-4 w-4 text-gray-400 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        @if ($index > 0)
+                                            <svg class="mx-2 h-4 w-4 flex-shrink-0 text-gray-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
                                             </svg>
                                         @endif
-                                        <div class="breadcrumb-item {{ $loop->last ? 'breadcrumb-item-current' : '' }}">
-                                            @if(!$loop->last && $breadcrumb['url'] !== '#')
-                                                <a href="{{ $breadcrumb['url'] }}" 
-                                                   class="hover:text-indigo-600 transition-colors duration-200">
+                                        <div
+                                            class="breadcrumb-item {{ $loop->last ? 'text-gray-700 font-medium' : 'text-gray-500' }}">
+                                            @if (!$loop->last && $breadcrumb['url'] !== '#')
+                                                <a class="transition-colors duration-200 hover:text-indigo-600"
+                                                    href="{{ $breadcrumb['url'] }}">
                                                     {{ $breadcrumb['name'] }}
                                                 </a>
                                             @else

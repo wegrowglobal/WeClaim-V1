@@ -184,12 +184,12 @@ class Profile {
                     <div class="relative">
                         <input type="password" 
                                id="current_password" 
-                               class="block w-full px-4 py-3 rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all sm:text-sm" 
+                               class="block w-full px-3 py-2 text-sm sm:text-base rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all" 
                                placeholder="Current Password">
                         <button type="button" 
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                class="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center"
                                 onclick="Profile.togglePasswordVisibility('current_password')">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                             </svg>
@@ -198,19 +198,19 @@ class Profile {
                     <div class="relative">
                         <input type="password" 
                                id="new_password" 
-                               class="block w-full px-4 py-3 rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all sm:text-sm" 
+                               class="block w-full px-3 py-2 text-sm sm:text-base rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all" 
                                placeholder="New Password"
                                oninput="window.profileInstance.updatePasswordStrength()">
                         <div class="absolute inset-y-0 right-0 flex items-center">
                             <button type="button"
-                                    class="px-3 py-1 mr-8 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"
+                                    class="px-2 py-1 mr-6 sm:mr-8 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"
                                     onclick="const profile = new Profile(); profile.fillPasswordFields(profile.generatePassword())">
                                 Generate
                             </button>
                             <button type="button" 
-                                    class="pr-3 flex items-center"
+                                    class="pr-2 sm:pr-3 flex items-center"
                                     onclick="Profile.togglePasswordVisibility('new_password')">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                     <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                                 </svg>
@@ -220,12 +220,12 @@ class Profile {
                     <div class="relative">
                         <input type="password" 
                                id="new_password_confirmation" 
-                               class="block w-full px-4 py-3 rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all sm:text-sm" 
+                               class="block w-full px-3 py-2 text-sm sm:text-base rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all" 
                                placeholder="Confirm New Password">
                         <button type="button" 
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                                class="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center"
                                 onclick="Profile.togglePasswordVisibility('new_password_confirmation')">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
                                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
                             </svg>
@@ -240,7 +240,7 @@ class Profile {
                             <div id="password-strength-bar" class="h-full bg-gray-300 transition-all duration-300" style="width: 0%"></div>
                         </div>
                     </div>
-                    <div class="mt-4 p-4 bg-blue-50 text-left rounded-lg text-sm text-blue-600">
+                    <div class="mt-4 p-3 sm:p-4 bg-blue-50 text-left rounded-lg text-xs sm:text-sm text-blue-600">
                         <h4 class="font-semibold mb-2">Password Requirements:</h4>
                         <ul class="list-disc list-inside">
                             <li>At least 8 characters long</li>
