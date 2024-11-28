@@ -50,6 +50,14 @@
                                     </svg>
                                     Claims Management
                                 </a>
+                                <a class="animate-fade-in {{ request()->routeIs('users.management') ? 'ring-2 ring-offset-2 ring-teal-500' : '' }} relative inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:from-teal-700 hover:to-emerald-700"
+                                    href="{{ route('users.management') }}">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                    User Management
+                                </a>
                             @endif
                         @endauth
                     </div>

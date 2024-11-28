@@ -12,6 +12,8 @@ use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\RegistrationRequestController;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\UserManagementController;
+use Illuminate\Http\Request;
 
 
 // Guest Routes
@@ -114,23 +116,55 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/change-password', [UserController::class, 'changePassword']);
     });
 
-    Route::middleware(['auth'])->group(function () {
-        // Admin only routes
-        Route::get('/admin/claims', function () {
-            if (Auth::user()->role_id !== 5) {
-                return redirect()->route('home')->with('error', 'Unauthorized access.');
-            }
-            return app(ClaimController::class)->adminIndex();
-        })->name('claims.admin');
+    // Admin only routes
+    Route::get('/admin/claims', function () {
+        if (Auth::user()->role_id !== 5) {
+            return redirect()->route('home')->with('error', 'Unauthorized access.');
+        }
+        return app(ClaimController::class)->adminIndex();
+    })->name('claims.admin');
 
-        Route::delete('/claims/{claim}', function (App\Models\Claim $claim) {
+    Route::delete('/claims/{claim}', function (App\Models\Claim $claim) {
+        if (Auth::user()->role_id !== 5) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        return app(ClaimController::class)->destroy($claim);
+    })->name('claims.destroy');
+
+    // User Management Routes
+    Route::get('/users/management', function () {
+        if (Auth::user()->role_id !== 5) {
+            return redirect()->route('home')->with('error', 'Unauthorized access.');
+        }
+        return app(UserManagementController::class)->index();
+    })->name('users.management');
+
+    Route::post(
+        '/users',
+        function (Request $request) {
             if (Auth::user()->role_id !== 5) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
-            return app(ClaimController::class)->destroy($claim);
-        })->name('claims.destroy');
-    });
+            return app(UserManagementController::class)->store($request);
+        }
+    )->name('users.store');
+
+    Route::put('/users/{id}', function (Request $request, $id) {
+        if (Auth::user()->role_id !== 5) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        return app(UserManagementController::class)->update($request, $id);
+    })->name('users.update');
+
+    Route::delete('/users/{id}', function ($id) {
+        if (Auth::user()->role_id !== 5) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        return app(UserManagementController::class)->destroy($id);
+    })->name('users.destroy');
 });
+
+
 
 // Logout Route
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
