@@ -4,9 +4,10 @@
 
 @section('content')
     <div
-        class="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800 md:bg-gradient-to-br md:from-wgg-black-950 md:to-wgg-black-800">
+        class="flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800 md:bg-gradient-to-br md:from-wgg-black-950 md:to-wgg-black-800">
         <div class="h-full w-full md:h-auto md:max-w-md">
-            <div class="flex h-full flex-col justify-center overflow-hidden bg-white shadow-2xl md:h-auto md:rounded-3xl">
+            <div
+                class="flex min-h-[100dvh] flex-col justify-center overflow-y-auto bg-white shadow-2xl md:h-auto md:rounded-3xl">
                 <div class="px-8 py-12">
                     <div class="mb-8 text-center">
                         <h1 class="text-3xl font-bold text-gray-900">Set Your Password</h1>

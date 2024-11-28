@@ -4,9 +4,9 @@
 
 @section('content')
     <div
-        class="flex min-h-screen w-full items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black md:bg-white">
+        class="flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-r from-wgg-black-950 to-black md:bg-white">
         <div
-            class="flex min-h-screen w-full flex-col items-center justify-center bg-white p-8 md:min-h-0 md:w-full md:max-w-md md:rounded-xl md:p-10 md:shadow-2xl">
+            class="flex min-h-[100dvh] w-full flex-col items-center justify-center bg-white p-8 md:min-h-0 md:w-full md:max-w-md md:rounded-xl md:p-10 md:shadow-2xl">
             <div class="mb-8 text-center">
                 <svg class="mx-auto mb-4" width="60" height="48" viewBox="0 0 557 438" fill="none"
                     xmlns="http://www.w3.org/2000/svg">

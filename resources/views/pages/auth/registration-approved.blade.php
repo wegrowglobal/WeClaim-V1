@@ -2,10 +2,10 @@
 
 @section('content')
     <div
-        class="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800 md:bg-white">
-        <div class="w-full max-w-md md:flex md:h-screen md:w-full md:max-w-none md:items-center md:justify-center">
+        class="flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800 md:bg-white">
+        <div class="w-full max-w-md md:flex md:h-[100dvh] md:w-full md:max-w-none md:items-center md:justify-center">
             <div
-                class="overflow-hidden rounded-3xl bg-white shadow-2xl md:flex md:h-full md:w-full md:flex-col md:justify-center md:rounded-none md:shadow-none">
+                class="overflow-y-auto rounded-3xl bg-white shadow-2xl md:flex md:h-full md:w-full md:flex-col md:justify-center md:rounded-none md:shadow-none">
                 <div class="px-8 py-12 md:text-center">
                     <div class="mb-8 text-center">
                         <svg class="mx-auto mb-4" width="60" height="48" viewBox="0 0 24 24" fill="none"
