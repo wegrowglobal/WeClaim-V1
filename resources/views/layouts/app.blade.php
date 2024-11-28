@@ -29,6 +29,9 @@
     <!-- Sortable -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
+    <!-- Favicon -->
+    <link type="image/x-icon" href="/resources/favicon.ico" rel="icon">
+
 </head>
 
 <body>
