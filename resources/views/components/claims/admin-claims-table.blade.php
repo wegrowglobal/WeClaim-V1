@@ -101,7 +101,7 @@
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-right text-gray-500">
                                 <div class="flex justify-end gap-2">
-                                    <a class="text-xs font-medium text-gray-500 hover:text-blue-700"
+                                    <a class="text-xs font-medium text-blue-500 hover:text-blue-700"
                                         href="{{ route('claims.view', $claim->id) }}">
                                         View
                                     </a>

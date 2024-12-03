@@ -17,41 +17,66 @@ class ClaimTemplateMapper
     public function getMappings(): array
     {
         return [
-            // Header Information
-            'claim_company' => match ($this->claim->claim_company) {
-                'WGG' => 'Wegrow Global Sdn. Bhd.',
-                'WGE' => 'Wegrow Edutainment (M) Sdn. Bhd.',
-                'Both' => 'Wegrow Global Sdn. Bhd. & Wegrow Edutainment (M) Sdn. Bhd.',
-                default => $this->claim->claim_company,
-            },
-            'first_name' => $this->claim->user->first_name,
-            'second_name' => $this->claim->user->last_name,
-            'claim_month' => $this->claim->created_at->format('F Y'),
-            'user_department_name' => $this->claim->user->department_name,
+            // Company Header
+            'claim_company' => $this->formatCompanyName($this->claim->claim_company),
 
-            // Bank & Position Details
-            'bank_name' => $this->claim->user->bank_name ?? 'N/A',
-            'bank_account' => $this->claim->user->bank_account ?? 'N/A',
-            'ic_number' => $this->claim->user->ic_number ?? 'N/A',
-            'department' => 'HQ EXECUTIVE',
+            // Employee Details
+            'employee_name' => $this->formatFullName($this->claim->user->first_name, $this->claim->user->last_name),
+            'department' => $this->claim->user->department ?? 'N/A',
+            'submitted_date' => $this->claim->submitted_at->format('d/m/Y'),
 
-            // Claim Details
+            // Department Details
+            'department_name' => $this->claim->user->department ?? 'N/A',
+
+            // Claim Period
+            'claim_period' => sprintf(
+                '%s to %s',
+                $this->claim->date_from->format('d/m/Y'),
+                $this->claim->date_to->format('d/m/Y')
+            ),
+
+            // Location Details (for each row)
             'date_from' => $this->claim->date_from->format('d/m/Y'),
             'date_to' => $this->claim->date_to->format('d/m/Y'),
+            'from_location' => '',  // Will be populated in loop
+            'to_location' => '',    // Will be populated in loop
+            'distance' => '',       // Will be populated in loop
+            'toll_amount' => number_format($this->claim->toll_amount, 2),
+            'parking_amount' => '0.00',
+            'remarks' => $this->claim->remarks ?? '',
 
-            // Signatures
-            'prepared_by' => $this->claim->user->first_name . ' ' . $this->claim->user->last_name,
-            'verified_by' => 'Nur Shathirah Afiqah Binti Annuar',
-            'checked_by' => 'Shahida Shamsudin',
-            'reviewed_by' => '',
-            'approved_by' => 'Datuk Dr Yong Lam Woei',
-            'checked_received_by' => 'Fatin Ayuni',
-
-            // Dates
-            'todays_date' => Carbon::now()->format('d/m/Y'),
-
-            // Location details will be handled separately in ClaimExportService
-            // as they need to be iterated and placed in multiple rows
+            // Approval Information
+            'approved_by_admin_date' => $this->getApprovalDate('Admin'),
+            'approved_by_datuk_date' => $this->getApprovalDate('Datuk'),
+            'approved_by_hr_date' => $this->getApprovalDate('HR'),
+            'approved_by_finance_date' => $this->getApprovalDate('Finance'),
         ];
+    }
+
+    private function formatCompanyName(string $code): string
+    {
+        return match ($code) {
+            'WGG' => 'WEGROW GLOBAL SDN. BHD.',
+            'WGE' => 'WEGROW EDUTAINMENT (M) SDN. BHD.',
+            'Both' => 'WEGROW GLOBAL SDN. BHD. & WEGROW EDUTAINMENT (M) SDN. BHD.',
+            default => $code,
+        };
+    }
+
+    private function formatFullName(?string $firstName, ?string $lastName): string
+    {
+        $parts = array_filter([$firstName, $lastName], fn($part) => !empty($part));
+        return implode(' ', $parts) ?: 'N/A';
+    }
+
+    private function getApprovalDate(string $department): string
+    {
+        $review = $this->claim->reviews()
+            ->where('department', $department)
+            ->whereNotNull('reviewed_at')
+            ->orderBy('reviewed_at', 'desc')
+            ->first();
+
+        return $review ? $review->reviewed_at->format('d/m/Y') : 'N/A';
     }
 }

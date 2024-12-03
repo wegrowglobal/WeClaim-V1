@@ -172,17 +172,35 @@ export class ReviewMap extends BaseMap {
 
         // Update distance displays
         const distanceValue = `${totals.distance} km`;
-        document.getElementById('total-distance-mobile')?.textContent = distanceValue;
-        document.getElementById('total-distance-desktop')?.textContent = distanceValue;
+        const totalDistanceMobile = document.getElementById('total-distance-mobile');
+        if (totalDistanceMobile) {
+            totalDistanceMobile.textContent = distanceValue;
+        }
+        const totalDistanceDesktop = document.getElementById('total-distance-desktop');
+        if (totalDistanceDesktop) {
+            totalDistanceDesktop.textContent = distanceValue;
+        }
 
         // Update duration displays
-        document.getElementById('total-duration-mobile')?.textContent = totals.duration;
-        document.getElementById('total-duration-desktop')?.textContent = totals.duration;
+        const totalDurationMobile = document.getElementById('total-duration-mobile');
+        if (totalDurationMobile) {
+            totalDurationMobile.textContent = totals.duration;
+        }
+        const totalDurationDesktop = document.getElementById('total-duration-desktop');
+        if (totalDurationDesktop) {
+            totalDurationDesktop.textContent = totals.duration;
+        }
 
         // Update cost displays
         const costValue = `RM ${totals.cost}`;
-        document.getElementById('total-cost-mobile')?.textContent = costValue;
-        document.getElementById('total-cost-desktop')?.textContent = costValue;
+        const totalCostMobile = document.getElementById('total-cost-mobile');
+        if (totalCostMobile) {
+            totalCostMobile.textContent = costValue;
+        }
+        const totalCostDesktop = document.getElementById('total-cost-desktop');
+        if (totalCostDesktop) {
+            totalCostDesktop.textContent = costValue;
+        }
 
         // Update hidden inputs
         const totalDistanceInput = document.getElementById('total-distance-input');

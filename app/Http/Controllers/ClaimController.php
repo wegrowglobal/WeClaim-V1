@@ -20,6 +20,7 @@ use App\Services\ClaimExportService;
 use Carbon\Exceptions\Exception as ExceptionsException;
 use Exception;
 use Illuminate\Foundation\Configuration\Exceptions;
+use App\Services\ClaimTemplateMapper;
 
 class ClaimController extends Controller
 {
@@ -484,12 +485,17 @@ class ClaimController extends Controller
                         })->get();
 
                         foreach ($hrUsers as $hrUser) {
-                            $hrUser->notify(new ClaimStatusNotification(
-                                $claim,
-                                $claim->status,
-                                'pending_review_hr',
-                                false
-                            ))->broadcast();
+                            if ($hrUser) {
+                                $hrUser->notify(new ClaimStatusNotification(
+                                    $claim,
+                                    $claim->status,
+                                    'pending_review_hr',
+                                    false
+                                ));
+                            } else {
+                                // Handle the case when no HR user is found
+                                Log::warning('No HR user found to notify for claim approval', ['claim_id' => $claim->id]);
+                            }
                         }
                     }
                 } else {
@@ -557,12 +563,13 @@ class ClaimController extends Controller
 
     public function export(Claim $claim)
     {
-        // Check if the current user is the assigned reviewer
-        if (Auth::id() !== $claim->reviewer_id) {
-            abort(403, 'Only the assigned reviewer can export this claim.');
+        // Remove the reviewer check to allow any authenticated user to export
+        if (!Auth::check()) {
+            abort(403, 'You must be logged in to export claims.');
         }
 
-        $exportService = new ClaimExportService();
+        $mapper = new ClaimTemplateMapper($claim);
+        $exportService = new ClaimExportService($mapper);
         return $exportService->exportToExcel($claim);
     }
 

@@ -18,7 +18,7 @@
                             the user with instructions to set up their password.</p>
                     </div>
 
-                    <a class="flex w-full items-center justify-center gap-2 rounded-lg bg-wgg-black-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-wgg-black-950"
+                    <a class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-wgg-black-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-wgg-black-950 focus:outline-none focus:ring-2 focus:ring-wgg-black-800 focus:ring-offset-2"
                         href="{{ route('login') }}">
                         Return to Login
                     </a>

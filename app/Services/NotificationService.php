@@ -14,46 +14,65 @@ class NotificationService
         Log::info('Sending claim status notification', [
             'claim_id' => $claim->id,
             'status' => $status,
-            'action' => $action
+            'action' => $action,
+            'user_id' => $claim->user_id ?? 'null'
         ]);
 
-        // Only notify claim owner for specific actions
-        $claimOwner = $claim->user;
-        if ($claimOwner && $this->shouldNotifyOwner($action)) {
-            $claimOwner->notify(new ClaimStatusNotification(
-                $claim,
-                $status,
-                $action,
-                true
-            ));
-        }
-
-        // Skip reviewer notifications for certain actions
-        if (in_array($action, ['approved_admin', 'approved_datuk', 'approved_hr', 'approved_finance'])) {
-            return;
-        }
-
-        // For other cases, proceed with normal notification flow
-        $nextReviewerRole = $this->determineNextReviewerRole($status);
-        if ($nextReviewerRole) {
-            $reviewers = User::whereHas('role', function ($query) use ($nextReviewerRole) {
-                $query->where('name', $nextReviewerRole);
-            })->get();
-
-            $reviewerAction = $this->determineReviewerAction($status, $claim);
-            
-            foreach ($reviewers as $reviewer) {
-                if ($reviewer->id === $claim->user_id) {
-                    continue;
-                }
-                
-                $reviewer->notify(new ClaimStatusNotification(
+        try {
+            // Only notify claim owner for specific actions
+            $claimOwner = $claim->user;
+            if ($claimOwner && $this->shouldNotifyOwner($action)) {
+                $notification = new ClaimStatusNotification(
                     $claim,
                     $status,
-                    $reviewerAction,
-                    false
-                ));
+                    $action,
+                    true
+                );
+
+                $claimOwner->notify($notification);
             }
+
+            // Skip reviewer notifications for certain actions
+            if (in_array($action, ['approved_admin', 'approved_datuk', 'approved_hr', 'approved_finance'])) {
+                return;
+            }
+
+            // For other cases, proceed with normal notification flow
+            $nextReviewerRole = $this->determineNextReviewerRole($status);
+            if ($nextReviewerRole) {
+                $reviewers = User::whereHas('role', function ($query) use ($nextReviewerRole) {
+                    $query->where('name', $nextReviewerRole);
+                })->get();
+
+                $reviewerAction = $this->determineReviewerAction($status, $claim);
+
+                foreach ($reviewers as $reviewer) {
+                    if ($reviewer->id === $claim->user_id) {
+                        continue;
+                    }
+
+                    try {
+                        $notification = new ClaimStatusNotification(
+                            $claim,
+                            $status,
+                            $reviewerAction,
+                            false
+                        );
+                        $reviewer->notify($notification);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send notification to reviewer', [
+                            'reviewer_id' => $reviewer->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in sendClaimStatusNotification', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
     }
 

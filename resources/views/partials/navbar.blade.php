@@ -3,7 +3,7 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="animate-slide-in-right flex h-16 items-center justify-between">
                 <!-- Left Side -->
-                <div class="flex items-center gap-8">
+                <div class="flex items-center gap-4 sm:gap-8">
                     <!-- Logo -->
                     <a class="animate-fade-in" href="{{ route('home') }}">
                         <svg class="text-[#242424] transition-transform duration-300 hover:scale-110" width="32"
@@ -64,7 +64,7 @@
                 </div>
 
                 <!-- Right Side Actions -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 sm:gap-4">
                     @auth
                         <a class="animate-fade-in hidden items-center gap-2 rounded-md bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 lg:inline-flex"
                             href="{{ route('claims.new') }}" title="New Claim">
@@ -75,7 +75,7 @@
                             <span>New Claim</span>
                         </a>
 
-                        <div class="flex gap-4 lg:hidden">
+                        <div class="flex gap-2 lg:hidden">
                             <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
                                 href="{{ route('claims.new') }}" title="New Claim">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,6 +107,13 @@
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                             d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                </a>
+                                <a class="animate-fade-in rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+                                    href="{{ route('users.management') }}" title="User Management">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 </a>
                             @endif
@@ -145,11 +152,11 @@
                             </button>
                         </form>
                     @else
-                        <a class="animate-fade-in rounded-md bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100"
+                        <a class="animate-fade-in rounded-md bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100"
                             href="{{ route('login') }}">
                             Sign In
                         </a>
-                        <a class="animate-fade-in rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700"
+                        <a class="animate-fade-in rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700"
                             href=" ">
                             Create Account
                         </a>

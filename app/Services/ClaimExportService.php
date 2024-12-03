@@ -5,125 +5,136 @@ namespace App\Services;
 use App\Models\Claim;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Style;
 
 class ClaimExportService
 {
-    protected $startRow = 8;
+    private const TEMPLATE_CELLS = [
+        'COMPANY_NAME' => 'B1',
+        'EMPLOYEE_NAME' => 'B4',
+        'DEPARTMENT' => 'E4',
+        'SUBMITTED_DATE' => 'G4',
+        'CLAIM_PERIOD' => 'B5',
+        'DEPARTMENT_NAME' => 'E5',
+        'DATE_RANGE' => 'A9',
+        'DETAILS' => 'B9',
+        'PETROL' => 'C9',
+        'TOLL' => 'D9',
+        'PARKING' => 'E9',
+        'TOTAL' => 'F9',
+        'REMARKS' => 'G9',
+        'APPROVED_BY_ADMIN_DATE' => 'A15',
+        'APPROVED_BY_DATUK_DATE' => 'B15',
+        'APPROVED_BY_HR_DATE' => 'E15',
+        'APPROVED_BY_FINANCE_DATE' => 'F15'
+    ];
+
     protected $mapper;
+    protected $spreadsheet;
+    protected $sheet;
 
     public function __construct(ClaimTemplateMapper $mapper)
     {
         $this->mapper = $mapper;
+        $templatePath = resource_path('templates/travel_claim_template.xlsx');
+        $this->spreadsheet = IOFactory::load($templatePath);
+        $this->sheet = $this->spreadsheet->getActiveSheet();
     }
 
     public function exportToExcel(Claim $claim)
     {
-        $this->mapper = new ClaimTemplateMapper($claim);
-        $templatePath = resource_path('templates/claim_template.xlsx');
-        $spreadsheet = IOFactory::load($templatePath);
-        $sheet = $spreadsheet->getActiveSheet();
+        $this->fillHeaderInfo($claim);
+        $this->fillClaimDetails($claim);
+        $this->applyStyles();
+        return $this->outputFile($claim);
+    }
 
-        $this->fillHeaderInfo($sheet, $claim);
-        $this->fillClaimDetails($sheet, $claim);
-        $this->fillFooterSection($sheet, $claim);
+    private function fillHeaderInfo(Claim $claim)
+    {
+        $mappings = $this->mapper->getMappings();
 
-        $filename = "claim_{$claim->id}_{$claim->created_at->format('Y-m-d')}.xlsx";
+        // Set company name in header
+        $this->sheet->setCellValue('C1', 'TRAVEL CLAIM FORM');
+        $this->sheet->setCellValue('C2', $mappings['claim_company']);
+
+        foreach (self::TEMPLATE_CELLS as $key => $cell) {
+            if (isset($mappings[strtolower($key)])) {
+                $this->sheet->setCellValue($cell, $mappings[strtolower($key)]);
+            }
+        }
+    }
+
+    private function fillClaimDetails(Claim $claim)
+    {
+        $currentRow = 9;
+        $locations = $claim->locations()->orderBy('order')->get();
+        $templateStyle = $this->sheet->getStyle("A9:G9");
+        $totalRowPosition = 9 + count($locations);
+
+        foreach ($locations as $index => $location) {
+            if ($index > 0) {
+                // Insert new row before total
+                $this->sheet->insertNewRowBefore($currentRow);
+                $this->sheet->duplicateStyle($templateStyle, "A{$currentRow}:G{$currentRow}");
+            }
+
+            $this->sheet->setCellValue("A{$currentRow}", $claim->date_from->format('d/m/Y'));
+            $this->sheet->setCellValue("B{$currentRow}", "{$location->from_location} → {$location->to_location}");
+            $this->sheet->setCellValue("C{$currentRow}", number_format($location->distance, 2));
+            $this->sheet->setCellValue("D{$currentRow}", number_format($claim->toll_amount, 2));
+            $this->sheet->setCellValue("E{$currentRow}", '0.00');
+            $this->sheet->setCellValue("F{$currentRow}", "=SUM(C{$currentRow}:E{$currentRow})");
+            $this->sheet->setCellValue("G{$currentRow}", $claim->remarks ?? '');
+
+            $currentRow++;
+        }
+
+        // Fill totals row at the end
+        $this->fillTotalsRow($currentRow);
+    }
+
+    private function fillTotalsRow($currentRow)
+    {
+        $this->sheet->setCellValue("B{$currentRow}", 'TOTAL');
+        $this->sheet->setCellValue("C{$currentRow}", "=SUM(C9:C" . ($currentRow - 1) . ")");
+        $this->sheet->setCellValue("D{$currentRow}", "=SUM(D9:D" . ($currentRow - 1) . ")");
+        $this->sheet->setCellValue("E{$currentRow}", "=SUM(E9:E" . ($currentRow - 1) . ")");
+        $this->sheet->setCellValue("F{$currentRow}", "=SUM(F9:F" . ($currentRow - 1) . ")");
+    }
+
+    private function outputFile(Claim $claim)
+    {
+        $filename = "travel_claim_{$claim->id}_{$claim->created_at->format('Y-m-d')}.xlsx";
 
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $filename . '"');
         header('Cache-Control: max-age=0');
 
-        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer = IOFactory::createWriter($this->spreadsheet, 'Xlsx');
         $writer->save('php://output');
         exit;
     }
 
-    protected function fillHeaderInfo($sheet, $claim)
+    private function applyStyles()
     {
-        $mappings = $this->mapper->getMappings();
+        $lastRow = $this->sheet->getHighestRow();
 
-        $sheet->setCellValue('A1', 'STAFF CLAIM FOR EXPENSES INCURRED ON OFFICIAL DUTIES FORM - ' . $claim->claim_company);
-        $sheet->setCellValue('A3', 'NAME: ' . $mappings['first_name'] . ' ' . $mappings['second_name']);
-        $sheet->setCellValue('I3', 'IC NUMBER: ' . $mappings['ic_number']);
-        $sheet->setCellValue('R3', 'MONTH: ' . $mappings['claim_month']);
-        $sheet->setCellValue('A4', 'BANK NAME: ' . $mappings['bank_name']);
-        $sheet->setCellValue('K4', 'PROJECT/DEPARTMENT: ' . $mappings['department']);
-        $sheet->setCellValue('A5', 'ACCOUNT NUMBER: ' . $mappings['bank_account']);
-        $sheet->setCellValue('K5', 'POSITION: ' . $mappings['user_department_name']);
-    }
+        // Apply number formatting to numeric columns
+        $this->sheet->getStyle("C9:F{$lastRow}")
+            ->getNumberFormat()
+            ->setFormatCode('#,##0.00');
 
-    protected function fillClaimDetails($sheet, $claim)
-    {
-        $currentRow = $this->startRow;
-        $locations = $claim->locations()->orderBy('order')->get();
-        $totalDistance = 0;
-        $totalToll = 0;
+        // Center align dates
+        $this->sheet->getStyle("A9:A{$lastRow}")
+            ->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-        foreach ($locations as $index => $location) {
-            // Date column
-            $sheet->setCellValue('A' . $currentRow, $claim->date_from->format('d/m/Y') . ' - ' . $claim->date_to->format('d/m/Y'));
-
-            // Location details
-            $sheet->setCellValue('B' . $currentRow, $location->from_location);
-            if ($index > 0) {
-                $sheet->setCellValue('B' . ($currentRow + 1), $location->to_location);
-            }
-
-            // Distance and toll
-            $sheet->setCellValue('E' . $currentRow, $location->distance);
-            $sheet->setCellValue('F' . $currentRow, 25.00); // Fixed toll amount
-
-            // Remarks
-            $sheet->setCellValue('W' . $currentRow, 'Test');
-
-            $totalDistance += $location->distance;
-            $totalToll += 25.00;
-
-            $currentRow += 2; // Increment by 2 to leave space for the next location pair
-        }
-
-        // Add date range row
-        $sheet->setCellValue('D' . ($currentRow - 1), $claim->date_from->format('d/m/Y') . ' - ' . $claim->date_to->format('d/m/Y'));
-
-        // Add totals
-        $sheet->setCellValue('E' . $currentRow, $totalDistance);
-        $sheet->setCellValue('F' . $currentRow, $totalToll);
-        $sheet->setCellValue('Q' . $currentRow, $totalDistance);
-    }
-
-    protected function fillFooterSection($sheet, $claim)
-    {
-        $mappings = $this->mapper->getMappings();
-        $footerStartRow = 12;
-
-        // PREPARED BY row
-        $sheet->setCellValue('A' . $footerStartRow, 'PREPARED BY:');
-        $sheet->setCellValue('D' . $footerStartRow, 'VERIFIED BY:');
-        $sheet->setCellValue('K' . $footerStartRow, 'REVIEWED BY:');
-
-        // Signature row
-        $sheet->setCellValue('A14', 'Staff Signature');
-        $sheet->setCellValue('D14', 'Manager');
-        $sheet->setCellValue('G14', 'HR & Admin');
-        $sheet->setCellValue('K14', 'Head of Department');
-        $sheet->setCellValue('O14', 'Approved By');
-        $sheet->setCellValue('R14', 'Checked & Received By');
-
-        // Names row
-        $sheet->setCellValue('A15', 'Name: ' . $mappings['prepared_by']);
-        $sheet->setCellValue('D15', 'Name: ' . $mappings['verified_by']);
-        $sheet->setCellValue('G15', 'Name: ' . $mappings['checked_by']);
-        $sheet->setCellValue('K15', 'Name: ' . $mappings['reviewed_by']);
-        $sheet->setCellValue('O15', 'Name: ' . $mappings['approved_by']);
-        $sheet->setCellValue('R15', 'Name: ' . $mappings['checked_received_by']);
-
-        // Dates row
-        $sheet->setCellValue('A16', 'Date: ' . $mappings['todays_date']);
-        $sheet->setCellValue('D16', 'Date: ' . $mappings['todays_date']);
-        $sheet->setCellValue('G16', 'Date: ' . $mappings['todays_date']);
-        $sheet->setCellValue('K16', 'Date: ' . $mappings['todays_date']);
-        $sheet->setCellValue('O16', 'Date: ' . $mappings['todays_date']);
-        $sheet->setCellValue('R16', 'Date: ' . $mappings['todays_date']);
+        // Right align numbers
+        $this->sheet->getStyle("C9:F{$lastRow}")
+            ->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
     }
 }

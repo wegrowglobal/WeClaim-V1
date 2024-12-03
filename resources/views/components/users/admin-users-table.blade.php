@@ -3,9 +3,10 @@
 <div class="overflow-hidden rounded-lg bg-white">
     <!-- Filters -->
     <div class="border-b border-gray-200 py-4">
-        <form class="flex flex-wrap items-center gap-4" method="GET" action="{{ route('users.management') }}">
-            <div class="flex flex-1 flex-wrap gap-4">
-                <div class="relative min-w-[200px] flex-1 focus-within:shadow-sm">
+        <form class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0" method="GET"
+            action="{{ route('users.management') }}">
+            <div class="flex flex-grow flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+                <div class="relative flex-grow focus-within:shadow-sm">
                     <input
                         class="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-wgg-border focus:outline-none"
                         name="search" type="search" value="{{ $filters['search'] ?? '' }}"
@@ -19,7 +20,7 @@
                 </div>
 
                 <select
-                    class="min-w-[150px] flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-wgg-border focus:outline-none"
+                    class="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-wgg-border focus:outline-none sm:w-auto"
                     name="role">
                     <option value="">All Roles</option>
                     @foreach ($roles as $role)
@@ -31,7 +32,7 @@
                 </select>
 
                 <select
-                    class="min-w-[150px] flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-wgg-border focus:outline-none"
+                    class="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm focus:border-wgg-border focus:outline-none sm:w-auto"
                     name="department">
                     <option value="">All Departments</option>
                     @foreach ($departments as $department)
@@ -43,14 +44,14 @@
                 </select>
             </div>
 
-            <div class="flex flex-col gap-2 sm:mt-0">
+            <div class="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
                 <button
-                    class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
                     type="submit">
                     Apply Filters
                 </button>
                 @if (request()->hasAny(['search', 'role', 'department']))
-                    <a class="inline-flex items-center justify-center rounded-lg border border-red-600 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    <a class="inline-flex w-full items-center justify-center rounded-lg border border-red-600 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
                         href="{{ route('users.management') }}">
                         Clear Filters
                     </a>
@@ -61,65 +62,64 @@
 
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200" id="usersTable">
-            <thead class="bg-gray-50 text-xs">
-                <tr>
-                    <th class="w-16 px-3 py-2 text-left font-medium text-gray-500" data-sort="id" scope="col">
+            <thead class="bg-gray-50">
+                <tr class="*:text-xs *:font-medium *:text-gray-600">
+                    <th class="px-3 py-2 text-left" data-sort="id" scope="col">
                         <div class="flex cursor-pointer items-center gap-1">
                             ID
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    <th class="w-32 px-3 py-2 text-left font-medium text-gray-500" data-sort="name" scope="col">
+                    <th class="px-3 py-2 text-left" data-sort="name" scope="col">
                         <div class="flex cursor-pointer items-center gap-1">
                             Name
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    <th class="px-3 py-2 text-left font-medium text-gray-500" data-sort="email" scope="col">
+                    <th class="hidden px-3 py-2 text-left sm:table-cell" data-sort="email" scope="col">
                         <div class="flex cursor-pointer items-center gap-1">
                             Email
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    <th class="w-24 px-3 py-2 text-left font-medium text-gray-500" data-sort="role" scope="col">
+                    <th class="hidden px-3 py-2 text-left md:table-cell" data-sort="role" scope="col">
                         <div class="flex cursor-pointer items-center gap-1">
                             Role
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    <th class="w-32 px-3 py-2 text-left font-medium text-gray-500" data-sort="department"
-                        scope="col">
+                    <th class="hidden px-3 py-2 text-left lg:table-cell" data-sort="department" scope="col">
                         <div class="flex cursor-pointer items-center gap-1">
                             Department
                             <i class="fas fa-sort ml-1 opacity-60"></i>
                         </div>
                     </th>
-                    <th class="w-24 px-3 py-2 text-right font-medium text-gray-500" scope="col">
+                    <th class="px-3 py-2 text-right" scope="col">
                         Actions
                     </th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white">
                 @forelse ($users as $user)
-                    <tr class="text-xs hover:bg-gray-50/50">
-                        <td class="whitespace-nowrap px-3 py-3 text-gray-500">{{ $user->id }}</td>
-                        <td class="whitespace-nowrap px-3 py-3 text-gray-500">
+                    <tr class="*:text-xs *:text-gray-600 hover:bg-gray-50">
+                        <td class="whitespace-nowrap px-3 py-3">{{ $user->id }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">
                             {{ $user->first_name }} {{ $user->second_name }}
                         </td>
-                        <td class="px-3 py-3 text-gray-500">{{ $user->email }}</td>
-                        <td class="whitespace-nowrap px-3 py-3 text-gray-500">
+                        <td class="hidden px-3 py-3 sm:table-cell">{{ $user->email }}</td>
+                        <td class="hidden whitespace-nowrap px-3 py-3 md:table-cell">
                             {{ $user->role->name }}
                         </td>
-                        <td class="whitespace-nowrap px-3 py-3 text-gray-500">
+                        <td class="hidden whitespace-nowrap px-3 py-3 lg:table-cell">
                             {{ $user->department->name }}
                         </td>
                         <td class="whitespace-nowrap px-3 py-3 text-right">
                             <div class="flex justify-end gap-2">
-                                <button class="text-xs font-medium text-blue-600 hover:text-blue-800"
+                                <button class="text-blue-600 hover:text-blue-800"
                                     onclick='openEditUserModal(@json($user))'>
                                     Edit
                                 </button>
-                                <button class="text-xs font-medium text-red-600 hover:text-red-800"
+                                <button class="text-red-600 hover:text-red-800"
                                     onclick="showDeleteModal({{ $user->id }})">
                                     Delete
                                 </button>
@@ -128,7 +128,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td class="px-3 py-8 text-center text-gray-500" colspan="6">
+                        <td class="px-3 py-8 text-center text-xs text-gray-600" colspan="6">
                             No users found
                         </td>
                     </tr>
@@ -138,9 +138,9 @@
     </div>
 
     @if ($users->hasPages())
-        <div class="border-t border-gray-200 py-3">
-            <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-700">
+        <div class="border-t border-gray-200 px-4 py-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div class="mb-4 text-sm text-gray-700 sm:mb-0">
                     Showing <span class="font-medium">{{ $users->firstItem() }}</span>
                     to <span class="font-medium">{{ $users->lastItem() }}</span>
                     of <span class="font-medium">{{ $users->total() }}</span> results
