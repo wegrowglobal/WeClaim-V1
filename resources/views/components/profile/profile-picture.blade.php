@@ -9,8 +9,8 @@
     $sizeClass = $sizes[$size] ?? $sizes['md'];
 
     // Add debugging
-    $fileExists = $user->profile_picture && Storage::disk('public')->exists($user->profile_picture);
-    $imagePath = $fileExists ? asset('storage/' . $user->profile_picture) : null;
+    $fileExists = $user->profile_picture && file_exists(public_path($user->profile_picture));
+    $imagePath = $fileExists ? asset($user->profile_picture) : null;
 
     Log::info('Profile picture component render', [
         'user_id' => $user->id,
@@ -24,7 +24,11 @@
     <div class="h-full w-full overflow-hidden rounded-full">
         @if ($fileExists)
             <img class="h-full w-full object-cover" src="{{ $imagePath }}" alt="{{ $user->first_name }}'s profile"
-                onerror="this.onerror=null; this.src=''; this.parentElement.innerHTML='{{ strtoupper(substr($user->first_name, 0, 1)) }}';">
+                onerror="this.style.display='none'">
+            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-xl font-bold text-white"
+                style="display: none;">
+                {{ strtoupper(substr($user->first_name, 0, 1)) }}
+            </div>
         @else
             <div
                 class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-xl font-bold text-white">

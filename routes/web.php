@@ -14,6 +14,7 @@ use App\Http\Controllers\RegistrationRequestController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\FileController;
 
 
 // Guest Routes
