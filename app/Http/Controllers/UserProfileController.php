@@ -20,7 +20,7 @@ class UserProfileController extends Controller
     public function show()
     {
         $banks = $this->bankingInstitutionService->getBankingInstitutions();
-        
+
         return view('pages.user.profile', [
             'banks' => $banks,
             'stateOptions' => [
@@ -72,24 +72,34 @@ class UserProfileController extends Controller
 
             if ($request->hasFile('profile_picture')) {
                 $file = $request->file('profile_picture');
-                
+
+                Log::info('Profile picture upload started', [
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'user_id' => $user->id
+                ]);
+
                 // Delete old profile picture if exists
                 if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                    Log::info('Deleting old profile picture', [
+                        'path' => $user->profile_picture
+                    ]);
                     Storage::disk('public')->delete($user->profile_picture);
                 }
 
                 // Store new profile picture with unique name
                 $fileName = 'profile-' . $user->id . '-' . time() . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('profile-pictures', $fileName, 'public');
-                
-                // Update user profile picture path directly
+
+                Log::info('New profile picture stored', [
+                    'file_name' => $fileName,
+                    'full_path' => $path,
+                    'exists' => Storage::disk('public')->exists($path)
+                ]);
+
                 $user->profile_picture = $path;
                 $user->save();
-
-                Log::info('Profile picture updated', [
-                    'user_id' => $user->id,
-                    'file_path' => $path
-                ]);
             }
 
             // Update other user information
@@ -118,13 +128,12 @@ class UserProfileController extends Controller
             Log::info('Profile update completed successfully');
 
             return redirect()->route('profile')->with('success', 'Profile updated successfully!');
-
         } catch (\Exception $e) {
             Log::error('Profile update error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return back()->withErrors(['error' => 'Failed to update profile.'])->withInput();
         }
     }
