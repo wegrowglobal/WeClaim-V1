@@ -61,23 +61,30 @@ window.openEditUserModal = function(user) {
             const formData = {
                 first_name: document.getElementById('first_name').value,
                 second_name: document.getElementById('second_name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
                 role_id: document.getElementById('role_id').value,
                 department_id: document.getElementById('department_id').value,
+                phone: document.getElementById('phone').value || null
             };
 
             return fetch(`/users/${user.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(formData)
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                if (!data.success) throw new Error(data.message || 'Failed to update user');
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to update user');
+                }
                 return data;
             });
         }
@@ -245,15 +252,20 @@ window.switchView = function(view) {
     if (view === 'registered') {
         registeredView.classList.remove('hidden');
         pendingView.classList.add('hidden');
-        registeredBtn.classList.add('bg-white', 'shadow');
-        pendingBtn.classList.remove('bg-white', 'shadow');
+        registeredBtn.classList.add('active');
+        pendingBtn.classList.remove('active');
     } else {
         registeredView.classList.add('hidden');
         pendingView.classList.remove('hidden');
-        registeredBtn.classList.remove('bg-white', 'shadow');
-        pendingBtn.classList.add('bg-white', 'shadow');
+        registeredBtn.classList.remove('active');
+        pendingBtn.classList.add('active');
     }
 };
+
+// Initialize view on page load
+document.addEventListener('DOMContentLoaded', function() {
+    switchView('registered');
+});
 
 // Request handling functions
 window.approveRequest = function(requestId) {
@@ -322,25 +334,34 @@ window.handleRegistrationRequest = function(requestId, action) {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success',
-                        text: `Request ${action}ed successfully`,
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => location.reload());
-                } else {
+            .then(async response => {
+                const data = await response.json();
+                if (!response.ok) {
                     throw new Error(data.message || `Failed to ${action} request`);
                 }
+                return data;
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
             })
             .catch(error => {
-                Swal.fire('Error', error.message, 'error');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
             });
         }
     });

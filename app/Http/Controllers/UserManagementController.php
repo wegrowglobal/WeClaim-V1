@@ -112,16 +112,15 @@ class UserManagementController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $validatedData = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'second_name' => 'required|string|max:255',
-            'role_id' => 'required|exists:roles,id',
-            'department_id' => 'required|exists:departments,id',
-            'phone' => 'nullable|string|max:20',
-            'status' => 'in:active,suspended'
-        ]);
-
         try {
+            $validatedData = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'second_name' => 'required|string|max:255',
+                'role_id' => 'required|exists:roles,id',
+                'department_id' => 'required|exists:departments,id',
+                'phone' => 'nullable|string|max:20'
+            ]);
+
             $user->update($validatedData);
 
             Log::info('User updated by SU', [
@@ -132,7 +131,7 @@ class UserManagementController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User updated successfully',
-                'user' => $user
+                'user' => $user->fresh()->load(['role', 'department'])
             ]);
         } catch (\Exception $e) {
             Log::error('User update failed', [
@@ -142,8 +141,7 @@ class UserManagementController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update user',
-                'error' => $e->getMessage()
+                'message' => 'Failed to update user: ' . $e->getMessage()
             ], 500);
         }
     }

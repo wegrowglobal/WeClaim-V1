@@ -43,6 +43,14 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated Routes
 Route::middleware(['auth'])->group(function () {
+
+    // Add these inside the authenticated routes group
+    // Add inside the authenticated routes group
+    Route::post('/registration-requests/{id}/approve', [RegistrationRequestController::class, 'approveFromDashboard'])
+        ->name('registration-requests.approve-dashboard');
+
+    Route::post('/registration-requests/{id}/reject', [RegistrationRequestController::class, 'rejectFromDashboard'])
+        ->name('registration-requests.reject-dashboard');
     // Home Route
     Route::get('/', [ClaimController::class, 'home'])->name('home');
 

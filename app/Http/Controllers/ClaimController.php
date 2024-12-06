@@ -16,17 +16,16 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Http\JsonResponse;
 use App\Services\NotificationService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use App\Services\ClaimExportService;
 use Carbon\Exceptions\Exception as ExceptionsException;
 use Exception;
 use Illuminate\Foundation\Configuration\Exceptions;
 use App\Services\ClaimTemplateMapper;
+use App\Services\ClaimPdfExportService;
 
 class ClaimController extends Controller
 {
     use AuthorizesRequests;
     protected $claimService;
-    protected $claimExportService;
 
 
     private const ADMIN_EMAIL = 'ammar@wegrow-global.com';
@@ -36,10 +35,9 @@ class ClaimController extends Controller
 
     //////////////////////////////////////////////////////////////////////////////////      
 
-    public function __construct(ClaimService $claimService, ClaimExportService $claimExportService)
+    public function __construct(ClaimService $claimService)
     {
         $this->claimService = $claimService;
-        $this->claimExportService = $claimExportService;
     }
 
     public function index($view)
@@ -74,13 +72,28 @@ class ClaimController extends Controller
     public function home()
     {
         $statistics = $this->getHomePageStatistics();
+        $user = Auth::user();
 
-        return view('pages.home', [
+        $data = [
             'totalClaims' => $statistics['totalClaims'],
             'approvedClaims' => $statistics['approvedClaims'],
             'pendingClaims' => $statistics['pendingClaims'],
-            'rejectedClaims' => $statistics['rejectedClaims']
-        ]);
+            'rejectedClaims' => $statistics['rejectedClaims'],
+            'claimService' => $this->claimService
+        ];
+
+        // Add additional statistics for non-staff users
+        if ($user && $user->role->name !== 'Staff') {
+            $data['pendingReview'] = Claim::where('status', '!=', Claim::STATUS_DONE)
+                ->where('status', '!=', Claim::STATUS_REJECTED)
+                ->count();
+            $data['totalAmount'] = Claim::sum(DB::raw('petrol_amount + toll_amount'));
+            $data['pendingClaims'] = Claim::where('status', '!=', Claim::STATUS_DONE)
+                ->where('status', '!=', Claim::STATUS_REJECTED)
+                ->get();
+        }
+
+        return view('pages.home', $data);
     }
 
     public function show($id, $view)
@@ -563,14 +576,33 @@ class ClaimController extends Controller
 
     public function export(Claim $claim)
     {
-        // Remove the reviewer check to allow any authenticated user to export
-        if (!Auth::check()) {
-            abort(403, 'You must be logged in to export claims.');
-        }
+        try {
+            // Check if claim is done
+            if ($claim->status !== Claim::STATUS_DONE) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only completed claims can be exported'
+                ], 403);
+            }
 
-        $mapper = new ClaimTemplateMapper($claim);
-        $exportService = new ClaimExportService($mapper);
-        return $exportService->exportToExcel($claim);
+            $pdfService = new ClaimPdfExportService(
+                new ClaimTemplateMapper(),
+                $claim
+            );
+
+            return $pdfService->exportToPdf();
+        } catch (\Exception $e) {
+            Log::error('PDF Export failed:', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to export claim: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     private function debugTemplate($worksheet)

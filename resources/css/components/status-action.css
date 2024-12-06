@@ -83,4 +83,20 @@
     .status-filter-btn[data-status="all"].active {
     @apply bg-gray-100 border-gray-200 text-gray-700 ring-gray-500/20;
     }   
+
+    .user-management-toggle-btn {
+        @apply py-2.5 px-4 text-gray-600 rounded-lg transition-all duration-200 relative border border-gray-200;
+    }
+
+    .user-management-toggle-btn.active {
+        @apply bg-indigo-50 border-indigo-200 text-indigo-700 ring-2 ring-indigo-500/20;
+    }
+
+    .user-management-toggle-btn.active svg {
+        @apply text-indigo-600;
+    }
+
+    .user-management-toggle-btn:hover:not(.active) {
+        @apply bg-gray-50 text-gray-700;
+    }
 }

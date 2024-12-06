@@ -64,7 +64,7 @@
     </div>
 
     <!-- Date Range -->
-    <div class="grid grid-cols-1 gap-4 sm:gap-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
 
         <!-- Company Selection -->
         <div class="space-y-2">
@@ -86,7 +86,7 @@
         </div>
 
         <!-- Date From -->
-        <div class="space-y-2">
+        <div class="space-y-2 sm:col-span-1">
             <label class="block text-sm font-medium text-gray-700" for="date_from">Date From</label>
             <input
                 class="form-input block h-10 w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white sm:h-[38px]"
@@ -94,7 +94,8 @@
                 value="{{ old('date_from', $draftData['date_from'] ?? '') }}" required>
         </div>
 
-        <div class="space-y-2">
+        <!-- Date To -->
+        <div class="space-y-2 sm:col-span-1">
             <label class="block text-sm font-medium text-gray-700" for="date_to">Date To</label>
             <input
                 class="form-input block h-10 w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white sm:h-[38px]"

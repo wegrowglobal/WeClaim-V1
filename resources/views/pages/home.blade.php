@@ -69,22 +69,42 @@
 
             <!-- Stats Grid -->
             <div class="mb-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
-                <div class="stats-card animate-slide-in delay-100">
-                    <span class="stats-label">Total Claims</span>
-                    <span class="stats-value text-indigo-600">{{ $totalClaims }}</span>
-                </div>
-                <div class="stats-card animate-slide-in delay-200">
-                    <span class="stats-label">Approved</span>
-                    <span class="stats-value text-emerald-600">{{ $approvedClaims }}</span>
-                </div>
-                <div class="stats-card animate-slide-in delay-300">
-                    <span class="stats-label">Pending</span>
-                    <span class="stats-value text-amber-600">{{ $pendingClaims }}</span>
-                </div>
-                <div class="stats-card animate-slide-in delay-400">
-                    <span class="stats-label">Rejected</span>
-                    <span class="stats-value text-red-600">{{ $rejectedClaims }}</span>
-                </div>
+                @if (auth()->user()->role->name === 'Staff')
+                    <div class="stats-card animate-slide-in delay-100">
+                        <span class="stats-label">Total Claims</span>
+                        <span class="stats-value text-indigo-600">{{ $totalClaims }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-200">
+                        <span class="stats-label">Approved</span>
+                        <span class="stats-value text-emerald-600">{{ $approvedClaims }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-300">
+                        <span class="stats-label">Pending</span>
+                        <span class="stats-value text-amber-600">{{ $pendingClaims }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-400">
+                        <span class="stats-label">Rejected</span>
+                        <span class="stats-value text-red-600">{{ $rejectedClaims }}</span>
+                    </div>
+                @else
+                    <!-- Admin, HR, Finance stats -->
+                    <div class="stats-card animate-slide-in delay-100">
+                        <span class="stats-label">Total Claims</span>
+                        <span class="stats-value text-indigo-600">{{ $totalClaims }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-200">
+                        <span class="stats-label">Pending Review</span>
+                        <span class="stats-value text-amber-600">{{ $pendingReview }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-300">
+                        <span class="stats-label">Approved</span>
+                        <span class="stats-value text-emerald-600">{{ $approvedClaims }}</span>
+                    </div>
+                    <div class="stats-card animate-slide-in delay-400">
+                        <span class="stats-label">Total Amount</span>
+                        <span class="stats-value text-purple-600">RM {{ number_format($totalAmount, 2) }}</span>
+                    </div>
+                @endif
             </div>
 
             <!-- Recent Updates -->
@@ -123,7 +143,8 @@
                             </div>
                             <div>
                                 <h4 class="text-base font-medium text-gray-900">Enhanced Approval Process</h4>
-                                <p class="mt-1 text-sm text-gray-600">Streamlined approval workflow with email notifications and
+                                <p class="mt-1 text-sm text-gray-600">Streamlined approval workflow with email notifications
+                                    and
                                     status tracking.</p>
                                 <span
                                     class="mt-2 inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-600">1

@@ -15,6 +15,7 @@ use App\Mail\RegistrationRejected;
 use Illuminate\Support\Facades\DB;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class RegistrationRequestController extends Controller
 {
@@ -62,60 +63,89 @@ class RegistrationRequestController extends Controller
 
     public function approveRequest($token)
     {
-        $request = RegistrationRequest::where('token', $token)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        try {
+            $request = RegistrationRequest::where('token', $token)
+                ->where('status', 'pending')
+                ->firstOrFail();
 
-        // Get department ID from name
-        $departmentId = DB::table('departments')
-            ->where('name', $request->department)
-            ->value('id');
+            // Get department ID from name
+            $departmentId = DB::table('departments')
+                ->where('name', $request->department)
+                ->value('id');
 
-        // Determine role based on department
-        $roleId = match ($request->department) {
-            'Human Resources' => Role::where('name', 'HR')->value('id'),
-            'Finance and Account' => Role::where('name', 'Finance')->value('id'),
-            'All' => Role::where('name', 'Admin')->value('id'),
-            default => Role::where('name', 'Staff')->value('id'),
-        };
+            // Determine role based on department
+            $roleId = match ($request->department) {
+                'Human Resources' => Role::where('name', 'HR')->value('id'),
+                'Finance and Account' => Role::where('name', 'Finance')->value('id'),
+                'All' => Role::where('name', 'Admin')->value('id'),
+                default => Role::where('name', 'Staff')->value('id'),
+            };
 
-        // Create user with temporary token for password setup
-        $passwordToken = Str::random(64);
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'second_name' => $request->last_name,
-            'email' => $request->email,
-            'department_id' => $departmentId,
-            'password' => Hash::make(Str::random(32)),
-            'password_setup_token' => $passwordToken,
-            'role_id' => $roleId
-        ]);
+            // Create user with temporary token for password setup
+            $passwordToken = Str::random(64);
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'second_name' => $request->last_name,
+                'email' => $request->email,
+                'department_id' => $departmentId,
+                'password' => Hash::make(Str::random(32)),
+                'password_setup_token' => $passwordToken,
+                'role_id' => $roleId
+            ]);
 
-        $request->update(['status' => 'approved']);
+            $request->update(['status' => 'approved']);
 
-        Mail::to($user->email)->send(new AccountCreated($user, $passwordToken));
+            Mail::to($user->email)->send(new AccountCreated($user, $passwordToken));
 
-        return view('pages.auth.registration-approved');
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration request approved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Registration approval failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve registration request'
+            ], 500);
+        }
     }
 
     public function rejectRequest($token)
     {
-        $request = RegistrationRequest::where('token', $token)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        try {
+            $request = RegistrationRequest::where('token', $token)
+                ->where('status', 'pending')
+                ->firstOrFail();
 
-        $request->update(['status' => 'rejected']);
+            $request->update(['status' => 'rejected']);
 
-        // Send rejection email to user
-        Mail::to($request->email)->send(new RegistrationRejected($request));
+            Mail::to($request->email)->send(new RegistrationRejected($request));
 
-        return view('pages.auth.registration-rejected');
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration request rejected successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Registration rejection failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject registration request'
+            ], 500);
+        }
     }
 
     public function showSetPasswordForm($token)
     {
         $user = User::where('password_setup_token', $token)->firstOrFail();
-        
+
         return view('pages.auth.set-password', [
             'token' => $token,
             'email' => $user->email
@@ -129,7 +159,7 @@ class RegistrationRequestController extends Controller
         ]);
 
         $user = User::where('password_setup_token', $token)->firstOrFail();
-        
+
         $user->update([
             'password' => Hash::make($request->password),
             'password_setup_token' => null,
@@ -139,4 +169,95 @@ class RegistrationRequestController extends Controller
         return redirect()->route('login')
             ->with('status', 'Password set successfully. You can now login.');
     }
-} 
+
+    public function approveFromDashboard($id)
+    {
+        try {
+            $request = RegistrationRequest::findOrFail($id);
+
+            if ($request->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request has already been processed'
+                ], 400);
+            }
+
+            // Get department ID from name
+            $departmentId = DB::table('departments')
+                ->where('name', $request->department)
+                ->value('id');
+
+            // Determine role based on department
+            $roleId = match ($request->department) {
+                'Human Resources' => Role::where('name', 'HR')->value('id'),
+                'Finance and Account' => Role::where('name', 'Finance')->value('id'),
+                'All' => Role::where('name', 'Admin')->value('id'),
+                default => Role::where('name', 'Staff')->value('id'),
+            };
+
+            // Create user with temporary token for password setup
+            $passwordToken = Str::random(64);
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'second_name' => $request->last_name,
+                'email' => $request->email,
+                'department_id' => $departmentId,
+                'password' => Hash::make(Str::random(32)),
+                'password_setup_token' => $passwordToken,
+                'role_id' => $roleId
+            ]);
+
+            $request->update(['status' => 'approved']);
+
+            Mail::to($user->email)->send(new AccountCreated($user, $passwordToken));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration request approved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Registration approval failed from dashboard', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve registration request'
+            ], 500);
+        }
+    }
+
+    public function rejectFromDashboard($id)
+    {
+        try {
+            $request = RegistrationRequest::findOrFail($id);
+
+            if ($request->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request has already been processed'
+                ], 400);
+            }
+
+            $request->update(['status' => 'rejected']);
+
+            Mail::to($request->email)->send(new RegistrationRejected($request));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Registration request rejected successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Registration rejection failed from dashboard', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject registration request'
+            ], 500);
+        }
+    }
+}

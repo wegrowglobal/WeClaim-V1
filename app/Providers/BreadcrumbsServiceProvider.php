@@ -110,6 +110,13 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     'url' => route('claims.admin')
                 ];
                 break;
+
+            case 'users.management':
+                $breadcrumbs[] = [
+                    'name' => 'User Management',
+                    'url' => route('users.management')
+                ];
+                break;
         }
 
         return array_values(array_filter($breadcrumbs));

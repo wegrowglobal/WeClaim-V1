@@ -31,7 +31,7 @@
             </div>
         @else
             <div
-                class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-xl font-bold text-white">
+                class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-lg font-bold text-white">
                 {{ strtoupper(substr($user->first_name, 0, 1)) }}
             </div>
         @endif

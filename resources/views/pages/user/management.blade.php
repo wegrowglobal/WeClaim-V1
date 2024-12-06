@@ -13,17 +13,28 @@
                 <!-- View Toggle -->
                 <div class="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
                     <button
-                        class="view-toggle-btn flex-1 rounded-md bg-white px-4 py-2 text-sm font-medium shadow transition-colors hover:bg-gray-50 sm:flex-initial"
+                        class="user-management-toggle-btn active group flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:bg-gray-50 sm:flex-initial"
                         id="registeredUsersBtn" onclick="switchView('registered')">
-                        Registered Users
+                        <svg class="h-4 w-4 text-gray-500 transition-colors group-hover:text-gray-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span>Registered Users</span>
                     </button>
+
                     <button
-                        class="view-toggle-btn relative flex flex-1 items-center justify-center rounded-md bg-gray-100 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-200 sm:flex-initial"
+                        class="user-management-toggle-btn group relative flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:bg-gray-50 sm:flex-initial"
                         id="pendingRequestsBtn" onclick="switchView('pending')">
-                        Pending Requests
+                        <svg class="h-4 w-4 text-gray-500 transition-colors group-hover:text-gray-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                        <span>Pending Requests</span>
                         @if ($pendingRequests->where('status', 'pending')->count() > 0)
                             <span
-                                class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                                class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white ring-2 ring-white">
                                 {{ $pendingRequests->where('status', 'pending')->count() }}
                             </span>
                         @endif

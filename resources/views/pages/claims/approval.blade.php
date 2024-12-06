@@ -12,6 +12,26 @@
             </div>
         </div>
 
+        <!-- Stats Summary -->
+        <div class="mb-8 grid grid-cols-2 gap-6 lg:grid-cols-4">
+            <div class="stats-card animate-slide-in delay-100">
+                <span class="stats-label">Total Claims</span>
+                <span class="stats-value text-indigo-600">{{ $statistics['totalClaims'] }}</span>
+            </div>
+            <div class="stats-card animate-slide-in delay-200">
+                <span class="stats-label">Pending Review</span>
+                <span class="stats-value text-amber-600">{{ $statistics['pendingReview'] }}</span>
+            </div>
+            <div class="stats-card animate-slide-in delay-300">
+                <span class="stats-label">Approved</span>
+                <span class="stats-value text-emerald-600">{{ $statistics['approvedClaims'] }}</span>
+            </div>
+            <div class="stats-card animate-slide-in delay-400">
+                <span class="stats-label">Total Amount</span>
+                <span class="stats-value text-purple-600">RM {{ number_format($statistics['totalAmount'], 2) }}</span>
+            </div>
+        </div>
+
         <!-- Claims Table Section -->
         <div class="card animate-slide-in delay-100">
             <!-- Search and Filters -->
