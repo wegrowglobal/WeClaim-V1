@@ -367,41 +367,28 @@ class ClaimExcelExportService
         $this->sheet->setCellValue('A' . $this->currentRow, 'Signed by Datuk');
         $this->sheet->setCellValue('C' . $this->currentRow, 'Signed by Financial');
 
-        // Style the title cells
-        $this->sheet->getStyle('A' . $this->currentRow)->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
-                ]
-            ],
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'indent' => 1
-            ],
-            'font' => ['bold' => true]
-        ]);
-
-        // Apply same style to second title cell
-        $this->sheet->getStyle('C' . $this->currentRow)->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
-                ]
-            ],
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'indent' => 1
-            ],
-            'font' => ['bold' => true]
-        ]);
-
         // Merge title cells
         $this->sheet->mergeCells('A' . $this->currentRow . ':B' . $this->currentRow);
         $this->sheet->mergeCells('C' . $this->currentRow . ':D' . $this->currentRow);
+
+        // Style the title cells with separate borders
+        $titleStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ],
+            'alignment' => [
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'horizontal' => Alignment::HORIZONTAL_LEFT,
+                'indent' => 1
+            ],
+            'font' => ['bold' => true]
+        ];
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':B' . $this->currentRow)->applyFromArray($titleStyle);
+        $this->sheet->getStyle('C' . $this->currentRow . ':D' . $this->currentRow)->applyFromArray($titleStyle);
 
         // Move to signature space
         $this->currentRow++;
