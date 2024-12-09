@@ -20,7 +20,8 @@ use Carbon\Exceptions\Exception as ExceptionsException;
 use Exception;
 use Illuminate\Foundation\Configuration\Exceptions;
 use App\Services\ClaimTemplateMapper;
-use App\Services\ClaimPdfExportService;
+use App\Services\ClaimExcelExportService;
+use App\Services\ClaimWordExportService;
 
 class ClaimController extends Controller
 {
@@ -529,7 +530,7 @@ class ClaimController extends Controller
                 // Create review record
                 $claim->reviews()->create([
                     'reviewer_id' => null,
-                    'remarks' => 'Action taken via email: ' . ($action === 'approve' ? 'Approved' : 'Rejected by Datuk'),
+                    'remarks' => ($action === 'approve' ? 'Approved' : 'Rejected by Datuk'),
                     'department' => 'Email Approval',
                     'review_order' => $claim->reviews()->count() + 1,
                     'status' => $claim->status,
@@ -577,7 +578,6 @@ class ClaimController extends Controller
     public function export(Claim $claim)
     {
         try {
-            // Check if claim is done
             if ($claim->status !== Claim::STATUS_DONE) {
                 return response()->json([
                     'success' => false,
@@ -585,14 +585,14 @@ class ClaimController extends Controller
                 ], 403);
             }
 
-            $pdfService = new ClaimPdfExportService(
+            $excelService = new ClaimExcelExportService(
                 new ClaimTemplateMapper(),
                 $claim
             );
 
-            return $pdfService->exportToPdf();
+            return $excelService->exportToExcel();
         } catch (\Exception $e) {
-            Log::error('PDF Export failed:', [
+            Log::error('Excel Export failed:', [
                 'claim_id' => $claim->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
