@@ -92,7 +92,7 @@ export class ClaimMap extends BaseMap {
             return;
         }
 
-        const showDelete = locationInputs.length >= 2; // Show delete button for 3rd input onwards
+        const showDelete = locationInputs.length >= 2;
         const wrapper = this.locationManager.createLocationInput(
             locationInputs.length,
             '',
@@ -100,17 +100,18 @@ export class ClaimMap extends BaseMap {
         );
         
         const container = document.getElementById('location-inputs');
-        
         if (container) {
             container.appendChild(wrapper);
-            const newInput = wrapper.querySelector('.location-input');
-            if (newInput) {
-                this.initializeLocationAutocomplete(newInput);
+            const input = wrapper.querySelector('.location-input');
+            if (input) {
+                // Mark as new stop before initializing autocomplete
+                input.dataset.newStop = 'true';
+                this.initializeLocationAutocomplete(input);
             }
         }
     }
 
-    async initializeLocationAutocomplete(input) {
+    initializeLocationAutocomplete(input) {
         if (!input) return;
 
         const autocomplete = new google.maps.places.Autocomplete(input, {
@@ -127,11 +128,16 @@ export class ClaimMap extends BaseMap {
                 return;
             }
 
-            await this.updateRoute();
+            const isNewStop = input.dataset.newStop === 'true';
+            delete input.dataset.newStop;
+            await this.updateRoute(isNewStop);
         });
+
+        // Store the autocomplete instance on the input
+        input.autocomplete = autocomplete;
     }
 
-    async updateRoute() {
+    async updateRoute(isNewStop = false) {
         const locations = this.locationManager.getLocationInputs();
 
         if (!this.locationManager.validateLocations(locations)) {
@@ -148,6 +154,55 @@ export class ClaimMap extends BaseMap {
             const routeData = await this.calculateRoute(locations);
             
             if (routeData) {
+                const draftDataInput = document.getElementById('draftData');
+                const existingData = draftDataInput ? JSON.parse(draftDataInput.value) : null;
+
+                if (!isNewStop && existingData?.total_distance && existingData?.total_cost) {
+                    const newTotalDistance = routeData.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
+                    const newTotalCost = newTotalDistance * parseFloat(document.getElementById('rate-per-km')?.value || 0.60);
+
+                    const distanceDiff = Math.abs(newTotalDistance - parseFloat(existingData.total_distance));
+                    
+                    if (distanceDiff > 0.1) {
+                        const result = await Swal.fire({
+                            title: 'Different Route Found',
+                            html: `
+                                <div class="space-y-4">
+                                    <div class="text-left">
+                                        <p class="font-medium text-gray-900">Current Route:</p>
+                                        <p class="text-sm text-gray-600">Distance: ${existingData.total_distance} km</p>
+                                        <p class="text-sm text-gray-600">Cost: RM ${existingData.total_cost}</p>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="font-medium text-gray-900">New Route:</p>
+                                        <p class="text-sm text-gray-600">Distance: ${newTotalDistance.toFixed(2)} km</p>
+                                        <p class="text-sm text-gray-600">Cost: RM ${newTotalCost.toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            `,
+                            icon: 'info',
+                            showDenyButton: true,
+                            confirmButtonText: 'Use New Route',
+                            denyButtonText: 'Keep Current Route',
+                            customClass: {
+                                popup: 'rounded-lg shadow-xl border border-gray-200',
+                                title: 'text-xl font-medium text-gray-900',
+                                htmlContainer: 'text-base text-gray-600'
+                            }
+                        });
+
+                        if (result.isDenied) {
+                            this.updateRouteDisplay({
+                                routes: routeData.routes,
+                                legs: existingData.segments_data ? JSON.parse(existingData.segments_data) : routeData.legs,
+                                useExistingData: true,
+                                existingData
+                            });
+                            return;
+                        }
+                    }
+                }
+
                 this.updateRouteDisplay(routeData);
                 this.updateSegmentInfo(routeData.legs);
                 this.saveRouteData(routeData);
@@ -227,6 +282,10 @@ export class ClaimMap extends BaseMap {
     async updateRouteDisplay(routeData) {
         if (!routeData?.routes) return;
 
+        // Clear existing renderers
+        this.directionsRenderers.forEach(renderer => renderer.setMap(null));
+        this.directionsRenderers = [];
+
         // Render each route segment with its corresponding color
         routeData.routes.forEach((route, index) => {
             const renderer = new google.maps.DirectionsRenderer({
@@ -242,16 +301,62 @@ export class ClaimMap extends BaseMap {
             this.directionsRenderers.push(renderer);
         });
 
-        // Calculate totals using all legs
-        const totals = this.routeCalculator.calculateTotals(routeData.legs);
-        
-        // Update displays
-        Object.entries(totals).forEach(([key, value]) => {
-            this.updateDisplay(`total-${key}`, value);
-            this.updateHiddenInput(`total-${key}-input`, value);
-        });
+        // Use existing data if specified
+        if (routeData.useExistingData && routeData.existingData) {
+            const { total_distance, total_cost, segments_data } = routeData.existingData;
+            
+            this.updateDisplay('total-distance', total_distance);
+            this.updateDisplay('total-cost', total_cost);
+            this.updateHiddenInput('total-distance-input', total_distance);
+            this.updateHiddenInput('total-cost-input', total_cost);
+            
+            // Parse segments data if it's a string
+            let parsedSegments;
+            try {
+                parsedSegments = typeof segments_data === 'string' ? 
+                    JSON.parse(segments_data) : segments_data;
+            } catch (error) {
+                console.error('Error parsing segments data:', error);
+                parsedSegments = [];
+            }
 
-        this.updateSegmentInfo(routeData.legs);
+            // Ensure segments data is valid and has required properties
+            if (Array.isArray(parsedSegments) && parsedSegments.length > 0) {
+                const validSegments = parsedSegments.map(segment => ({
+                    start_address: segment.from_location,
+                    end_address: segment.to_location,
+                    distance: { value: segment.distance * 1000 }, // Convert back to meters
+                    duration: { text: segment.duration },
+                    cost: segment.cost
+                }));
+
+                this.updateSegmentInfo(validSegments);
+                this.updateHiddenInput('segments-data', JSON.stringify(parsedSegments));
+            }
+        } else {
+            // Calculate totals using all legs
+            const totals = this.routeCalculator.calculateTotals(routeData.legs);
+            
+            Object.entries(totals).forEach(([key, value]) => {
+                this.updateDisplay(`total-${key}`, value);
+                this.updateHiddenInput(`total-${key}-input`, value);
+            });
+
+            this.updateSegmentInfo(routeData.legs);
+            
+            // Save the segments data
+            const segmentsData = routeData.legs.map((leg, index) => ({
+                from_location: leg.start_address,
+                to_location: leg.end_address,
+                distance: leg.distance.value / 1000,
+                duration: leg.duration.text,
+                cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
+                order: index + 1
+            }));
+            
+            this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
+        }
+
         this.updateNextButtonState();
     }
 
@@ -578,6 +683,16 @@ export class ClaimMap extends BaseMap {
         return Array.from(locationInputs)
             .map(input => input.value.trim())
             .filter(value => value.length > 0);
+    }
+    
+    async compareRouteData(newRouteData, existingData) {
+        if (!newRouteData || !existingData) return false;
+    
+        const newTotalDistance = newRouteData.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
+        const existingTotalDistance = parseFloat(existingData.total_distance || 0);
+    
+        // Check if the difference is more than 0.1 km
+        return Math.abs(newTotalDistance - existingTotalDistance) > 0.1;
     }
 }
 
