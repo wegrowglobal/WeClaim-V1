@@ -15,6 +15,7 @@ use App\Mail\ClaimActionMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ClaimStatusNotification;
+use App\Models\SystemConfig;
 
 class ClaimService
 {
@@ -38,10 +39,10 @@ class ClaimService
     public function createClaim(array $validatedData, int $userId): Claim
     {
         DB::beginTransaction();
-        
+
         try {
             // Get initial admin reviewer
-            $initialReviewer = User::whereHas('role', function($query) {
+            $initialReviewer = User::whereHas('role', function ($query) {
                 $query->where('id', self::ROLE_ID_ADMIN);
             })->first();
 
@@ -75,7 +76,6 @@ class ClaimService
 
             DB::commit();
             return $claim;
-
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -85,11 +85,11 @@ class ClaimService
     private function createClaimLocations(Claim $claim, string $locationsJson): void
     {
         $locations = json_decode($locationsJson, true);
-        
+
         foreach ($locations as $location) {
             // Ensure we have an order value
             $order = $location['order'] ?? 0;
-            
+
             $claim->locations()->create([
                 'from_location' => $location['from_location']['address'] ?? $location['from_location'],
                 'to_location' => $location['to_location']['address'] ?? $location['to_location'],
@@ -124,7 +124,7 @@ class ClaimService
     public function deleteClaim(Claim $claim): void
     {
         DB::beginTransaction();
-        
+
         try {
             // Delete associated documents from storage
             foreach ($claim->documents as $document) {
@@ -163,7 +163,7 @@ class ClaimService
             } else {
                 Log::info('Creating new claim');
                 $claim = new Claim($this->prepareClaim($data, $user));
-                $initialReviewer = User::whereHas('role', function($query) {
+                $initialReviewer = User::whereHas('role', function ($query) {
                     $query->where('id', self::ROLE_ID_ADMIN);
                 })->first();
 
@@ -187,7 +187,6 @@ class ClaimService
             ]);
 
             return $claim;
-
         } catch (\Exception $e) {
             Log::error('Error in createOrUpdateClaim', [
                 'error' => $e->getMessage(),
@@ -240,10 +239,10 @@ class ClaimService
         try {
             // Clear existing locations
             $claim->locations()->delete();
-            
+
             $locations = array_values($locationData);
             $distances = request()->input('distances', []);
-            
+
             // Validate that we have distances for each location pair
             if (count($locations) < 2) {
                 throw new \Exception('At least two locations are required');
@@ -256,7 +255,7 @@ class ClaimService
             // Calculate and update total distance
             $totalDistance = array_sum($distances);
             $claim->update(['total_distance' => $totalDistance]);
-            
+
             // Create location pairs with distances
             for ($i = 0; $i < count($locations) - 1; $i++) {
                 $claim->locations()->create([
@@ -280,7 +279,6 @@ class ClaimService
                 'total_distance' => $totalDistance,
                 'location_pairs' => count($locations) - 1
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error updating locations', [
                 'claim_id' => $claim->id,
@@ -304,14 +302,13 @@ class ClaimService
         try {
             $claim->status = $status;
             $claim->save();
-            
+
             Log::info('Claim status updated successfully', [
                 'claim_id' => $claim->id,
                 'status' => $status
             ]);
 
             return $claim;
-
         } catch (\Exception $e) {
             Log::error('Error updating claim status', [
                 'claim_id' => $claim->id,
@@ -354,7 +351,6 @@ class ClaimService
             ]);
 
             return $claim;
-
         } catch (\Exception $e) {
             Log::error('Error handling file uploads', [
                 'claim_id' => $claim->id,
@@ -377,7 +373,7 @@ class ClaimService
         try {
             $fileName = time() . "_{$prefix}_" . $file->getClientOriginalName();
             $filePath = $file->storeAs($path, $fileName, 'public');
-            
+
             Log::info("File uploaded successfully", [
                 'type' => $prefix,
                 'file_name' => $fileName,
@@ -385,7 +381,6 @@ class ClaimService
             ]);
 
             return ['fileName' => $fileName, 'filePath' => $filePath];
-
         } catch (\Exception $e) {
             Log::error("Error uploading {$prefix} file", [
                 'error' => $e->getMessage(),
@@ -422,17 +417,17 @@ class ClaimService
     private function calculateTotalAmount($totalDistance)
     {
         Log::debug('Calculating total amount', ['distance' => $totalDistance]);
-        
+
         $roundedDistance = round(floatval($totalDistance), 2);
         $amount = $roundedDistance * self::PETROL_RATE;
-        
+
         Log::info('Total amount calculated', [
             'distance' => $totalDistance,
             'rounded_distance' => $roundedDistance,
             'rate' => self::PETROL_RATE,
             'amount' => $amount
         ]);
-        
+
         return $amount;
     }
 
@@ -471,19 +466,19 @@ class ClaimService
                     if ($claim->status === Claim::STATUS_SUBMITTED) {
                         $claim->status = Claim::STATUS_APPROVED_ADMIN;
                         $notificationAction = 'approved_admin';
-                        
+
                         // Keep Admin as reviewer for Datuk email process
-                        $nextReviewer = User::whereHas('role', function($query) {
+                        $nextReviewer = User::whereHas('role', function ($query) {
                             $query->where('name', 'Admin');
                         })->first();
-                        
+
                         if ($nextReviewer) {
                             $claim->reviewer_id = $nextReviewer->id;
                         }
-                        
+
                         // Save before sending notification
                         $claim->save();
-                        
+
                         // Send single notification
                         $notificationService = app(NotificationService::class);
                         $notificationService->sendClaimStatusNotification($claim, $claim->status, $notificationAction);
@@ -491,18 +486,18 @@ class ClaimService
                     } elseif ($claim->status === Claim::STATUS_APPROVED_ADMIN) {
                         // This is when Admin sends to Datuk
                         $notificationAction = 'pending_datuk_review';
-                        
+
                         // Keep the current status and reviewer
                         $nextReviewer = $claim->reviewer;
-                        
+
                         // Send email to Datuk
                         $this->sendClaimToDatuk($claim);
-                        
+
                         // Send single notification for Datuk review
                         $notificationService = app(NotificationService::class);
                         $notificationService->sendClaimStatusNotification($claim, $claim->status, $notificationAction);
                     }
-                    
+
                     // Remove the general notification call at the end
                     return;
                     break;
@@ -510,8 +505,8 @@ class ClaimService
                 case 'HR':
                     $claim->status = Claim::STATUS_APPROVED_HR;
                     $notificationAction = 'approved_hr';
-                    
-                    $nextReviewer = User::whereHas('role', function($query) {
+
+                    $nextReviewer = User::whereHas('role', function ($query) {
                         $query->where('name', 'Finance');
                     })->first();
                     break;
@@ -547,16 +542,16 @@ class ClaimService
         DB::transaction(function () use ($user, $claim) {
             // Set status to REJECTED
             $claim->status = Claim::STATUS_REJECTED;
-            
+
             // Set reviewer back to Admin for resubmission
-            $nextReviewer = User::whereHas('role', function($query) {
+            $nextReviewer = User::whereHas('role', function ($query) {
                 $query->where('name', 'Admin');
             })->first();
-            
+
             if ($nextReviewer) {
                 $claim->reviewer_id = $nextReviewer->id;
             }
-            
+
             $claim->save();
 
             // Create review record
@@ -611,7 +606,6 @@ class ClaimService
                 'review_id' => $claimReview->id,
                 'review_order' => $reviewOrder
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error storing remarks', [
                 'claim_id' => $claim->id,
@@ -654,7 +648,7 @@ class ClaimService
 
         if ($lastRejectedReview) {
             $reviewer = User::find($lastRejectedReview->reviewer_id);
-            
+
             Log::info('Previous rejector found', [
                 'claim_id' => $claim->id,
                 'reviewer_id' => $reviewer?->id,
@@ -693,7 +687,7 @@ class ClaimService
         try {
             // Force fresh load of the claim with user relationship
             $claim = Claim::with(['user', 'locations'])->findOrFail($claim->id);
-            
+
             Log::info('Claim loaded with relationships', [
                 'claim_id' => $claim->id,
                 'user_loaded' => $claim->relationLoaded('user'),
@@ -721,12 +715,11 @@ class ClaimService
             ];
 
             Mail::to('ammar@wegrow-global.com')->send(new ClaimActionMail($data));
-            
+
             Log::info('Claim sent to Datuk successfully', [
                 'claim_id' => $claim->id,
                 'user_id' => $claim->user->id
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error sending claim to Datuk', [
                 'claim_id' => $claim->id,
@@ -742,7 +735,7 @@ class ClaimService
         return DB::transaction(function () use ($claim, $data) {
             // Get the previous non-rejected status
             $previousStatus = $this->getPreviousNonRejectedStatus($claim) ?? Claim::STATUS_SUBMITTED;
-            
+
             // Update claim with new data
             $claim->update([
                 'description' => $data['description'],
@@ -786,4 +779,9 @@ class ClaimService
         $notificationService->sendClaimStatusNotification($claim, $claim->status, $action);
     }
 
+    public function calculateClaimAmount($distance)
+    {
+        $ratePerKm = SystemConfig::getConfig('claim.rate_per_km', 0.60);
+        return $distance * $ratePerKm;
+    }
 }

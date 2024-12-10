@@ -8,6 +8,10 @@ class Kernel extends HttpKernel
 {
     protected $routeMiddleware = [
         'role' => \App\Http\Middleware\CheckRole::class,
-        'su' => \App\Http\Middleware\SuperUserMiddleware::class,
+        'superuser' => \App\Http\Middleware\SuperUserMiddleware::class,
+    ];
+
+    protected $middlewareAliases = [
+        'superuser' => \App\Http\Middleware\SuperUserMiddleware::class,
     ];
 }

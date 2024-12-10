@@ -117,6 +117,13 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     'url' => route('users.management')
                 ];
                 break;
+
+            case 'admin.system-config':
+                $breadcrumbs[] = [
+                    'name' => 'System Configuration',
+                    'url' => route('admin.system-config')
+                ];
+                break;
         }
 
         return array_values(array_filter($breadcrumbs));

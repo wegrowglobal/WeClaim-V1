@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\SystemConfigController;
 
 
 // Guest Routes
@@ -173,7 +174,21 @@ Route::middleware(['auth'])->group(function () {
     })->name('users.destroy');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/admin/system-config', function () {
+        if (Auth::user()->role_id !== 5) {
+            return redirect()->route('home')->with('error', 'Unauthorized access');
+        }
+        return app(SystemConfigController::class)->index();
+    })->name('admin.system-config');
 
+    Route::post('/admin/system-config', function (Request $request) {
+        if (Auth::user()->role_id !== 5) {
+            return redirect()->route('home')->with('error', 'Unauthorized access');
+        }
+        return app(SystemConfigController::class)->update($request);
+    })->name('admin.system-config.update');
+});
 
 // Logout Route
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
