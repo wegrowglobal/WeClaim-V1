@@ -22,18 +22,20 @@ export class ClaimMap extends BaseMap {
         }
 
         const mapContainer = document.getElementById('map');
+        const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Initializing map...');
         
         try {
             await this.initialize();
             this.setupEventListeners();
             this.addInitialLocationInputs();
             this.initialized = true;
-            
             return true;
         } catch (error) {
             console.error('Error initializing claim map:', error);
             await SwalUtils.showError('Failed to initialize map', mapContainer);
             return false;
+        } finally {
+            await loadingState.close();
         }
     }
 

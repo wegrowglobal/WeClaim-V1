@@ -4,9 +4,19 @@ export class SwalUtils {
     }
 
     static async showMapLoading(mapContainer, message = 'Calculating Route...') {
+        // Get the relative positioned parent container
+        const containerParent = mapContainer.parentElement;
+        if (!containerParent) return;
+
+        // Remove any existing overlay first
+        const existingOverlay = containerParent.querySelector('.map-loading-overlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+
         // Create a loading overlay div
         const overlayDiv = document.createElement('div');
-        overlayDiv.className = 'absolute inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-sm z-50';
+        overlayDiv.className = 'map-loading-overlay absolute inset-0 flex items-center justify-center bg-gray-900/30 backdrop-blur-sm z-[9999]';
         
         const loadingContent = document.createElement('div');
         loadingContent.className = 'bg-white rounded-lg shadow-lg p-6 max-w-sm w-full mx-4 text-center';
@@ -16,21 +26,24 @@ export class SwalUtils {
         `;
 
         overlayDiv.appendChild(loadingContent);
-        mapContainer.style.position = 'relative';
-        mapContainer.appendChild(overlayDiv);
+        
+        // Append to the parent container instead of map
+        containerParent.appendChild(overlayDiv);
 
-        // Set timeout to remove overlay after 3 seconds
-        setTimeout(() => {
-            if (overlayDiv && overlayDiv.parentNode === mapContainer) {
-                overlayDiv.remove();
-            }
-        }, 3000);
+        // Create a promise that resolves after minimum display duration
+        const minDisplayDuration = new Promise(resolve => setTimeout(resolve, 1500));
 
         return {
-            close: () => {
-                if (overlayDiv && overlayDiv.parentNode === mapContainer) {
-                    overlayDiv.remove();
-                }
+            close: async () => {
+                await minDisplayDuration;
+                overlayDiv.style.transition = 'opacity 0.3s ease-out';
+                overlayDiv.style.opacity = '0';
+                
+                setTimeout(() => {
+                    if (overlayDiv && overlayDiv.parentNode === containerParent) {
+                        overlayDiv.remove();
+                    }
+                }, 300);
             }
         };
     }
