@@ -14,39 +14,42 @@
 
         <!-- Configuration Form Section -->
         <div class="animate-slide-in delay-200">
-            <form id="configForm" class="space-y-8">
-                @foreach($configs as $group => $groupConfigs)
-                    <div class="card bg-white rounded-lg p-6">
-                        <h2 class="text-xl font-semibold mb-4">{{ ucfirst($group) }} Settings</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            @foreach($groupConfigs as $config)
+            <form class="space-y-8" id="configForm">
+                @foreach ($configs as $group => $groupConfigs)
+                    <div class="card rounded-lg bg-white p-6">
+                        <h2 class="mb-4 text-xl font-semibold">{{ ucfirst($group) }} Settings</h2>
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            @foreach ($groupConfigs as $config)
                                 <div>
-                                    <label for="{{ $config->key }}" class="block text-sm font-medium text-gray-700">
+                                    <label class="block text-sm font-medium text-gray-700" for="{{ $config->key }}">
                                         {{ $config->description }}
                                     </label>
                                     <div class="mt-1">
                                         @switch($config->type)
                                             @case('boolean')
-                                                <select id="{{ $config->key }}" 
-                                                        name="{{ $config->key }}" 
-                                                        class="form-select block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                                                    <option value="true" {{ $config->value === 'true' ? 'selected' : '' }}>Enabled</option>
-                                                    <option value="false" {{ $config->value === 'false' ? 'selected' : '' }}>Disabled</option>
+                                                <select
+                                                    class="form-select block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                    id="{{ $config->key }}" name="{{ $config->key }}">
+                                                    <option value="true" {{ $config->value === 'true' ? 'selected' : '' }}>Enabled
+                                                    </option>
+                                                    <option value="false" {{ $config->value === 'false' ? 'selected' : '' }}>
+                                                        Disabled</option>
                                                 </select>
-                                                @break
+                                            @break
+
                                             @case('textarea')
-                                                <textarea id="{{ $config->key }}"
-                                                          name="{{ $config->key }}"
-                                                          rows="3"
-                                                          class="form-textarea block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">{{ $config->value }}</textarea>
-                                                @break
+                                                <textarea
+                                                    class="form-textarea block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                    id="{{ $config->key }}" name="{{ $config->key }}" rows="3">{{ $config->value }}</textarea>
+                                            @break
+
                                             @default
-                                                <input type="{{ $config->type === 'number' ? 'number' : 'text' }}"
-                                                       id="{{ $config->key }}"
-                                                       name="{{ $config->key }}"
-                                                       value="{{ $config->value }}"
-                                                       class="form-input block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                                                       {{ $config->type === 'number' ? 'step="0.01"' : '' }}>
+                                                <input
+                                                    class="form-input block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                                    id="{{ $config->key }}" name="{{ $config->key }}"
+                                                    type="{{ $config->type === 'number' ? 'number' : 'text' }}"
+                                                    value="{{ $config->value }}"
+                                                    {{ $config->type === 'number' ? 'step="0.01"' : '' }}>
                                         @endswitch
                                     </div>
                                 </div>
@@ -56,8 +59,9 @@
                 @endforeach
 
                 <div class="flex justify-end">
-                    <button type="submit" 
-                            class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:from-indigo-700 hover:to-purple-700">
+                    <button
+                        class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:from-indigo-700 hover:to-purple-700"
+                        type="submit">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -67,8 +71,4 @@
             </form>
         </div>
     </div>
-
-    @push('scripts')
-        @vite(['resources/js/system-config.js'])
-    @endpush
-@endsection 
+@endsection

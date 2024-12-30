@@ -166,7 +166,7 @@ export class ReviewMap extends BaseMap {
             const costEl = document.getElementById(`total-cost-${device}`);
 
             if (distanceEl) distanceEl.textContent = formatDistance(totalDistance);
-            if (costEl) costEl.textContent = `RM ${formatCurrency(totalCost)}`;
+            if (costEl) costEl.textContent = `${formatCurrency(totalCost)}`;
         });
     }
 }

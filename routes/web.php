@@ -142,7 +142,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('claims.destroy');
 
     // User Management Routes
-    Route::get('/users/management', function () {
+    Route::get('/admin/users', function () {
         if (Auth::user()->role_id !== 5) {
             return redirect()->route('home')->with('error', 'Unauthorized access.');
         }

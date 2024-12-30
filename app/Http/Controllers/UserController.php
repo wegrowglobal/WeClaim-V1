@@ -55,7 +55,7 @@ final class UserController extends Controller
                 'user_role' => $user->role?->name,
                 'user_department' => $user->department?->name
             ]);
-
+            /* 
             if ($user->role_id === 1) {
                 Auth::logout();
                 $request->session()->invalidate();
@@ -63,7 +63,7 @@ final class UserController extends Controller
 
                 return redirect()->route('coming-soon')->with('message', 'System is currently under maintenance for staff members.');
             }
-
+ */
             return redirect()->intended(route(self::HOME_ROUTE));
         } catch (AuthenticationException $e) {
             return back()

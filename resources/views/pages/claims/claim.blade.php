@@ -18,24 +18,21 @@
             </div>
 
             <!-- Trip Summary -->
-            <div class="rounded-lg bg-gray-50 p-4 sm:p-6">
-                <h3 class="mb-4 text-base font-semibold text-gray-800">Trip Summary</h3>
+            <div class="animate-slide-in space-y-4 delay-300 ">
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <!-- Total Distance -->
-                    <div class="flex flex-col items-center rounded-lg bg-white p-4 shadow-sm">
+                    <div class="flex flex-col items-center rounded-lg bg-white shadow-sm ring-1 ring-black/5 p-4">
                         <p class="mb-1 text-sm text-gray-500">Total Distance</p>
                         <div class="flex items-baseline">
                             <span id="total-distance-desktop" class="text-2xl font-semibold text-indigo-600">{{ number_format($claim->total_distance, 2) }}</span>
-                            <span class="ml-1 text-sm text-gray-500">km</span>
                         </div>
                     </div>
 
                     <!-- Petrol Claim -->
-                    <div class="flex flex-col items-center rounded-lg bg-white p-4 shadow-sm">
+                    <div class="flex flex-col items-center rounded-lg g-white shadow-sm ring-1 ring-black/5 p-4">
                         <p class="mb-1 text-sm text-gray-500">Petrol Claim</p>
                         <div class="flex items-baseline">
-                            <span class="text-sm text-gray-500">RM</span>
                             <span id="total-cost-desktop" class="ml-1 text-2xl font-semibold text-emerald-600">{{ number_format($claim->petrol_amount, 2) }}</span>
                         </div>
                     </div>
