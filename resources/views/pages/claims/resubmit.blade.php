@@ -251,13 +251,16 @@
     $locationData = $claim->locations
         ->sortBy('order')
         ->map(function ($location) {
-            // Ensure we capture both from and to locations for each segment
             return [
                 'from_location' => $location->from_location,
                 'to_location' => $location->to_location,
                 'order' => $location->order,
                 'distance' => $location->distance,
                 'duration' => $location->duration,
+                'from_latitude' => $location->from_latitude,
+                'from_longitude' => $location->from_longitude,
+                'to_latitude' => $location->to_latitude,
+                'to_longitude' => $location->to_longitude,
             ];
         })
         ->values()
@@ -267,9 +270,17 @@
     $transformedLocations = [];
     foreach ($locationData as $index => $location) {
         if ($index === 0) {
-            $transformedLocations[] = $location['from_location'];
+            $transformedLocations[] = [
+                'address' => $location['from_location'],
+                'lat' => $location['from_latitude'],
+                'lng' => $location['from_longitude'],
+            ];
         }
-        $transformedLocations[] = $location['to_location'];
+        $transformedLocations[] = [
+            'address' => $location['to_location'],
+            'lat' => $location['to_latitude'],
+            'lng' => $location['to_longitude'],
+        ];
     }
 @endphp
 

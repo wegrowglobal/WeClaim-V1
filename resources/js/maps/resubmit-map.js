@@ -55,21 +55,43 @@ export class ResubmitMap extends ClaimMap {
                 const showDelete = index >= 2;
                 const wrapper = this.locationManager.createLocationInput(
                     index,
-                    location,
+                    location.address,
                     showDelete
                 );
                 container.appendChild(wrapper);
                 
                 const input = wrapper.querySelector('.location-input');
                 if (input) {
-                    input.value = location;
+                    input.value = location.address;
+                    // Store the coordinates for this location
+                    input.dataset.latitude = location.lat;
+                    input.dataset.longitude = location.lng;
                     this.initializeLocationAutocomplete(input);
+                    
+                    // Add marker if coordinates exist
+                    if (location.lat && location.lng) {
+                        this.addMarker({
+                            lat: parseFloat(location.lat),
+                            lng: parseFloat(location.lng)
+                        });
+                    }
                 }
             });
 
             this.initializeSortable(container);
             await this.updateRoute();
         }, 'loading locations');
+    }
+
+    // Override the geocodeLocation method to use stored coordinates when available
+    async geocodeLocation(address, input) {
+        if (input.dataset.latitude && input.dataset.longitude) {
+            return {
+                lat: parseFloat(input.dataset.latitude),
+                lng: parseFloat(input.dataset.longitude)
+            };
+        }
+        return await super.geocodeLocation(address);
     }
 }
 

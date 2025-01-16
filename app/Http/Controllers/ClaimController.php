@@ -807,8 +807,18 @@ class ClaimController extends Controller
     public function processResubmission(Request $request, Claim $claim)
     {
         try {
-            // Decode the locations and segments data
-            $locations = json_decode($request->locations, true);
+            // Decode and sanitize the locations data
+            $locations = collect(json_decode($request->locations, true))
+                ->map(function ($location) {
+                    return [
+                        'address' => $location['address'],
+                        'latitude' => $location['lat'],
+                        'longitude' => $location['lng']
+                    ];
+                })
+                ->values()
+                ->toArray();
+
             $segmentsData = json_decode($request->segments_data, true);
 
             $this->claimService->handleResubmission($claim, [
