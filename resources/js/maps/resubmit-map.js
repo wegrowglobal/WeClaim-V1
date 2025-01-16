@@ -50,20 +50,19 @@ export class ResubmitMap extends ClaimMap {
             container.innerHTML = '';
             this.clearMarkers();
 
+            // Create inputs for each location
             locations.forEach((location, index) => {
                 const showDelete = index >= 2;
                 const wrapper = this.locationManager.createLocationInput(
                     index,
-                    location.from_location,
+                    location,
                     showDelete
                 );
                 container.appendChild(wrapper);
                 
                 const input = wrapper.querySelector('.location-input');
                 if (input) {
-                    input.value = index === locations.length - 1 ? 
-                        location.to_location : 
-                        location.from_location;
+                    input.value = location;
                     this.initializeLocationAutocomplete(input);
                 }
             });

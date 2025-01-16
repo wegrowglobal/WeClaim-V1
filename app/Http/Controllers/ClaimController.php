@@ -197,7 +197,7 @@ class ClaimController extends Controller
             return redirect()->route('login');
         }
 
-        if ($user->role->name === 'Staff') {
+        if ($user->role_id === 1) {
             Log::warning('Staff member attempted to access approval screen', ['user_id' => $userId]);
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }
@@ -807,6 +807,10 @@ class ClaimController extends Controller
     public function processResubmission(Request $request, Claim $claim)
     {
         try {
+            // Decode the locations and segments data
+            $locations = json_decode($request->locations, true);
+            $segmentsData = json_decode($request->segments_data, true);
+
             $this->claimService->handleResubmission($claim, [
                 'description' => $request->description,
                 'claim_company' => $request->claim_company,
@@ -815,7 +819,8 @@ class ClaimController extends Controller
                 'total_distance' => $request->total_distance,
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to,
-                'locations' => $request->locations
+                'locations' => $locations,
+                'segments_data' => $segmentsData
             ]);
 
             return response()->json([
@@ -832,7 +837,7 @@ class ClaimController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to resubmit claim: ' . $e->getMessage()
+                'message' => 'Failed to resubmit claim'
             ], 500);
         }
     }
@@ -853,6 +858,10 @@ class ClaimController extends Controller
 
     public function adminIndex()
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         $claims = Claim::with(['user', 'reviews'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -865,6 +874,10 @@ class ClaimController extends Controller
 
     public function destroy(Claim $claim)
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         try {
             $claim->delete();
             return response()->json(['success' => true]);
