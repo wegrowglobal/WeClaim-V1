@@ -105,7 +105,7 @@
                         clip-rule="evenodd" />
                 </svg>
                 <p class="text-sm">
-                    All toll amounts will be verified against the attached toll receipts.
+                    All toll amounts will be verified with the attached toll receipts.
                 </p>
             </div>
         </div>
