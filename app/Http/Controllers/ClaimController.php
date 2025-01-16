@@ -807,20 +807,6 @@ class ClaimController extends Controller
     public function processResubmission(Request $request, Claim $claim)
     {
         try {
-            // Decode and sanitize the locations data
-            $locations = collect(json_decode($request->locations, true))
-                ->map(function ($location) {
-                    return [
-                        'address' => $location['address'],
-                        'latitude' => $location['lat'],
-                        'longitude' => $location['lng']
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            $segmentsData = json_decode($request->segments_data, true);
-
             $this->claimService->handleResubmission($claim, [
                 'description' => $request->description,
                 'claim_company' => $request->claim_company,
@@ -829,8 +815,7 @@ class ClaimController extends Controller
                 'total_distance' => $request->total_distance,
                 'date_from' => $request->date_from,
                 'date_to' => $request->date_to,
-                'locations' => $locations,
-                'segments_data' => $segmentsData
+                'locations' => $request->locations
             ]);
 
             return response()->json([
@@ -847,7 +832,7 @@ class ClaimController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to resubmit claim'
+                'message' => 'Failed to resubmit claim: ' . $e->getMessage()
             ], 500);
         }
     }

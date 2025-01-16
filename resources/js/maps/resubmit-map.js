@@ -50,48 +50,27 @@ export class ResubmitMap extends ClaimMap {
             container.innerHTML = '';
             this.clearMarkers();
 
-            // Create inputs for each location
             locations.forEach((location, index) => {
                 const showDelete = index >= 2;
                 const wrapper = this.locationManager.createLocationInput(
                     index,
-                    location.address,
+                    location.from_location,
                     showDelete
                 );
                 container.appendChild(wrapper);
                 
                 const input = wrapper.querySelector('.location-input');
                 if (input) {
-                    input.value = location.address;
-                    // Store the coordinates for this location
-                    input.dataset.latitude = location.lat;
-                    input.dataset.longitude = location.lng;
+                    input.value = index === locations.length - 1 ? 
+                        location.to_location : 
+                        location.from_location;
                     this.initializeLocationAutocomplete(input);
-                    
-                    // Add marker if coordinates exist
-                    if (location.lat && location.lng) {
-                        this.addMarker({
-                            lat: parseFloat(location.lat),
-                            lng: parseFloat(location.lng)
-                        });
-                    }
                 }
             });
 
             this.initializeSortable(container);
             await this.updateRoute();
         }, 'loading locations');
-    }
-
-    // Override the geocodeLocation method to use stored coordinates when available
-    async geocodeLocation(address, input) {
-        if (input.dataset.latitude && input.dataset.longitude) {
-            return {
-                lat: parseFloat(input.dataset.latitude),
-                lng: parseFloat(input.dataset.longitude)
-            };
-        }
-        return await super.geocodeLocation(address);
     }
 }
 

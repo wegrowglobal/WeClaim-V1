@@ -250,38 +250,16 @@
 @php
     $locationData = $claim->locations
         ->sortBy('order')
-        ->map(function ($location) {
-            return [
+        ->map(
+            fn($location) => [
                 'from_location' => $location->from_location,
                 'to_location' => $location->to_location,
                 'order' => $location->order,
                 'distance' => $location->distance,
-                'duration' => $location->duration,
-                'from_latitude' => $location->from_latitude,
-                'from_longitude' => $location->from_longitude,
-                'to_latitude' => $location->to_latitude,
-                'to_longitude' => $location->to_longitude,
-            ];
-        })
+            ],
+        )
         ->values()
         ->toArray();
-
-    // Transform into format expected by the map
-    $transformedLocations = [];
-    foreach ($locationData as $index => $location) {
-        if ($index === 0) {
-            $transformedLocations[] = [
-                'address' => $location['from_location'],
-                'lat' => $location['from_latitude'],
-                'lng' => $location['from_longitude'],
-            ];
-        }
-        $transformedLocations[] = [
-            'address' => $location['to_location'],
-            'lat' => $location['to_latitude'],
-            'lng' => $location['to_longitude'],
-        ];
-    }
 @endphp
 
 @push('scripts')
@@ -289,13 +267,15 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            window.existingLocations = @json($transformedLocations);
+            window.existingLocations = @json($locationData);
 
             // Set initial values for hidden inputs
             document.getElementById('locations').value = JSON.stringify(window.existingLocations);
             document.getElementById('total-distance-input').value = '{{ $claim->total_distance }}';
             document.getElementById('petrol-amount-input').value = '{{ $claim->petrol_amount }}';
-            document.getElementById('segments-data').value = @json($locationData);
+
+            console.log(document.getElementById('total-distance-input').value);
+            console.log(document.getElementById('petrol-amount-input').value);
         });
     </script>
 @endpush
