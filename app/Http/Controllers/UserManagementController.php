@@ -16,6 +16,10 @@ class UserManagementController extends Controller
 {
     public function index()
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         $users = User::query()
             ->with(['role', 'department'])
             ->when(request('search'), function ($query, $search) {
@@ -57,6 +61,10 @@ class UserManagementController extends Controller
 
     public function store(Request $request)
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         $validatedData = $request->validate([
             'first_name' => 'required|string|max:255',
             'second_name' => 'required|string|max:255',
@@ -110,6 +118,10 @@ class UserManagementController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         $user = User::findOrFail($id);
 
         try {
@@ -148,6 +160,10 @@ class UserManagementController extends Controller
 
     public function destroy($id)
     {
+        if (Auth::user()->role_id !== 5) {
+            abort(403);
+        }
+
         $user = User::findOrFail($id);
 
         try {

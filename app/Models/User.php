@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $attributes = [
-        'role_id' => 2  // Default to Staff role
+        'role_id' => 1  // Update default to Staff role (1)
     ];
 
     protected $fillable = [

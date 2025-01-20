@@ -19,9 +19,11 @@ use App\Http\Controllers\SystemConfigController;
 
 
 // Guest Routes
-Route::middleware('guest')->group(function () {
-    // Authentication Routes
+Route::group([], function () {
     Route::get('/login', function () {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
         return view('pages.auth.login');
     })->name('login.form');
 
@@ -43,8 +45,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Authenticated Routes
-Route::middleware(['auth'])->group(function () {
-
+Route::group([], function () {
     // Add these inside the authenticated routes group
     // Add inside the authenticated routes group
     Route::post('/registration-requests/{id}/approve', [RegistrationRequestController::class, 'approveFromDashboard'])
@@ -121,7 +122,7 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/settings', 'pages.settings')->name('settings');
 
     // Password Change Routes
-    Route::middleware(['auth'])->group(function () {
+    Route::group([], function () {
         Route::get('/change-password', [UserController::class, 'showChangePassword'])->name('password.change');
         Route::post('/change-password', [UserController::class, 'changePassword']);
     });
@@ -172,22 +173,6 @@ Route::middleware(['auth'])->group(function () {
         }
         return app(UserManagementController::class)->destroy($id);
     })->name('users.destroy');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/admin/system-config', function () {
-        if (Auth::user()->role_id !== 5) {
-            return redirect()->route('home')->with('error', 'Unauthorized access');
-        }
-        return app(SystemConfigController::class)->index();
-    })->name('admin.system-config');
-
-    Route::post('/admin/system-config', function (Request $request) {
-        if (Auth::user()->role_id !== 5) {
-            return redirect()->route('home')->with('error', 'Unauthorized access');
-        }
-        return app(SystemConfigController::class)->update($request);
-    })->name('admin.system-config.update');
 });
 
 // Logout Route

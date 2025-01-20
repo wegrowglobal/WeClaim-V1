@@ -107,77 +107,7 @@
                 @endif
             </div>
 
-            <!-- Recent Updates -->
-            <div class="card animate-slide-in overflow-hidden rounded-lg bg-white shadow-sm">
-                <div class="p-6">
-                    <h3 class="mb-4 text-2xl font-semibold text-gray-800">Recent Updates</h3>
-                    <div class="space-y-6">
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0">
-                                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                                    <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                    </svg>
-                                </span>
-                            </div>
-                            <div>
-                                <h4 class="text-base font-medium text-gray-900">New Claims Dashboard</h4>
-                                <p class="mt-1 text-sm text-gray-600">Improved claims management interface with better filtering
-                                    and sorting options.</p>
-                                <span
-                                    class="mt-2 inline-block rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-600">2
-                                    days ago</span>
-                            </div>
-                        </div>
 
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0">
-                                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                                    <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </span>
-                            </div>
-                            <div>
-                                <h4 class="text-base font-medium text-gray-900">Enhanced Approval Process</h4>
-                                <p class="mt-1 text-sm text-gray-600">Streamlined approval workflow with email notifications
-                                    and
-                                    status tracking.</p>
-                                <span
-                                    class="mt-2 inline-block rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-600">1
-                                    week ago</span>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start space-x-4">
-                            <div class="flex-shrink-0">
-                                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-                                    <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                </span>
-                            </div>
-                            <div>
-                                <h4 class="text-base font-medium text-gray-900">Mobile Responsiveness</h4>
-                                <p class="mt-1 text-sm text-gray-600">Added full mobile support for managing claims on the go.
-                                </p>
-                                <span
-                                    class="mt-2 inline-block rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-600">2
-                                    weeks ago</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-gray-50 px-6 py-3">
-                    <a class="text-sm font-medium text-indigo-600 transition-colors duration-150 ease-in-out hover:text-indigo-500"
-                        href="#">View all updates &rarr;</a>
-                </div>
-            </div>
         @endauth
     </div>
 @endsection

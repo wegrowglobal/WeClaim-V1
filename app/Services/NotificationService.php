@@ -80,7 +80,7 @@ class NotificationService
     {
         return match ($status) {
             Claim::STATUS_SUBMITTED => 'Admin',
-            Claim::STATUS_APPROVED_ADMIN => 'Admin', // For Datuk email process
+            Claim::STATUS_APPROVED_ADMIN => 'Admin',
             Claim::STATUS_APPROVED_DATUK => 'HR',
             Claim::STATUS_APPROVED_HR => 'Finance',
             Claim::STATUS_APPROVED_FINANCE => 'Finance',
