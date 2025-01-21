@@ -71,6 +71,9 @@ class ClaimService
                 $this->createClaimDocuments($claim, $validatedData, $userId);
             }
 
+            // Create accommodations
+            $this->createClaimAccommodations($claim, $validatedData);
+
             // Send notifications
             $this->notifyRelevantUsers($claim, 'submitted');
 
@@ -118,6 +121,32 @@ class ClaimService
         if (!empty($documents)) {
             $documents['uploaded_by'] = $userId;
             $claim->documents()->create($documents);
+        }
+    }
+
+    private function createClaimAccommodations(Claim $claim, array $data): void
+    {
+        if (!isset($data['accommodations'])) {
+            return;
+        }
+
+        $accommodations = is_string($data['accommodations']) 
+            ? json_decode($data['accommodations'], true) 
+            : $data['accommodations'];
+
+        foreach ($accommodations as $index => $accommodation) {
+            $receiptPath = null;
+            if (isset($data['accommodation_receipts'][$index])) {
+                $receiptPath = $data['accommodation_receipts'][$index]->store('claims/accommodations', 'public');
+            }
+
+            $claim->accommodations()->create([
+                'location' => $accommodation['location'],
+                'price' => $accommodation['price'],
+                'check_in' => $accommodation['check_in'],
+                'check_out' => $accommodation['check_out'],
+                'receipt_path' => $receiptPath
+            ]);
         }
     }
 

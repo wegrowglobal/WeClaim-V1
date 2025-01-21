@@ -274,23 +274,44 @@ class ClaimForm {
         const form = document.getElementById('claimForm');
         if (!form) return true;
 
+        console.log('SaveCurrentStep - Initial draft data:', {
+            draftData: JSON.parse(document.getElementById('draftData')?.value || '{}'),
+            accommodationsData: JSON.parse(document.getElementById('accommodations-data')?.value || '[]')
+        });
+
         // Get existing draft data
         const draftDataInput = document.getElementById('draftData');
         let existingData = {};
         try {
             existingData = JSON.parse(draftDataInput?.value || '{}');
         } catch (error) {
-            
+            console.error('Error parsing existing draft data:', error);
         }
 
         const formData = new FormData(form);
         
+        // Preserve existing accommodations data
+        let accommodationsData = existingData.accommodations || [];
+        // If we're on step 3, get fresh accommodations data
+        if (this.currentStep === 3 && window.accommodationManagerInstance) {
+            window.accommodationManagerInstance.updateAccommodationsData(); // Force update
+            const accommodationsInput = document.getElementById('accommodations-data');
+            try {
+                const newAccommodations = JSON.parse(accommodationsInput?.value || '[]');
+                if (newAccommodations.length > 0) {
+                    accommodationsData = newAccommodations;
+                }
+            } catch (error) {
+                console.error('Error parsing accommodations data:', error);
+            }
+        }
+        
         // Create merged data object
         const currentStepData = {
-            ...existingData, // Start with existing data
+            ...existingData,
             current_step: this.currentStep,
             
-            // Step 1 data (preserve from existing if not in current form)
+            // Step 1 data
             claim_company: formData.get('claim_company') || existingData.claim_company || '',
             date_from: formData.get('date_from') || existingData.date_from || '',
             date_to: formData.get('date_to') || existingData.date_to || '',
@@ -304,8 +325,15 @@ class ClaimForm {
             total_duration: formData.get('total_duration') || existingData.total_duration || '0',
             
             // Step 3 data
-            toll_amount: formData.get('toll_amount') || existingData.toll_amount || '0'
+            accommodations: accommodationsData.length > 0 ? accommodationsData : existingData.accommodations || [],
+            toll_amount: formData.get('toll_amount') || existingData.toll_amount || '0',
         };
+
+        console.log('SaveCurrentStep - Data to be saved:', {
+            currentStepData,
+            accommodationsData,
+            existingAccommodations: existingData.accommodations
+        });
 
         try {
             const response = await fetch('/claims/save-step', {
@@ -324,22 +352,39 @@ class ClaimForm {
             // Update the draft data input with merged data
             if (draftDataInput) {
                 draftDataInput.value = JSON.stringify(currentStepData);
+                
+                // Log final state
+                console.log('SaveCurrentStep - Final draft data after save:', {
+                    draftData: JSON.parse(draftDataInput.value),
+                    accommodationsData: currentStepData.accommodations
+                });
             }
 
             return true;
         } catch (error) {
-            
+            console.error('Error saving step data:', error);
             return false;
         }
     }
 
     async nextStep(currentStep) {
+        // Add logging before saving
+        console.log('Next Step - Current draft data before save:', {
+            draftData: JSON.parse(document.getElementById('draftData')?.value || '{}'),
+            accommodationsData: JSON.parse(document.getElementById('accommodations-data')?.value || '[]')
+        });
+
         // Save current step data before proceeding
         const savedSuccessfully = await this.saveCurrentStep();
         if (!savedSuccessfully) {
             console.error('Failed to save current step data');
             return;
         }
+
+        // Log after saving
+        console.log('Next Step - Draft data after save:', {
+            draftData: JSON.parse(document.getElementById('draftData')?.value || '{}')
+        });
 
         // Get all current form data
         const form = document.getElementById('claimForm');
@@ -352,6 +397,20 @@ class ClaimForm {
             existingData = JSON.parse(draftDataInput?.value || '{}');
         } catch (error) {
             console.error('Error parsing existing draft data:', error);
+        }
+
+        // Ensure accommodations data is properly captured
+        let accommodations = existingData.accommodations || [];
+        const accommodationsDataInput = document.getElementById('accommodations-data');
+        if (accommodationsDataInput) {
+            try {
+                const newAccommodations = JSON.parse(accommodationsDataInput.value || '[]');
+                if (newAccommodations.length > 0) {
+                    accommodations = newAccommodations;
+                }
+            } catch (error) {
+                console.error('Error parsing accommodations data:', error);
+            }
         }
 
         // Merge all data
@@ -368,26 +427,42 @@ class ClaimForm {
             total_distance: formData.get('total_distance') || existingData.total_distance,
             total_cost: formData.get('total_cost') || existingData.total_cost,
             // Step 3 data
+            accommodations: accommodations.length > 0 ? accommodations : existingData.accommodations,
             toll_amount: formData.get('toll_amount') || existingData.toll_amount
         };
 
-        // Update the URL with next step
-        const nextStepNumber = currentStep + 1;
-        const url = new URL(window.location.href);
-        url.searchParams.set('step', nextStepNumber);
-        
-        // Add merged data to URL
-        url.searchParams.set('draft_data', JSON.stringify(mergedData));
-        
-        window.location.href = url.toString();
+        console.log('Merged data before navigation:', mergedData);
+
+        // Update draft data input
+        if (draftDataInput) {
+            draftDataInput.value = JSON.stringify(mergedData);
+        }
+
+        // Navigate to next step
+        await this.loadStep(currentStep + 1);
     }
 
     async previousStep(currentStep) {
-        // Remove the save step requirement for going back
-        const prevStep = currentStep - 1;
-        if (prevStep >= 1) {
-            window.location.href = `/claims/new?step=${prevStep}`;
+        // Add logging before saving
+        console.log('Previous Step - Current draft data before save:', {
+            draftData: JSON.parse(document.getElementById('draftData')?.value || '{}'),
+            accommodationsData: JSON.parse(document.getElementById('accommodations-data')?.value || '[]')
+        });
+
+        // Save current step data before proceeding
+        const savedSuccessfully = await this.saveCurrentStep();
+        if (!savedSuccessfully) {
+            console.error('Failed to save current step data');
+            return;
         }
+
+        // Log after saving
+        console.log('Previous Step - Draft data after save:', {
+            draftData: JSON.parse(document.getElementById('draftData')?.value || '{}')
+        });
+
+        // Navigate to previous step
+        await this.loadStep(currentStep - 1);
     }
 
     async resetForm(e) {
@@ -505,10 +580,11 @@ class ClaimForm {
                 status: 'Submitted',
                 title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
                 claim_type: 'Petrol',
+                accommodations: draftData.accommodations || [],
             };
 
             Object.entries(claimData).forEach(([key, value]) => {
-                if (key === 'locations') {
+                if (key === 'locations' || key === 'accommodations') {
                     submitFormData.append(key, JSON.stringify(value));
                 } else {
                     const cleanValue = typeof value === 'string' ? 
@@ -528,6 +604,15 @@ class ClaimForm {
             if (emailFile) {
                 submitFormData.append('email_file', emailFile);
             }
+
+            // Add accommodation files if they exist
+            const accommodations = document.querySelectorAll('.accommodation-entry');
+            accommodations.forEach((acc, index) => {
+                const receiptFile = document.getElementById(`accommodation_receipt_${index}`)?.files[0];
+                if (receiptFile) {
+                    submitFormData.append(`accommodation_receipts[${index}]`, receiptFile);
+                }
+            });
 
             const response = await fetch('/claims/store', {
                 method: 'POST',
@@ -833,6 +918,34 @@ class ClaimForm {
         });
 
         return result.isConfirmed;
+    }
+
+    async loadStep(step) {
+        try {
+            const response = await fetch(`/claims/get-step/${step}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load step');
+
+            // Update URL
+            const url = new URL(window.location.href);
+            url.searchParams.set('step', step);
+            window.history.pushState({}, '', url.toString());
+
+            // Reload the page to ensure proper initialization
+            window.location.href = url.toString();
+        } catch (error) {
+            console.error('Error loading step:', error);
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load the next step. Please try again.',
+                icon: 'error'
+            });
+        }
     }
 }
 

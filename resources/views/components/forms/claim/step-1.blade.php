@@ -1,4 +1,11 @@
-<div class="space-y-6 p-0 sm:p-6">
+<div class="space-y-6 p-0 sm:p-6" data-step="1">
+    @php
+        $draftData = $draftData ?? [];
+    @endphp
+    
+    <script>
+        console.log('Step 1 - Initial draft data:', @json($draftData));
+    </script>
     <div>
         <h2 class="text-lg font-medium text-gray-900 sm:text-xl">Basic Information</h2>
         <p class="mt-1 text-sm text-gray-500">Fill in the basic claim details</p>
@@ -97,6 +104,15 @@
     </div>
 
     <!-- Hidden Draft Data Input -->
+    @php
+        // Ensure accommodations data is preserved
+        $accommodations = [];
+        if (isset($draftData['accommodations'])) {
+            $accommodations = is_string($draftData['accommodations']) 
+                ? json_decode($draftData['accommodations'], true) 
+                : $draftData['accommodations'];
+        }
+    @endphp
     <input id="draftData" name="draft_data" type="hidden"
         value="{{ json_encode([
             'claim_company' => old('claim_company', $draftData['claim_company'] ?? ''),
@@ -107,6 +123,7 @@
             'total_cost' => old('total_cost', $draftData['total_cost'] ?? '0'),
             'segments_data' => old('segments_data', $draftData['segments_data'] ?? '[]'),
             'locations' => old('locations', $draftData['locations'] ?? '[]'),
+            'accommodations' => $accommodations
         ]) }}">
 
     <!-- Navigation Buttons -->

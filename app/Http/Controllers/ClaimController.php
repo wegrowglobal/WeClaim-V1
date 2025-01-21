@@ -700,6 +700,19 @@ class ClaimController extends Controller
     {
         try {
             $draftData = Session::get('claim_draft', []);
+           
+            // Handle accommodations data specially when loading step 3
+            if ($step == 3 && isset($draftData['accommodations'])) {
+                // Ensure accommodations is properly decoded if it's a string
+                if (is_string($draftData['accommodations'])) {
+                    $draftData['accommodations'] = json_decode($draftData['accommodations'], true);
+                }
+                
+                Log::info('Loading step 3 with accommodations', [
+                    'accommodations_count' => count($draftData['accommodations']),
+                    'accommodations' => $draftData['accommodations']
+                ]);
+            }
 
             return view("components.forms.claim.step-{$step}", [
                 'draftData' => $draftData,
@@ -723,13 +736,31 @@ class ClaimController extends Controller
             $currentDraft = session('claim_draft', []);
             $data = $request->all();
 
-            Log::info('Saving step data', ['incoming_data' => $data]); // Debug log
+            Log::info('Saving step data', [
+                'incoming_data' => $data,
+                'step' => $data['current_step'] ?? null,
+                'accommodations' => $data['accommodations'] ?? null
+            ]);
 
             // Handle locations data specially
             if (isset($data['locations'])) {
                 $data['locations'] = is_string($data['locations'])
                     ? json_decode($data['locations'], true)
                     : $data['locations'];
+            }
+
+            // Handle accommodations data specially
+            if (isset($data['accommodations'])) {
+                $data['accommodations'] = is_string($data['accommodations'])
+                    ? json_decode($data['accommodations'], true)
+                    : $data['accommodations'];
+               
+                // Ensure the accommodations data is preserved in the session
+                $currentDraft['accommodations'] = $data['accommodations'];
+            }
+            // Don't remove accommodations data if it's not in the current request
+            elseif (isset($currentDraft['accommodations'])) {
+                $data['accommodations'] = $currentDraft['accommodations'];
             }
 
             // Ensure we're not overwriting existing data with null values
@@ -742,7 +773,11 @@ class ClaimController extends Controller
 
             session(['claim_draft' => $updatedDraft]);
 
-            Log::info('Updated draft data', ['draft' => $updatedDraft]); // Debug log
+            Log::info('Updated draft data', [
+                'draft' => $updatedDraft,
+                'has_accommodations' => isset($updatedDraft['accommodations']),
+                'accommodations_count' => isset($updatedDraft['accommodations']) ? count($updatedDraft['accommodations']) : 0
+            ]);
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
@@ -880,6 +915,33 @@ class ClaimController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error deleting claim: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function loadStep(Request $request, $step)
+    {
+        try {
+            $draftData = session('claim_draft', []);
+            Log::info('Loading step', [
+                'step' => $step,
+                'draft_data' => $draftData,
+                'has_accommodations' => isset($draftData['accommodations']),
+                'accommodations_count' => isset($draftData['accommodations']) ? count($draftData['accommodations']) : 0
+            ]);
+
+            return view('components.forms.claim.step-' . $step, [
+                'draftData' => $draftData,
+                'currentStep' => (int) $step
+            ])->render();
+        } catch (\Exception $e) {
+            Log::error('Error loading step', [
+                'step' => $step,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Error loading step'
             ], 500);
         }
     }

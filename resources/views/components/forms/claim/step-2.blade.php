@@ -1,4 +1,12 @@
-<div class="space-y-6 p-6">
+<div class="space-y-6 p-0 sm:p-6" data-step="2">
+    @php
+        $draftData = $draftData ?? [];
+    @endphp
+    
+    <script>
+        console.log('Step 2 - Initial draft data:', @json($draftData));
+    </script>
+
     <div>
         <h2 class="text-base font-medium text-gray-900">Trip Details</h2>
         <p class="mt-1 text-sm text-gray-500">Plan your route and calculate travel distance</p>
@@ -27,13 +35,30 @@ $totalCost = isset($draftData['total_cost']) ? $draftData['total_cost'] : '0.00'
     @endphp
 
     <!-- Hidden Inputs -->
-    <input id="draftData" type="hidden" value="{{ is_array($draftData) ? json_encode($draftData) : '{}' }}">
+    @php
+        // Ensure accommodations data is preserved
+        $accommodations = [];
+        if (isset($draftData['accommodations'])) {
+            $accommodations = is_string($draftData['accommodations']) 
+                ? json_decode($draftData['accommodations'], true) 
+                : $draftData['accommodations'];
+        }
+    @endphp
+    <input id="draftData" type="hidden" value="{{ json_encode([
+        'claim_company' => $draftData['claim_company'] ?? '',
+        'date_from' => $draftData['date_from'] ?? '',
+        'date_to' => $draftData['date_to'] ?? '',
+        'remarks' => $draftData['remarks'] ?? '',
+        'total_distance' => $totalDistance,
+        'total_cost' => $totalCost,
+        'segments_data' => $draftData['segments_data'] ?? '[]',
+        'locations' => $filteredLocations,
+        'accommodations' => $accommodations
+    ]) }}">
     <input id="locations" name="locations" type="hidden" value="{{ json_encode($filteredLocations) }}">
     <input id="total-distance-input" name="total_distance" type="hidden" value="{{ $totalDistance }}">
     <input id="total-duration-input" name="total_duration" type="hidden" value="{{ $totalDuration }}">
     <input id="total-cost-input" name="total_cost" type="hidden" value="{{ $totalCost }}">
-    <input id="segments-data" name="segments_data" type="hidden"
-        value="{{ old('segments_data', $draftData['segments_data'] ?? '[]') }}">
 
     <!-- Location Inputs -->
     <div class="space-y-4" id="location-inputs">

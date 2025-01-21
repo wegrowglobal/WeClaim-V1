@@ -12,35 +12,153 @@
         $segmentsData = is_string($draftData['segments_data'] ?? '[]')
             ? json_decode($draftData['segments_data'], true)
             : $draftData['segments_data'] ?? [];
+
+        // Parse accommodations from draft data
+        $accommodations = [];
+        if (isset($draftData['accommodations'])) {
+            $accommodations = is_string($draftData['accommodations']) 
+                ? json_decode($draftData['accommodations'], true) 
+                : $draftData['accommodations'];
+        }
     @endphp
 
-    <!-- Add hidden inputs to preserve all data -->
-    <input id="draftData" name="draft_data" type="hidden"
-        value="{{ json_encode([
-            'claim_company' => $claimCompany,
-            'date_from' => $dateFrom,
-            'date_to' => $dateTo,
-            'remarks' => $remarks,
-            'total_distance' => $totalDistance,
-            'total_cost' => $totalCost,
-            'segments_data' => $segmentsData,
-            'locations' => $draftData['locations'] ?? [],
-        ]) }}">
+    <script>
+        console.log('Step 3 - Initial draft data:', @json($draftData));
+        console.log('Step 3 - Parsed accommodations:', @json($accommodations));
+    </script>
+
+    <!-- Hidden inputs for data persistence -->
+    <input type="hidden" id="accommodations-data" name="accommodations" value="{{ json_encode($accommodations) }}">
+    <input type="hidden" id="draftData" name="draft_data" value="{{ json_encode($draftData) }}">
 
     <!-- Debug information (optional) -->
     <div class="hidden">
         <pre>{{ print_r($draftData, true) }}</pre>
     </div>
 
-    <div>
-        <h2 class="text-lg font-medium text-gray-900">Supporting Documents</h2>
-        <p class="mt-1 text-sm text-gray-500">Upload your toll receipts and approval emails</p>
-    </div>
+    <div class="rounded-lg bg-gray-50/50 p-4 sm:p-6 space-y-4">
 
+        <div>
+            <h2 class="text-lg font-medium text-gray-900">Accommodation Details</h2>
+            <p class="mt-1 text-sm text-gray-500">Add your accommodation expenses</p>
+        </div>
+    
+        <!-- Accommodations Container -->
+        <div id="accommodations-container" class="space-y-6">
+            <!-- Accommodation entries will be added here -->
+            @foreach($accommodations as $index => $accommodation)
+                <div class="accommodation-entry rounded-lg border border-gray-200 bg-white p-4 shadow-sm" data-index="{{ $index }}">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-sm font-medium text-gray-900">Accommodation Entry #{{ $index + 1 }}</h3>
+                        <button type="button" onclick="removeAccommodation({{ $index }})" class="text-red-600 hover:text-red-700">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Location -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_location_{{ $index }}">
+                                Location
+                            </label>
+                            <input type="text" 
+                                id="accommodation_location_{{ $index }}"
+                                name="accommodations[{{ $index }}][location]"
+                                value="{{ $accommodation['location'] ?? '' }}"
+                                class="location-autocomplete form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white"
+                                data-accommodation-index="{{ $index }}"
+                                required>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_price_{{ $index }}">
+                                Price (RM)
+                            </label>
+                            <input type="number" 
+                                step="0.01"
+                                id="accommodation_price_{{ $index }}"
+                                name="accommodations[{{ $index }}][price]"
+                                value="{{ $accommodation['price'] ?? '' }}"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white"
+                                required>
+                        </div>
+
+                        <!-- Check-in Date -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_check_in_{{ $index }}">
+                                Check-in Date
+                            </label>
+                            <input type="date" 
+                                id="accommodation_check_in_{{ $index }}"
+                                name="accommodations[{{ $index }}][check_in]"
+                                value="{{ $accommodation['check_in'] ?? '' }}"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white"
+                                required>
+                        </div>
+
+                        <!-- Check-out Date -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_check_out_{{ $index }}">
+                                Check-out Date
+                            </label>
+                            <input type="date" 
+                                id="accommodation_check_out_{{ $index }}"
+                                name="accommodations[{{ $index }}][check_out]"
+                                value="{{ $accommodation['check_out'] ?? '' }}"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white"
+                                required>
+                        </div>
+
+                        <!-- Receipt Upload -->
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Receipt
+                            </label>
+                            <div class="document-upload-area">
+                                <input type="file" 
+                                    id="accommodation_receipt_{{ $index }}"
+                                    name="accommodations[{{ $index }}][receipt]"
+                                    class="hidden"
+                                    accept=".pdf,.jpg,.jpeg,.png">
+                                <label for="accommodation_receipt_{{ $index }}"
+                                    class="document-upload-label block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-indigo-400">
+                                    <div class="space-y-2 text-center">
+                                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <div class="text-sm">
+                                            <span class="font-medium text-indigo-600">Click to upload</span>
+                                            <span class="text-gray-500"> or drag and drop</span>
+                                        </div>
+                                    </div>
+                                </label>
+                                <div class="mt-2 text-sm text-gray-500" id="accommodation_receipt_name_{{ $index }}">
+                                    {{ $accommodation['receipt_name'] ?? 'No file selected' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Add Accommodation Button -->
+        <button type="button" 
+            onclick="window.accommodationManager.addAccommodation()"
+            class="mt-3 inline-flex items-center justify-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+            <svg class="mr-1.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Accommodation
+        </button>
+    </div>
     <!-- Documents & Toll Section -->
     <div class="space-y-6">
         <!-- Trip Summary -->
-        <div class="rounded-lg bg-gray-50 p-4 sm:p-6">
+        <div class="rounded-lg bg-gray-50/50 p-4 sm:p-6">
             <h3 class="mb-4 text-base font-semibold text-gray-800">Trip Summary</h3>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -236,5 +354,5 @@
 </div>
 
 @push('scripts')
-    @vite(['resources/js/claim-document.js'])
+    @vite(['resources/js/claim-document.js', 'resources/js/claim-accommodation.js'])
 @endpush

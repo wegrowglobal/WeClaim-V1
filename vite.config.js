@@ -8,11 +8,12 @@ export default defineConfig({
         port: 5173,
         hmr: {
             host: '192.168.0.60',
-            protocol: 'http'  // Force HTTP
+            protocol: 'http'
         },
         watch: {
             usePolling: true
-        }
+        },
+        cors: true
     },
     plugins: [
         laravel({
@@ -21,8 +22,6 @@ export default defineConfig({
                 'resources/css/app.css',
                 
                 // Core JS
-                'resources/js/app.js',
-                'resources/js/bootstrap.js',
                 'resources/js/mobile-menu.js',
                 
                 // Map Related
@@ -38,6 +37,7 @@ export default defineConfig({
                 'resources/js/claim-review.js',
                 'resources/js/claim-resubmit.js',
                 'resources/js/claims-view-toggle.js',
+                'resources/js/claim-accommodation.js',
                 
                 // Utils
                 'resources/js/utils/error-handler.js',
