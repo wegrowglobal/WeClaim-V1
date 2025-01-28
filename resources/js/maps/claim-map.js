@@ -154,55 +154,7 @@ export class ClaimMap extends BaseMap {
             const routeData = await this.calculateRoute(locations);
             
             if (routeData) {
-                const draftDataInput = document.getElementById('draftData');
-                const existingData = draftDataInput ? JSON.parse(draftDataInput.value) : null;
-
-                if (!isNewStop && existingData?.total_distance && existingData?.total_cost) {
-                    const newTotalDistance = routeData.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
-                    const newTotalCost = newTotalDistance * parseFloat(document.getElementById('rate-per-km')?.value || 0.60);
-
-                    const distanceDiff = Math.abs(newTotalDistance - parseFloat(existingData.total_distance));
-                    
-                    if (distanceDiff > 0.1) {
-                        const result = await Swal.fire({
-                            title: 'Different Route Found',
-                            html: `
-                                <div class="space-y-4">
-                                    <div class="text-left">
-                                        <p class="font-medium text-gray-900">Current Route:</p>
-                                        <p class="text-sm text-gray-600">Distance: ${existingData.total_distance} km</p>
-                                        <p class="text-sm text-gray-600">Cost: RM ${existingData.total_cost}</p>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="font-medium text-gray-900">New Route:</p>
-                                        <p class="text-sm text-gray-600">Distance: ${newTotalDistance.toFixed(2)} km</p>
-                                        <p class="text-sm text-gray-600">Cost: RM ${newTotalCost.toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            `,
-                            icon: 'info',
-                            showDenyButton: true,
-                            confirmButtonText: 'Use New Route',
-                            denyButtonText: 'Keep Current Route',
-                            customClass: {
-                                popup: 'rounded-lg shadow-xl border border-gray-200',
-                                title: 'text-xl font-medium text-gray-900',
-                                htmlContainer: 'text-base text-gray-600'
-                            }
-                        });
-
-                        if (result.isDenied) {
-                            this.updateRouteDisplay({
-                                routes: routeData.routes,
-                                legs: existingData.segments_data ? JSON.parse(existingData.segments_data) : routeData.legs,
-                                useExistingData: true,
-                                existingData
-                            });
-                            return;
-                        }
-                    }
-                }
-
+                // Always use the new route data
                 this.updateRouteDisplay(routeData);
                 this.updateSegmentInfo(routeData.legs);
                 this.saveRouteData(routeData);
@@ -301,62 +253,27 @@ export class ClaimMap extends BaseMap {
             this.directionsRenderers.push(renderer);
         });
 
-        // Use existing data if specified
-        if (routeData.useExistingData && routeData.existingData) {
-            const { total_distance, total_cost, segments_data } = routeData.existingData;
-            
-            this.updateDisplay('total-distance', total_distance);
-            this.updateDisplay('total-cost', total_cost);
-            this.updateHiddenInput('total-distance-input', total_distance);
-            this.updateHiddenInput('total-cost-input', total_cost);
-            
-            // Parse segments data if it's a string
-            let parsedSegments;
-            try {
-                parsedSegments = typeof segments_data === 'string' ? 
-                    JSON.parse(segments_data) : segments_data;
-            } catch (error) {
-                console.error('Error parsing segments data:', error);
-                parsedSegments = [];
-            }
+        // Calculate totals using all legs
+        const totals = this.routeCalculator.calculateTotals(routeData.legs);
+        
+        Object.entries(totals).forEach(([key, value]) => {
+            this.updateDisplay(`total-${key}`, value);
+            this.updateHiddenInput(`total-${key}-input`, value);
+        });
 
-            // Ensure segments data is valid and has required properties
-            if (Array.isArray(parsedSegments) && parsedSegments.length > 0) {
-                const validSegments = parsedSegments.map(segment => ({
-                    start_address: segment.from_location,
-                    end_address: segment.to_location,
-                    distance: { value: segment.distance * 1000 }, // Convert back to meters
-                    duration: { text: segment.duration },
-                    cost: segment.cost
-                }));
-
-                this.updateSegmentInfo(validSegments);
-                this.updateHiddenInput('segments-data', JSON.stringify(parsedSegments));
-            }
-        } else {
-            // Calculate totals using all legs
-            const totals = this.routeCalculator.calculateTotals(routeData.legs);
-            
-            Object.entries(totals).forEach(([key, value]) => {
-                this.updateDisplay(`total-${key}`, value);
-                this.updateHiddenInput(`total-${key}-input`, value);
-            });
-
-            this.updateSegmentInfo(routeData.legs);
-            
-            // Save the segments data
-            const segmentsData = routeData.legs.map((leg, index) => ({
-                from_location: leg.start_address,
-                to_location: leg.end_address,
-                distance: leg.distance.value / 1000,
-                duration: leg.duration.text,
-                cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
-                order: index + 1
-            }));
-            
-            this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
-        }
-
+        this.updateSegmentInfo(routeData.legs);
+        
+        // Save the segments data
+        const segmentsData = routeData.legs.map((leg, index) => ({
+            from_location: leg.start_address,
+            to_location: leg.end_address,
+            distance: leg.distance.value / 1000,
+            duration: leg.duration.text,
+            cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
+            order: index + 1
+        }));
+        
+        this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
         this.updateNextButtonState();
     }
 
@@ -380,51 +297,60 @@ export class ClaimMap extends BaseMap {
         legs.forEach((leg, index) => {
             const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
             const segmentHtml = `
-                <div class="segment-detail bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md border-2 border-indigo-200">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 space-y-4 sm:space-y-0">
-                        <div class="space-y-3 w-full sm:w-auto">
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <!-- Location Header -->
+                    <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                        <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                <span class="from-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${color}"></span>
-                                <span class="text-xs sm:text-sm text-gray-700 truncate max-w-[200px] sm:max-w-none">${leg.start_address}</span>
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full" style="background-color: ${color}">
+                                    <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">Route Segment ${index + 1}</p>
+                                    <p class="text-xs text-gray-500">${leg.start_address} → ${leg.end_address}</p>
+                                </div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <span class="to-location-dot inline-flex items-center justify-center w-2 h-2 rounded-full" style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
-                                <span class="text-xs sm:text-sm text-gray-700 truncate max-w-[200px] sm:max-w-none">${leg.end_address}</span>
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-gray-900">RM ${((leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60))).toFixed(2)}</p>
+                                <p class="text-xs text-gray-500">${this.formatDuration(leg.duration.value)}</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-4 w-full sm:w-auto">
-                            <div class="flex items-center space-x-2">
-                                <div class="p-2 bg-blue-50 rounded-lg">
-                                    <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                                    </svg>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- From Location -->
+                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="inline-flex h-2 w-2 rounded-full" style="background-color: ${color}"></span>
+                                    <span class="text-xs font-medium text-gray-700">From</span>
                                 </div>
-                                <div>
-                                    <p class="text-xs text-gray-500">Distance</p>
-                                    <p class="text-xs font-medium text-gray-900" data-distance>${(leg.distance.value / 1000).toFixed(2)} km</p>
-                                </div>
+                                <p class="text-sm text-gray-900 truncate" title="${leg.start_address}">${leg.start_address}</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="p-2 bg-green-50 rounded-lg">
-                                    <svg class="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
+
+                            <!-- To Location -->
+                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="inline-flex h-2 w-2 rounded-full" style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
+                                    <span class="text-xs font-medium text-gray-700">To</span>
                                 </div>
-                                <div>
-                                    <p class="text-xs text-gray-500">Duration</p>
-                                    <p class="text-xs font-medium text-gray-900">${leg.duration.text}</p>
-                                </div>
+                                <p class="text-sm text-gray-900 truncate" title="${leg.end_address}">${leg.end_address}</p>
                             </div>
-                            <div class="flex items-center space-x-2">
-                                <div class="p-2 bg-purple-50 rounded-lg">
-                                    <svg class="w-4 h-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
+
+                            <!-- Distance -->
+                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100">
+                                        <svg class="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                        </svg>
+                                    </div>
+                                    <span class="text-xs font-medium text-gray-700">Distance</span>
                                 </div>
-                                <div>
-                                    <p class="text-xs text-gray-500">Cost</p>
-                                    <p class="text-xs font-medium text-gray-900">RM ${((leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60))).toFixed(2)}</p>
-                                </div>
+                                <p class="text-sm font-medium text-gray-900">${(leg.distance.value / 1000).toFixed(2)} km</p>
                             </div>
                         </div>
                     </div>
@@ -438,12 +364,12 @@ export class ClaimMap extends BaseMap {
     updateDisplay(elementId, value) {
         const element = document.getElementById(elementId);
         if (element) element.textContent = value;
-    }
+    };
 
     updateHiddenInput(elementId, value) {
         const input = document.getElementById(elementId);
         if (input) input.value = value;
-    }
+    };
 
     updateNextButtonState() {
         const nextButton = document.getElementById('next-step-button');
@@ -461,7 +387,7 @@ export class ClaimMap extends BaseMap {
         nextButton.disabled = !(allLocationsFilled && hasValidRoute);
         nextButton.classList.toggle('opacity-50', !hasValidRoute);
         nextButton.classList.toggle('cursor-not-allowed', !hasValidRoute);
-    }
+    };
 
     updateRemoveButtonState() {
         const locationInputs = document.querySelectorAll('.location-pair');
@@ -473,7 +399,7 @@ export class ClaimMap extends BaseMap {
             button.classList.toggle('opacity-50', disabled);
             button.classList.toggle('cursor-not-allowed', disabled);
         });
-    }
+    };
 
     loadSavedData() {
         const draftDataElement = document.getElementById('draftData');
@@ -495,9 +421,9 @@ export class ClaimMap extends BaseMap {
                 }
             }
         } catch (error) {
-
+            console.error('Error loading saved data:', error);
         }
-    }
+    };
 
     async loadLocations(locations) {
         return await ErrorHandler.handle(async () => {
@@ -538,7 +464,7 @@ export class ClaimMap extends BaseMap {
                 }
             }
         }, 'loading locations');
-    }
+    };
 
     removeLocation(wrapper) {
         const locationInputs = document.querySelectorAll('.location-pair');
@@ -550,7 +476,7 @@ export class ClaimMap extends BaseMap {
         wrapper.remove();
         this.locationManager.reindexLocations();
         this.updateRoute();
-    }
+    };
 
     saveRouteData(routeData) {
         if (!routeData || !routeData.legs) return;
@@ -591,13 +517,13 @@ export class ClaimMap extends BaseMap {
         
         this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
         this.updateNextButtonState();
-    }
+    };
 
     formatDuration(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
-    }
+    };
 
     clearMapData() {
         // Clear the map
@@ -625,7 +551,7 @@ export class ClaimMap extends BaseMap {
         
         // Add initial location inputs back
         this.addInitialLocationInputs();
-    }
+    };
 
     chunkArray(array, size) {
         const chunks = [];
@@ -633,7 +559,7 @@ export class ClaimMap extends BaseMap {
             chunks.push(array.slice(i, i + size));
         }
         return chunks;
-    }
+    };
 
     showLoadingState() {
         return Swal.fire({
@@ -645,7 +571,7 @@ export class ClaimMap extends BaseMap {
             target: document.getElementById('map'),
             didOpen: () => Swal.showLoading()
         });
-    }
+    };
 
     async processLocation(location, index) {
         if (!location || typeof location !== 'string') {
@@ -676,14 +602,14 @@ export class ClaimMap extends BaseMap {
             console.error('Error processing location:', error);
             return null;
         }
-    }
+    };
 
     getValidLocationValues() {
         const locationInputs = document.querySelectorAll('.location-input');
         return Array.from(locationInputs)
             .map(input => input.value.trim())
             .filter(value => value.length > 0);
-    }
+    };
     
     async compareRouteData(newRouteData, existingData) {
         if (!newRouteData || !existingData) return false;
@@ -691,9 +617,8 @@ export class ClaimMap extends BaseMap {
         const newTotalDistance = newRouteData.legs.reduce((sum, leg) => sum + leg.distance.value, 0) / 1000;
         const existingTotalDistance = parseFloat(existingData.total_distance || 0);
     
-        // Check if the difference is more than 0.1 km
         return Math.abs(newTotalDistance - existingTotalDistance) > 0.1;
-    }
+    };
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
 
         // Re-enable foreign key checks
         Schema::enableForeignKeyConstraints();
-
+ 
         // Run seeders
         $this->call([
             RoleSeeder::class,

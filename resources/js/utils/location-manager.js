@@ -36,39 +36,51 @@ export class LocationManager {
 
     createLocationInput(index, value = '', showDelete = false) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'location-pair relative flex gap-2 cursor-move';
+        wrapper.className = 'location-pair bg-white shadow-sm ring-1 ring-black/5 p-4 relative flex flex-col gap-3';
         
         const letter = String.fromCharCode(65 + index);
+        const color = this.routeColors[index % this.routeColors.length];
         
         wrapper.innerHTML = `
-            <div class="flex-1">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 cursor-move">
-                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 14a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
-                        </svg>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                        <span class="text-sm font-medium" style="color: ${color}">${letter}</span>
                     </div>
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-10">
-                        <span class="w-5 h-5 flex items-center justify-center rounded-full text-xs font-medium text-white"
-                              style="background-color: ${this.routeColors[index % this.routeColors.length]}">
-                            ${letter}
-                        </span>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">Location ${index + 1}</h3>
+                        <p class="text-xs text-gray-500">Enter the address or select from map</p>
                     </div>
-                    <input type="text" 
-                           class="location-input block w-full pl-20 pr-10 py-2 text-sm border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 rounded-lg transition-all" 
-                           placeholder="Enter location"
-                           value="${value}"
-                           autocomplete="off">
                 </div>
+                ${showDelete ? `
+                    <button type="button" 
+                            class="delete-location-btn inline-flex items-center rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-500">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                ` : ''}
             </div>
-            ${showDelete ? `
-                <button type="button" 
-                        class="delete-location-btn inline-flex items-center p-2 text-gray-400 hover:text-gray-500">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 cursor-move">
+                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 14a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
                     </svg>
-                </button>
-            ` : ''}`;
+                </div>
+                <input type="text" 
+                       class="location-input block w-full pl-10 pr-10 py-2 text-sm border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 rounded-lg transition-all" 
+                       placeholder="Enter location"
+                       value="${value}"
+                       autocomplete="off">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+            </div>`;
 
         if (showDelete) {
             const deleteButton = wrapper.querySelector('.delete-location-btn');
@@ -128,36 +140,6 @@ export class LocationManager {
             }
         });
 
-        // Add the button to the wrapper
-        let inputWrapper = input.parentElement;
-        if (!inputWrapper.classList.contains('input-group-wrapper')) {
-            inputWrapper = document.createElement('div');
-            inputWrapper.className = 'input-group-wrapper relative flex items-center';
-            input.parentNode.insertBefore(inputWrapper, input);
-            inputWrapper.appendChild(input);
-        }
-
-        const mapPickerBtn = document.createElement('button');
-        mapPickerBtn.type = 'button';
-        mapPickerBtn.className = 'absolute right-0 h-full px-3 flex items-center justify-center text-gray-400 hover:text-gray-600 focus:outline-none';
-        mapPickerBtn.innerHTML = `
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-        `;
-
-        input.style.paddingRight = '40px';
-        input.style.width = '100%';
-        inputWrapper.appendChild(mapPickerBtn);
-
-        // Handle map picker click
-        mapPickerBtn.addEventListener('click', () => {
-            this.showMapPicker(input, options);
-        });
-
         // Handle place selection from autocomplete
         autocomplete.addListener('place_changed', () => {
             const place = autocomplete.getPlace();
@@ -181,7 +163,7 @@ export class LocationManager {
         if (document.getElementById('map-picker-modal')) return;
 
         const modalHtml = `
-            <div id="map-picker-modal" class="fixed inset-0 z-50 hidden">
+            <div id="map-picker-modal" class="fixed inset-0 z-[9999] hidden">
                 <div class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
                 <div class="fixed inset-0 z-10 overflow-y-auto">
                     <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -259,9 +241,9 @@ export class LocationManager {
 
     showMapPicker(input, options) {
         const modal = document.getElementById('map-picker-modal');
-        const mapDiv = document.getElementById('map-picker');
-        const searchInput = document.getElementById('map-search-input');
-        const locationDisplay = document.getElementById('selected-location-display');
+        const mapDiv = modal.querySelector('#map-picker');
+        const searchInput = modal.querySelector('#map-search-input');
+        const locationDisplay = modal.querySelector('#selected-location-display');
         modal.classList.remove('hidden');
 
         // Initialize map if not already done
@@ -299,7 +281,7 @@ export class LocationManager {
         });
 
         // Handle search input enter key
-        searchInput.addEventListener('keydown', (e) => {
+        searchInput.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const place = searchAutocomplete.getPlace();
@@ -311,15 +293,18 @@ export class LocationManager {
                 } else {
                     // If no place details available, try geocoding the input value
                     const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({ address: searchInput.value }, (results, status) => {
-                        if (status === 'OK' && results[0]) {
+                    try {
+                        const { results } = await geocoder.geocode({ address: searchInput.value });
+                        if (results[0]) {
                             const location = results[0].geometry.location;
                             this.marker.setPosition(location);
                             this.map.setCenter(location);
                             this.map.setZoom(17);
                             this.updateLocationDisplay(locationDisplay);
                         }
-                    });
+                    } catch (error) {
+                        console.error('Geocoding failed:', error);
+                    }
                 }
             }
         });
@@ -339,27 +324,34 @@ export class LocationManager {
         if (input.value) {
             searchInput.value = input.value;
             const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ address: input.value }, (results, status) => {
-                if (status === 'OK' && results[0].geometry) {
-                    const location = results[0].geometry.location;
-                    this.marker.setPosition(location);
-                    this.map.setCenter(location);
-                    this.map.setZoom(17);
-                    locationDisplay.textContent = results[0].formatted_address;
-                }
-            });
+            geocoder.geocode({ address: input.value })
+                .then(({ results }) => {
+                    if (results[0].geometry) {
+                        const location = results[0].geometry.location;
+                        this.marker.setPosition(location);
+                        this.map.setCenter(location);
+                        this.map.setZoom(17);
+                        locationDisplay.textContent = results[0].formatted_address;
+                    }
+                })
+                .catch(error => {
+                    console.error('Geocoding failed:', error);
+                });
         }
 
         // Handle modal close
         const closeModal = () => {
             modal.classList.add('hidden');
+            // Clean up event listeners
+            searchInput.value = '';
+            locationDisplay.textContent = 'No location selected';
         };
 
         // Add event listeners
-        const cancelBtn = document.querySelector('.cancel-picker');
-        const closeBtn = document.querySelector('.absolute.right-0.top-0 button');
-        const confirmBtn = document.querySelector('.confirm-location');
-        const overlay = document.querySelector('.absolute.inset-0.bg-gray-500');
+        const cancelBtn = modal.querySelector('.cancel-picker');
+        const closeBtn = modal.querySelector('.absolute.right-0.top-0 button');
+        const confirmBtn = modal.querySelector('.confirm-location');
+        const overlay = modal.querySelector('.absolute.inset-0.bg-gray-500');
 
         // Remove existing listeners if any
         const newCancelBtn = cancelBtn.cloneNode(true);
@@ -378,9 +370,10 @@ export class LocationManager {
         newOverlay.onclick = closeModal;
 
         // Handle location confirmation
-        newConfirmBtn.onclick = () => {
+        newConfirmBtn.onclick = async () => {
             const position = this.marker.getPosition();
-            this.geocodePosition(position, (address) => {
+            try {
+                const address = await this.geocodePosition(position);
                 input.value = address;
                 if (options.onPlaceChanged) {
                     options.onPlaceChanged({
@@ -391,7 +384,9 @@ export class LocationManager {
                     });
                 }
                 closeModal();
-            });
+            } catch (error) {
+                console.error('Failed to get address:', error);
+            }
         };
 
         // Trigger a resize event to ensure map renders correctly
@@ -403,26 +398,30 @@ export class LocationManager {
         }, 100);
     }
 
-    geocodePosition(pos, callback) {
+    async geocodePosition(pos) {
         const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({
-            location: pos,
-        }, (results, status) => {
-            if (status === 'OK' && results[0]) {
-                callback(results[0].formatted_address);
-            } else {
-                console.warn('Geocoder failed:', status);
-                callback(`${pos.lat()}, ${pos.lng()}`);
+        try {
+            const { results } = await geocoder.geocode({ location: pos });
+            if (results[0]) {
+                return results[0].formatted_address;
             }
-        });
+            throw new Error('No results found');
+        } catch (error) {
+            console.warn('Geocoder failed:', error);
+            return `${pos.lat()}, ${pos.lng()}`;
+        }
     }
 
-    updateLocationDisplay(displayElement) {
+    async updateLocationDisplay(displayElement) {
         const position = this.marker.getPosition();
         displayElement.textContent = 'Getting address...';
         
-        this.geocodePosition(position, (address) => {
+        try {
+            const address = await this.geocodePosition(position);
             displayElement.textContent = address;
-        });
+        } catch (error) {
+            console.error('Failed to update location display:', error);
+            displayElement.textContent = 'Failed to get address';
+        }
     }
 } 

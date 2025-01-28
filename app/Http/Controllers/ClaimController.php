@@ -408,40 +408,31 @@ class ClaimController extends Controller
     public function sendToDatuk(Request $request, $id)
     {
         try {
-            Log::info('Attempting to send claim to Datuk', [
-                'claim_id' => $id,
-                'user_id' => Auth::id()
-            ]);
+            $user = Auth::user();
+            if (!$user || $user->role_id !== 3) { // Only HR can send to Datuk
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized. Only HR can send claims to Datuk.'
+                ], 403);
+            }
 
             $claim = Claim::findOrFail($id);
 
-            if (!Auth::user() || Auth::user()->role->name !== 'Admin') {
-                throw new \Exception('Unauthorized action.');
+            if ($claim->status !== Claim::STATUS_APPROVED_HR) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Claim must be approved by HR before sending to Datuk.'
+                ], 400);
             }
-
-            Log::info('Claim found', [
-                'claim_id' => $claim->id,
-                'user_id' => $claim->user_id,
-                'status' => $claim->status
-            ]);
 
             $this->claimService->sendClaimToDatuk($claim);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Claim sent to Datuk successfully'
+                'message' => 'Email sent to Datuk successfully.'
             ]);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Claim not found', [
-                'claim_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Claim not found'
-            ], 404);
         } catch (\Exception $e) {
-            Log::error('Error in sendToDatuk controller', [
+            Log::error('Error sending claim to Datuk', [
                 'claim_id' => $id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -449,8 +440,8 @@ class ClaimController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+                'message' => 'Failed to send email to Datuk: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -33,7 +33,13 @@ class NotificationService
             }
 
             // Skip reviewer notifications for certain actions
-            if (in_array($action, ['approved_admin', 'approved_datuk', 'approved_hr', 'approved_finance'])) {
+            if (in_array($action, [
+                'approved_admin',
+                'approved_manager',
+                'approved_hr',
+                'approved_datuk',
+                'approved_finance'
+            ])) {
                 return;
             }
 
@@ -80,9 +86,10 @@ class NotificationService
     {
         return match ($status) {
             Claim::STATUS_SUBMITTED => 'Admin',
-            Claim::STATUS_APPROVED_ADMIN => 'Admin',
-            Claim::STATUS_APPROVED_DATUK => 'HR',
-            Claim::STATUS_APPROVED_HR => 'Finance',
+            Claim::STATUS_APPROVED_ADMIN => 'Manager',
+            Claim::STATUS_APPROVED_MANAGER => 'HR',
+            Claim::STATUS_APPROVED_HR => 'HR', // HR still handles Datuk email
+            Claim::STATUS_APPROVED_DATUK => 'Finance',
             Claim::STATUS_APPROVED_FINANCE => 'Finance',
             Claim::STATUS_DONE => null,
             default => null
@@ -101,9 +108,10 @@ class NotificationService
 
         return match ($status) {
             Claim::STATUS_SUBMITTED => 'pending_admin_review',
-            Claim::STATUS_APPROVED_ADMIN => 'pending_review_datuk',
-            Claim::STATUS_APPROVED_DATUK => 'pending_review_hr',
-            Claim::STATUS_APPROVED_HR => 'pending_review_finance',
+            Claim::STATUS_APPROVED_ADMIN => 'pending_manager_review',
+            Claim::STATUS_APPROVED_MANAGER => 'pending_hr_review',
+            Claim::STATUS_APPROVED_HR => 'pending_datuk_review',
+            Claim::STATUS_APPROVED_DATUK => 'pending_finance_review',
             default => 'pending_review'
         };
     }
@@ -119,12 +127,14 @@ class NotificationService
     {
         return in_array($action, [
             'approved_admin',
-            'approved_datuk',
+            'approved_manager',
             'approved_hr',
+            'approved_datuk',
             'approved_finance',
             'rejected_admin',
-            'rejected_datuk',
+            'rejected_manager',
             'rejected_hr',
+            'rejected_datuk',
             'rejected_finance',
             'completed'
         ]);

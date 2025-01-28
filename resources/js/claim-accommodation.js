@@ -5,11 +5,15 @@ class AccommodationManager {
     constructor() {
         this.accommodationIndex = 0;
         this.locationManager = new LocationManager();
+        this.claimDateFrom = null;
+        this.claimDateTo = null;
         
         // Bind methods to this instance
         this.addAccommodation = this.addAccommodation.bind(this);
         this.removeAccommodation = this.removeAccommodation.bind(this);
         this.updateFileName = this.updateFileName.bind(this);
+        this.validateDates = this.validateDates.bind(this);
+        this.setupDateValidation = this.setupDateValidation.bind(this);
         
         // Initialize
         this.init();
@@ -20,16 +24,32 @@ class AccommodationManager {
 
     init() {
         ErrorHandler.handle(async () => {
-            // Load existing accommodations from draft data
+            // Wait for Google Maps to load
+            if (!window.google || !window.google.maps) {
+                console.warn('Waiting for Google Maps to load...');
+                await new Promise(resolve => {
+                    const checkGoogleMaps = setInterval(() => {
+                        if (window.google && window.google.maps) {
+                            clearInterval(checkGoogleMaps);
+                            resolve();
+                        }
+                    }, 100);
+                });
+            }
+
+            // Get claim period dates from draft data
             const draftDataInput = document.getElementById('draftData');
             if (draftDataInput) {
                 try {
                     const draftData = JSON.parse(draftDataInput.value || '{}');
                     console.log('Initializing AccommodationManager with draft data:', draftData);
                     
+                    // Store claim period dates
+                    this.claimDateFrom = draftData.date_from || null;
+                    this.claimDateTo = draftData.date_to || null;
+                    
                     let accommodations = [];
                     if (draftData.accommodations) {
-                        // Handle both string and array formats
                         accommodations = typeof draftData.accommodations === 'string' 
                             ? JSON.parse(draftData.accommodations) 
                             : draftData.accommodations;
@@ -60,19 +80,25 @@ class AccommodationManager {
                                 
                                 if (locationInput) locationInput.value = accommodation.location || '';
                                 if (priceInput) priceInput.value = accommodation.price || '';
-                                if (checkInInput) checkInInput.value = accommodation.check_in || '';
-                                if (checkOutInput) checkOutInput.value = accommodation.check_out || '';
+                                if (checkInInput) {
+                                    checkInInput.value = accommodation.check_in || '';
+                                    this.setupDateValidation(checkInInput, 'check-in');
+                                }
+                                if (checkOutInput) {
+                                    checkOutInput.value = accommodation.check_out || '';
+                                    this.setupDateValidation(checkOutInput, 'check-out');
+                                }
                                 if (receiptNameElement && accommodation.receipt_name) {
                                     receiptNameElement.textContent = accommodation.receipt_name;
                                 }
+
+                                // Initialize autocomplete for this entry
+                                this.initializeAutocomplete(index);
                             }
                         });
                         
                         // Update index for new entries
                         this.accommodationIndex = accommodations.length;
-                        
-                        // Initialize autocomplete for all entries
-                        await this.initializeExistingAutocomplete();
                     }
                 } catch (error) {
                     console.error('Error parsing draft data:', error);
@@ -86,7 +112,9 @@ class AccommodationManager {
             this.updateAccommodationsData();
 
             console.info('AccommodationManager initialized', {
-                existingAccommodations: this.accommodationIndex
+                existingAccommodations: this.accommodationIndex,
+                claimDateFrom: this.claimDateFrom,
+                claimDateTo: this.claimDateTo
             });
         }, 'AccommodationManager.init');
     }
@@ -100,11 +128,88 @@ class AccommodationManager {
         };
     }
 
+    setupDateValidation(input, type) {
+        if (!input) return;
+
+        // Disable if claim period is not set
+        if (!this.claimDateFrom || !this.claimDateTo) {
+            input.disabled = true;
+            input.classList.add('bg-gray-100', 'cursor-not-allowed');
+            input.title = 'Please set the claim period in Step 1 first';
+            
+            // Find and update the tooltip message
+            const tooltipContainer = input.parentElement.querySelector('.group div[class*="group-hover"]');
+            if (tooltipContainer) {
+                tooltipContainer.textContent = 'Please complete Step 1 and set the claim period dates first before adding accommodation dates';
+                tooltipContainer.classList.add('bg-yellow-700'); // Change color to indicate warning
+            }
+            return;
+        }
+
+        // Remove disabled state if it was previously disabled
+        input.disabled = false;
+        input.classList.remove('bg-gray-100', 'cursor-not-allowed');
+        
+        // Reset tooltip to default message
+        const tooltipContainer = input.parentElement.querySelector('.group div[class*="group-hover"]');
+        if (tooltipContainer) {
+            tooltipContainer.textContent = type === 'check-in' 
+                ? 'Date must be within the claim period'
+                : 'Date must be within the claim period and after check-in date';
+            tooltipContainer.classList.remove('bg-yellow-700');
+        }
+
+        // Set min/max dates based on claim period
+        input.min = this.claimDateFrom;
+        input.max = this.claimDateTo;
+
+        // Add event listeners for validation
+        input.addEventListener('change', () => this.validateDates(input, type));
+    }
+
+    validateDates(input, type) {
+        const index = input.id.match(/\d+/)[0];
+        const checkInInput = document.getElementById(`accommodation_check_in_${index}`);
+        const checkOutInput = document.getElementById(`accommodation_check_out_${index}`);
+
+        if (!checkInInput || !checkOutInput) return;
+
+        const checkInDate = checkInInput.value ? new Date(checkInInput.value) : null;
+        const checkOutDate = checkOutInput.value ? new Date(checkOutInput.value) : null;
+        const claimFromDate = this.claimDateFrom ? new Date(this.claimDateFrom) : null;
+        const claimToDate = this.claimDateTo ? new Date(this.claimDateTo) : null;
+
+        // Reset validation state
+        input.classList.remove('border-red-500');
+        
+        if (type === 'check-in') {
+            if (checkInDate && checkOutDate && checkInDate > checkOutDate) {
+                input.value = '';
+            } else if (checkInDate && claimFromDate && checkInDate < claimFromDate) {
+                input.value = '';
+            }
+        } else if (type === 'check-out') {
+            if (checkOutDate && checkInDate && checkOutDate < checkInDate) {
+                input.value = '';
+            } else if (checkOutDate && claimToDate && checkOutDate > claimToDate) {
+                input.value = '';
+            }
+        }
+    }
+
     addAccommodation() {
         const container = document.getElementById('accommodations-container');
         const template = this.getAccommodationTemplate();
         
         container.insertAdjacentHTML('beforeend', template);
+        
+        // Initialize new date inputs
+        const checkInInput = document.getElementById(`accommodation_check_in_${this.accommodationIndex}`);
+        const checkOutInput = document.getElementById(`accommodation_check_out_${this.accommodationIndex}`);
+        
+        this.setupDateValidation(checkInInput, 'check-in');
+        this.setupDateValidation(checkOutInput, 'check-out');
+        
         this.initializeAutocomplete(this.accommodationIndex);
         this.accommodationIndex++;
         this.updateAccommodationsData();
@@ -115,6 +220,22 @@ class AccommodationManager {
         if (entry) {
             entry.remove();
             this.updateAccommodationsData();
+            
+            // Reindex remaining entries
+            const entries = document.querySelectorAll('.accommodation-entry');
+            entries.forEach((entry, newIndex) => {
+                entry.dataset.index = newIndex;
+                entry.querySelector('h3').textContent = `Entry #${newIndex + 1}`;
+                
+                // Update remove button onclick
+                const removeButton = entry.querySelector('button');
+                if (removeButton) {
+                    removeButton.setAttribute('onclick', `accommodationManager.removeAccommodation(${newIndex})`);
+                }
+            });
+            
+            // Update accommodationIndex
+            this.accommodationIndex = entries.length;
         }
     }
 
@@ -198,6 +319,7 @@ class AccommodationManager {
         if (!input) return;
 
         try {
+            // Initialize Google Places Autocomplete
             this.locationManager.initializeAutocomplete(input, {
                 onPlaceChanged: (place) => {
                     if (!place.geometry) {
@@ -228,6 +350,22 @@ class AccommodationManager {
                 }
             });
 
+            // Add click handler for the location picker button
+            const locationPickerBtn = input.parentElement.querySelector('button');
+            if (locationPickerBtn) {
+                locationPickerBtn.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent form submission
+                    this.locationManager.showMapPicker(input, {
+                        onPlaceChanged: (place) => {
+                            if (place.geometry) {
+                                input.value = place.formatted_address;
+                                this.updateAccommodationsData();
+                            }
+                        }
+                    });
+                });
+            }
+
         } catch (error) {
             console.error('Error initializing autocomplete', {
                 index,
@@ -257,108 +395,118 @@ class AccommodationManager {
 
     getAccommodationTemplate() {
         return `
-            <div class="accommodation-entry rounded-lg border border-gray-200 bg-white p-6" data-index="${this.accommodationIndex}">
-                <!-- Header with Entry # and Delete -->
-                <div class="mb-3 flex items-center justify-between">
-                    <h3 class="text-sm font-medium text-gray-900">Entry #${this.accommodationIndex + 1}</h3>
-                    <button type="button" onclick="window.accommodationManager.removeAccommodation(${this.accommodationIndex})" 
-                        class="text-gray-400 hover:text-red-600 transition-colors">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Form Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <!-- Location - Full Width -->
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-gray-700" for="accommodation_location_${this.accommodationIndex}">
-                            Location
-                        </label>
-                        <div class="mt-1">
-                            <input type="text" 
-                                id="accommodation_location_${this.accommodationIndex}"
-                                name="accommodations[${this.accommodationIndex}][location]"
-                                class="location-autocomplete form-input block w-full rounded-md border-gray-200 text-sm"
-                                data-accommodation-index="${this.accommodationIndex}"
-                                placeholder="Enter or select location"
-                                required>
-                        </div>
+            <div class="mb-4 accommodation-entry overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" data-index="${this.accommodationIndex}">
+                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-900">Accommodation Entry #${this.accommodationIndex + 1}</p>
+                        <button type="button" onclick="window.accommodationManager.removeAccommodation(${this.accommodationIndex})" 
+                            class="text-red-600 hover:text-red-700">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
+                </div>
+                
+                <div class="p-4">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <!-- Location -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_location_${this.accommodationIndex}">
+                                Location
+                            </label>
+                            <div class="relative">
+                                <input type="text" 
+                                    id="accommodation_location_${this.accommodationIndex}"
+                                    name="accommodations[${this.accommodationIndex}][location]"
+                                    class="location-autocomplete form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 pr-10"
+                                    data-accommodation-index="${this.accommodationIndex}"
+                                    placeholder="Enter or select location"
+                                    required>
+                                <div class="absolute inset-y-0 right-0 flex items-center">
+                                    <button type="button" class="h-full px-2 text-gray-400 hover:text-gray-600">
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Price -->
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700" for="accommodation_price_${this.accommodationIndex}">
-                            Price (RM)
-                        </label>
-                        <div class="mt-1">
+                        <!-- Price -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_price_${this.accommodationIndex}">
+                                Price (RM)
+                            </label>
                             <input type="number" 
                                 step="0.01"
                                 id="accommodation_price_${this.accommodationIndex}"
                                 name="accommodations[${this.accommodationIndex}][price]"
-                                class="form-input block w-full rounded-md border-gray-200 text-sm"
-                                placeholder="0.00"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                                 required>
                         </div>
-                    </div>
 
-                    <!-- Check-in Date -->
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700" for="accommodation_check_in_${this.accommodationIndex}">
-                            Check-in Date
-                        </label>
-                        <div class="mt-1">
+                        <!-- Check-in Date -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_check_in_${this.accommodationIndex}">
+                                Check-in Date
+                            </label>
                             <input type="date" 
                                 id="accommodation_check_in_${this.accommodationIndex}"
                                 name="accommodations[${this.accommodationIndex}][check_in]"
-                                class="form-input block w-full rounded-md border-gray-200 text-sm"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                                 required>
                         </div>
-                    </div>
 
-                    <!-- Check-out Date -->
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700" for="accommodation_check_out_${this.accommodationIndex}">
-                            Check-out Date
-                        </label>
-                        <div class="mt-1">
+                        <!-- Check-out Date -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700" for="accommodation_check_out_${this.accommodationIndex}">
+                                Check-out Date
+                            </label>
                             <input type="date" 
                                 id="accommodation_check_out_${this.accommodationIndex}"
                                 name="accommodations[${this.accommodationIndex}][check_out]"
-                                class="form-input block w-full rounded-md border-gray-200 text-sm"
+                                class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
                                 required>
                         </div>
-                    </div>
 
-                    <!-- Receipt Upload -->
-                    <div>
-                        <label class="block text-xs font-medium text-gray-700">Receipt</label>
-                        <div class="mt-1">
-                            <input type="file" 
-                                id="accommodation_receipt_${this.accommodationIndex}"
-                                name="accommodations[${this.accommodationIndex}][receipt]"
-                                class="hidden"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                onchange="window.accommodationManager.updateFileName(${this.accommodationIndex}, this)">
-                            <label for="accommodation_receipt_${this.accommodationIndex}"
-                                class="group flex items-center h-[38px] w-full px-3 border border-gray-300 rounded-md hover:border-gray-400 cursor-pointer bg-white">
-                                <div class="flex items-center space-x-2 text-gray-500">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                    </svg>
-                                    <span class="text-xs">
-                                        <span class="text-indigo-600 font-medium hover:text-indigo-500">Upload</span>
-                                        or Drag
-                                    </span>
-                                </div>
-                                <div class="flex-1 text-right">
-                                    <p class="text-xs text-gray-500 truncate" id="accommodation_receipt_name_${this.accommodationIndex}">
-                                        No file selected
-                                    </p>
-                                </div>
+                        <!-- Receipt Upload -->
+                        <div class="sm:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Receipt
                             </label>
+                            <div class="document-upload-area">
+                                <input type="file" 
+                                    id="accommodation_receipt_${this.accommodationIndex}"
+                                    name="accommodations[${this.accommodationIndex}][receipt]"
+                                    class="hidden"
+                                    onchange="window.accommodationManager.updateFileName(${this.accommodationIndex}, this)"
+                                    accept=".pdf,.jpg,.jpeg,.png">
+                                <label for="accommodation_receipt_${this.accommodationIndex}"
+                                    class="document-upload-label block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-indigo-400"
+                                    ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('border-indigo-400');"
+                                    ondragleave="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400');"
+                                    ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400'); const input = document.getElementById('accommodation_receipt_${this.accommodationIndex}'); input.files = event.dataTransfer.files; window.accommodationManager.updateFileName(${this.accommodationIndex}, input);">
+                                    <div class="space-y-2 text-center">
+                                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <div class="flex flex-col items-center text-sm">
+                                            <div>
+                                                <span class="font-medium text-indigo-600">Click to upload</span>
+                                                <span class="text-gray-500"> or drag and drop</span>
+                                            </div>
+                                            <p class="text-xs text-gray-500 mt-1">PDF, JPG, JPEG or PNG</p>
+                                        </div>
+                                    </div>
+                                </label>
+                                <div class="mt-2 text-sm text-gray-500" id="accommodation_receipt_name_${this.accommodationIndex}">
+                                    No file selected
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

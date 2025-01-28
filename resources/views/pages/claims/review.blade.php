@@ -6,51 +6,17 @@
 
 @section('content')
     <div class="mx-auto w-full max-w-7xl px-0 sm:px-6 lg:px-8">
-        <div class="animate-slide-in mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Review Claim</h1>
-                    <p class="mt-1 text-sm text-gray-500">Review and process claim request</p>
-                </div>
-                <x-claims.status-badge class="!text-sm" :status="$claim->status" />
-            </div>
-        </div>
+        <x-claims.claim-header title="Review Claim" subtitle="Review and process claim request" :status="$claim->status" />
 
         <div class="space-y-6">
             <x-claims.claim-details :claim="$claim" />
             <x-claims.toll-details :claim="$claim" />
-
+            <x-claims.accommodations-table :claim="$claim" :accommodations="$claim->accommodations" />
             <div class="animate-slide-in space-y-4 delay-300">
                 @include('components.claims.locations-table', ['locations' => $claim->locations])
             </div>
 
-            <!-- Map Container -->
-            <div class="relative">
-                <div class="h-[400px] w-full rounded-lg border border-gray-100 shadow-sm" id="map"></div>
-            </div>
-
-            <!-- Trip Summary -->
-            <div class="animate-slide-in space-y-4 delay-300 ">
-
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <!-- Total Distance -->
-                    <div class="flex flex-col items-center rounded-lg bg-white shadow-sm ring-1 ring-black/5 p-4">
-                        <p class="mb-1 text-sm text-gray-500">Total Distance</p>
-                        <div class="flex items-baseline">
-                            <span id="total-distance-desktop" class="text-2xl font-semibold text-indigo-600">{{ number_format($claim->total_distance, 2) }}</span>
-                        </div>
-                    </div>
-
-                    <!-- Petrol Claim -->
-                    <div class="flex flex-col items-center rounded-lg g-white shadow-sm ring-1 ring-black/5 p-4">
-                        <p class="mb-1 text-sm text-gray-500">Petrol Claim</p>
-                        <div class="flex items-baseline">
-                            <span id="total-cost-desktop" class="ml-1 text-2xl font-semibold text-emerald-600">{{ number_format($claim->petrol_amount, 2) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <x-claims.cost-summary :claim="$claim" />
             <!-- Review Action -->
             <x-claims.review-action :claim="$claim" />
         </div>

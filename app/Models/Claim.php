@@ -16,8 +16,9 @@ class Claim extends Model
 
     const STATUS_SUBMITTED = 'Submitted';
     const STATUS_APPROVED_ADMIN = 'Approved Admin';
-    const STATUS_APPROVED_DATUK = 'Approved Datuk';
+    const STATUS_APPROVED_MANAGER = 'Approved Manager';
     const STATUS_APPROVED_HR = 'Approved HR';
+    const STATUS_APPROVED_DATUK = 'Approved Datuk';
     const STATUS_APPROVED_FINANCE = 'Approved Finance';
     const STATUS_REJECTED = 'Rejected';
     const STATUS_DONE = 'Done';
@@ -68,6 +69,11 @@ class Claim extends Model
     public function locations(): HasMany
     {
         return $this->hasMany(ClaimLocation::class);
+    }
+
+    public function accommodations(): HasMany
+    {
+        return $this->hasMany(ClaimAccommodation::class);
     }
 
     public function documents(): HasOne

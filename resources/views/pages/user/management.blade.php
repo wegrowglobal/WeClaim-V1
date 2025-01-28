@@ -6,7 +6,7 @@
         <div class="card animate-slide-in mb-4 p-4 sm:mb-8 sm:p-8">
             <div class="flex flex-col items-start justify-between gap-4">
                 <div class="w-full">
-                    <h2 class="heading-1 text-2xl font-bold sm:text-3xl">User Management</h2>
+                    <h2 class="heading-1 text-2xl font-semibold sm:text-3xl">User Management</h2>
                     <p class="mt-1 text-sm text-gray-600">Manage system users and their access</p>
                 </div>
 

@@ -9,33 +9,59 @@
             </div>
         </div>
 
-        <dl class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="flex flex-col p-4 bg-gray-50 rounded-lg">
-                <dt class="text-sm font-medium text-gray-500">Submitted Date</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ $claim->submitted_at->format('d M Y') }}</dd>
-            </div>
-            
-            <div class="flex flex-col p-4 bg-gray-50 rounded-lg">
-                <dt class="text-sm font-medium text-gray-500">Staff Name</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ $claim->user->first_name }} {{ $claim->user->second_name }}</dd>
-            </div>
+        <div class="space-y-4">
+            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <!-- Submission Info -->
+                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
+                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $claim->user->first_name }} {{ $claim->user->second_name }}</p>
+                                <p class="text-xs text-gray-500">Submitted on {{ $claim->submitted_at->format('d M Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="flex flex-col p-4 bg-gray-50 rounded-lg">
-                <dt class="text-sm font-medium text-gray-500">Period</dt>
-                <dd class="mt-1 text-sm text-gray-900">
-                    {{ $claim->date_from->format('d M Y') }} - {{ $claim->date_to->format('d M Y') }}
-                </dd>
-            </div>
+                <!-- Claim Period -->
+                <div class="border-b border-gray-100 bg-white px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-600">
+                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Claim Period</p>
+                                <p class="text-xs text-gray-500">{{ $claim->date_from->format('d M Y') }} - {{ $claim->date_to->format('d M Y') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="col-span-full p-4 bg-gray-50 rounded-lg">
-                <dt class="text-sm font-medium text-gray-500">Claim Title</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ $claim->title }}</dd>
+                <!-- Claim Title & Description -->
+                <div class="bg-gray-50 px-4 py-3">
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
+                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $claim->title }}</p>
+                                <p class="text-xs text-gray-500">{{ $claim->description ?: 'No description provided' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="col-span-full p-4 bg-gray-50 rounded-lg">
-                <dt class="text-sm font-medium text-gray-500">Description</dt>
-                <dd class="mt-1 text-sm text-gray-900">{{ $claim->description ?: 'No description provided' }}</dd>
-            </div>
-        </dl>
+        </div>
     </div>
 </div> 

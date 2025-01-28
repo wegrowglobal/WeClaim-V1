@@ -16,6 +16,7 @@ use App\Http\Controllers\UserManagementController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\SystemConfigController;
+use App\Http\Controllers\BulkEmailController;
 
 
 // Guest Routes
@@ -79,6 +80,10 @@ Route::group([], function () {
         Route::get('/dashboard', [ClaimController::class, 'dashboard'])->name('claims.dashboard');
         Route::get('/new', [ClaimController::class, 'new'])->name('claims.new');
         Route::get('/approval', [ClaimController::class, 'approval'])->name('claims.approval');
+
+        // Bulk Email Routes
+        Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('claims.bulk-email');
+        Route::post('/bulk-email/send', [BulkEmailController::class, 'send'])->name('bulk-email.send');
 
         // Form Steps Routes
         Route::post('/save-step', [ClaimController::class, 'saveStep'])->name('claims.save-step');

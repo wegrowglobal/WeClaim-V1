@@ -9,8 +9,6 @@ use Illuminate\Database\Seeder;
 class RoleSeeder extends Seeder
 {
 
-    //////////////////////////////////////////////////////////////////
-
     public function run()
     {
         $roles = [
@@ -18,7 +16,8 @@ class RoleSeeder extends Seeder
             ['id' => 2, 'name' => 'Admin'],
             ['id' => 3, 'name' => 'HR'],
             ['id' => 4, 'name' => 'Finance'],
-            ['id' => 5, 'name' => 'SU']
+            ['id' => 5, 'name' => 'SU'],
+            ['id' => 6, 'name' => 'Manager']
         ];
 
         foreach ($roles as $role) {
@@ -28,7 +27,5 @@ class RoleSeeder extends Seeder
             );
         }
     }
-
-    //////////////////////////////////////////////////////////////////
 
 }

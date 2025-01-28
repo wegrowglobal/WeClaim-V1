@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
         $financeRoleId = Role::where('name', 'Finance')->value('id');
         $staffRoleId = Role::where('name', 'Staff')->value('id');
         $suRoleId = Role::where('name', 'SU')->value('id');
+        $managerRoleId = Role::where('name', 'Manager')->value('id');
 
         // Get department IDs
         $allDepartmentId = Department::where('name', 'All')->value('id');
@@ -54,6 +55,26 @@ class UserSeeder extends Seeder
                 'email' => "admin{$i}@wegrow-global.com",
                 'password' => Hash::make('password123'),
                 'role_id' => $adminRoleId,
+                'department_id' => $allDepartmentId,
+                'email_verified_at' => now(),
+                'remember_token' => Str::random(10),
+                'phone' => $faker->phoneNumber(),
+                'address' => $faker->streetAddress(),
+                'city' => $faker->city(),
+                'state' => $faker->state(),
+                'zip_code' => $faker->postcode(),
+                'country' => $faker->country(),
+            ]);
+        }
+
+        // Create Manager users (2-3)
+        for ($i = 0; $i < rand(2, 3); $i++) {
+            User::create([
+                'first_name' => $faker->firstName(),
+                'second_name' => $faker->lastName(),
+                'email' => "manager{$i}@wegrow-global.com",
+                'password' => Hash::make('password123'),
+                'role_id' => $managerRoleId,
                 'department_id' => $allDepartmentId,
                 'email_verified_at' => now(),
                 'remember_token' => Str::random(10),

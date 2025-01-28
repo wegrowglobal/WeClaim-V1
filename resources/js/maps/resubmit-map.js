@@ -25,7 +25,6 @@ export class ResubmitMap extends ClaimMap {
         if (this.initialized) return;
 
         const mapContainer = document.getElementById('map');
-        const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Loading saved route...');
 
         try {
             await this.initialize();
@@ -35,8 +34,6 @@ export class ResubmitMap extends ClaimMap {
         } catch (error) {
             console.error('Error initializing resubmit map:', error);
             await SwalUtils.showError('Failed to initialize map', mapContainer);
-        } finally {
-            await loadingState.close();
         }
     }
 

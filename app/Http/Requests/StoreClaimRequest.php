@@ -28,6 +28,14 @@ class StoreClaimRequest extends FormRequest
             // Validate locations array
             'locations' => 'required|json',
             
+            // Validate accommodations
+            'accommodations' => 'nullable|array',
+            'accommodations.*.location' => 'required_with:accommodations|string',
+            'accommodations.*.price' => 'required_with:accommodations|numeric|min:0',
+            'accommodations.*.check_in' => 'required_with:accommodations|date|after_or_equal:date_from|before_or_equal:date_to',
+            'accommodations.*.check_out' => 'required_with:accommodations|date|after_or_equal:accommodations.*.check_in|before_or_equal:date_to',
+            'accommodations.*.receipt' => 'required_with:accommodations|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            
             // File validations
             'toll_file' => 'required|file|mimes:pdf|max:10240', // 10MB max
             'email_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
@@ -45,6 +53,10 @@ class StoreClaimRequest extends FormRequest
             'email_file.mimes' => 'The email approval must be a PDF file.',
             'locations.required' => 'At least one location must be specified.',
             'locations.json' => 'The locations data is invalid.',
+            'accommodations.*.check_in.after_or_equal' => 'Check-in date must be within the claim period.',
+            'accommodations.*.check_in.before_or_equal' => 'Check-in date must be within the claim period.',
+            'accommodations.*.check_out.after_or_equal' => 'Check-out date must be after or equal to check-in date.',
+            'accommodations.*.check_out.before_or_equal' => 'Check-out date must be within the claim period.',
         ];
     }
 }

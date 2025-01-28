@@ -40,9 +40,6 @@ export class ReviewMap extends BaseMap {
             return;
         }
 
-        // Create loading state immediately
-        const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Loading route details...');
-        
         try {
             await this.initialize();
             await this.renderStoredLocations();
@@ -50,9 +47,6 @@ export class ReviewMap extends BaseMap {
         } catch (error) {
             Logger.error('Error initializing map:', error);
             throw error;
-        } finally {
-            // Close loading state with animation
-            await loadingState.close();
         }
     }
 

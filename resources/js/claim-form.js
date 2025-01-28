@@ -399,18 +399,50 @@ class ClaimForm {
             console.error('Error parsing existing draft data:', error);
         }
 
-        // Ensure accommodations data is properly captured
-        let accommodations = existingData.accommodations || [];
-        const accommodationsDataInput = document.getElementById('accommodations-data');
-        if (accommodationsDataInput) {
-            try {
-                const newAccommodations = JSON.parse(accommodationsDataInput.value || '[]');
-                if (newAccommodations.length > 0) {
-                    accommodations = newAccommodations;
+        // Handle accommodations data and files
+        let accommodationsData = [];
+        const accommodationEntries = document.querySelectorAll('.accommodation-entry');
+        accommodationEntries.forEach((acc, index) => {
+            const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
+            const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
+            const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
+            const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
+
+            // Only add accommodation if ALL required fields are filled
+            if (location && price && checkIn && checkOut) {
+                accommodationsData.push({
+                    location: location,
+                    price: price,
+                    check_in: checkIn,
+                    check_out: checkOut
+                });
+
+                // Add accommodation receipt file if it exists
+                const receiptFile = document.getElementById(`accommodation_receipt_${index}`)?.files[0];
+                if (receiptFile) {
+                    formData.append(`accommodation_receipts[${index}]`, receiptFile);
                 }
-            } catch (error) {
-                console.error('Error parsing accommodations data:', error);
             }
+        });
+
+        // Only include accommodations in claimData if there are valid entries
+        const claimData = {
+            claim_company: formData.get('claim_company') || existingData.claim_company,
+            date_from: formData.get('date_from') || existingData.date_from,
+            date_to: formData.get('date_to') || existingData.date_to,
+            remarks: formData.get('remarks') || existingData.remarks,
+            total_distance: existingData.total_distance || '0',
+            petrol_amount: existingData.total_cost || '0',
+            toll_amount: formData.get('toll_amount') || '0',
+            locations: existingData.locations || [],
+            status: 'Submitted',
+            title: `Petrol Claim ${existingData.date_from} to ${existingData.date_to}`,
+            claim_type: 'Petrol',
+        };
+
+        // Only add accommodations if there are valid entries
+        if (accommodationsData.length > 0) {
+            claimData.accommodations = accommodationsData;
         }
 
         // Merge all data
@@ -427,7 +459,7 @@ class ClaimForm {
             total_distance: formData.get('total_distance') || existingData.total_distance,
             total_cost: formData.get('total_cost') || existingData.total_cost,
             // Step 3 data
-            accommodations: accommodations.length > 0 ? accommodations : existingData.accommodations,
+            accommodations: accommodationsData.length > 0 ? accommodationsData : existingData.accommodations,
             toll_amount: formData.get('toll_amount') || existingData.toll_amount
         };
 
@@ -472,19 +504,19 @@ class ClaimForm {
         if (!e?.skipConfirmation) {
             const result = await Swal.fire({
                 title: 'Reset Form?',
-                text: 'This will clear all entered data. This action cannot be undone.',
+                text: 'This will clear all entered data.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#DC2626',
                 cancelButtonColor: '#4F46E5',
-                confirmButtonText: 'Reset form',
-                cancelButtonText: 'Keep editing',
+                confirmButtonText: 'Reset Form',
+                cancelButtonText: 'Keep Editing',
                 reverseButtons: true,
                 customClass: {
                     popup: 'rounded-lg shadow-xl border border-gray-200',
                     title: 'text-xl font-medium text-gray-900',
                     htmlContainer: 'text-base text-gray-600',
-                    confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
+                    confirmButton: 'inline-flex items-center ml-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
                     cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
                 },
                 buttonsStyling: false
@@ -494,6 +526,31 @@ class ClaimForm {
         }
 
         try {
+            // Reset all form inputs
+            const form = document.getElementById('claimForm');
+            if (form) {
+                form.reset();
+            }
+
+            // Clear file inputs
+            ['toll_report', 'email_report'].forEach(id => {
+                const fileInput = document.getElementById(id);
+                if (fileInput) {
+                    fileInput.value = '';
+                    const previewId = id.replace('_report', '-preview');
+                    const preview = document.getElementById(previewId);
+                    if (preview) {
+                        preview.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Clear accommodation entries
+            const accommodationContainer = document.getElementById('accommodations-container');
+            if (accommodationContainer) {
+                accommodationContainer.innerHTML = '';
+            }
+
             // Clear all stored data
             localStorage.removeItem('claimFormData');
             localStorage.removeItem('draftData');
@@ -511,7 +568,7 @@ class ClaimForm {
             }
 
             // Make API call to clear server-side session
-            const response = await fetch('/claims/reset-session', {
+            await fetch('/claims/reset-session', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -519,12 +576,8 @@ class ClaimForm {
                 }
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to reset session');
-            }
-
-            // Redirect to step 1 without any animation delays
-            window.location.href = '/claims/new?step=1&draft_data={}';
+            // Redirect to step 1
+            window.location.href = '/claims/new?step=1';
         } catch (error) {
             console.error('Error resetting form:', error);
             Swal.fire({
@@ -564,10 +617,33 @@ class ClaimForm {
                 Logger.error('Error parsing draft data', error);
             }
 
-            // Create the final form data for submission
-            const submitFormData = new FormData();
-            
-            // Add claim data
+            // Handle accommodations data and files
+            let accommodationsData = [];
+            const accommodationEntries = document.querySelectorAll('.accommodation-entry');
+            accommodationEntries.forEach((acc, index) => {
+                const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
+                const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
+                const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
+                const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
+
+                // Only add accommodation if ALL required fields are filled
+                if (location && price && checkIn && checkOut) {
+                    accommodationsData.push({
+                        location: location,
+                        price: price,
+                        check_in: checkIn,
+                        check_out: checkOut
+                    });
+
+                    // Add accommodation receipt file if it exists
+                    const receiptFile = document.getElementById(`accommodation_receipt_${index}`)?.files[0];
+                    if (receiptFile) {
+                        formData.append(`accommodation_receipts[${index}]`, receiptFile);
+                    }
+                }
+            });
+
+            // Only include accommodations in claimData if there are valid entries
             const claimData = {
                 claim_company: formData.get('claim_company') || draftData.claim_company,
                 date_from: formData.get('date_from') || draftData.date_from,
@@ -580,17 +656,21 @@ class ClaimForm {
                 status: 'Submitted',
                 title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
                 claim_type: 'Petrol',
-                accommodations: draftData.accommodations || [],
             };
+
+            // Only add accommodations if there are valid entries
+            if (accommodationsData.length > 0) {
+                claimData.accommodations = accommodationsData;
+            }
 
             Object.entries(claimData).forEach(([key, value]) => {
                 if (key === 'locations' || key === 'accommodations') {
-                    submitFormData.append(key, JSON.stringify(value));
+                    formData.append(key, JSON.stringify(value));
                 } else {
                     const cleanValue = typeof value === 'string' ? 
                         value.trim() : 
                         String(value).trim();
-                    submitFormData.append(key, cleanValue);
+                    formData.append(key, cleanValue);
                 }
             });
 
@@ -599,24 +679,15 @@ class ClaimForm {
             const emailFile = document.getElementById('email_report')?.files[0];
             
             if (tollFile) {
-                submitFormData.append('toll_file', tollFile);
+                formData.append('toll_file', tollFile);
             }
             if (emailFile) {
-                submitFormData.append('email_file', emailFile);
+                formData.append('email_file', emailFile);
             }
-
-            // Add accommodation files if they exist
-            const accommodations = document.querySelectorAll('.accommodation-entry');
-            accommodations.forEach((acc, index) => {
-                const receiptFile = document.getElementById(`accommodation_receipt_${index}`)?.files[0];
-                if (receiptFile) {
-                    submitFormData.append(`accommodation_receipts[${index}]`, receiptFile);
-                }
-            });
 
             const response = await fetch('/claims/store', {
                 method: 'POST',
-                body: submitFormData,
+                body: formData,
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                     'Accept': 'application/json'
@@ -911,7 +982,7 @@ class ClaimForm {
                 popup: 'rounded-lg shadow-xl border border-gray-200',
                 title: 'text-xl font-medium text-gray-900',
                 htmlContainer: 'text-base text-gray-600',
-                confirmButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
+                confirmButton: 'inline-flex items-center ml-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all',
                 cancelButton: 'inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg border border-gray-200 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all'
             },
             buttonsStyling: false

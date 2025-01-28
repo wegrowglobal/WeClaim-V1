@@ -1,8 +1,17 @@
-@props(['locations'])
+@props(['locations', 'routeColors' => [
+    '#4285F4', // Google Blue
+    '#DB4437', // Google Red
+    '#F4B400', // Google Yellow
+    '#0F9D58', // Google Green
+    '#AB47BC', // Purple
+    '#00ACC1', // Cyan
+    '#FF7043', // Deep Orange
+    '#9E9E9E', // Grey
+]])
 
-<div class="animate-slide-in rounded-lg bg-white shadow-sm ring-1 ring-black/5 delay-100">
-    <div class="px-4 py-5 sm:px-6">
-        <div class="mb-6 flex items-center justify-between">
+<div class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 animate-slide-in delay-100">
+    <div class="px-6 py-5">
+        <div class="flex items-center justify-between mb-6">
             <div>
                 <h3 class="text-lg font-medium text-gray-900">Trip Details</h3>
                 <p class="mt-1 text-sm text-gray-500">Location information and distances</p>
@@ -12,59 +21,68 @@
         <div class="space-y-4">
             @foreach ($locations as $index => $location)
                 @if ($location->from_location && $location->to_location)
-                    <div
-                        class="segment-detail overflow-hidden rounded-lg border-2 border-indigo-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md">
-                        <div class="flex flex-col p-4">
-                            <div class="mb-4 w-full space-y-3">
+                    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <!-- Location Header -->
+                        <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                            <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-3">
-                                    <span
-                                        class="from-location-dot inline-flex h-2 w-2 items-center justify-center rounded-full"></span>
-                                    <span
-                                        class="break-words text-xs text-gray-700 sm:text-sm">{{ $location->from_location }}</span>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full" style="background-color: {{ $routeColors[$index % count($routeColors)] }}">
+                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">Route Segment {{ $index + 1 }}</p>
+                                        <p class="text-xs text-gray-500">{{ $location->from_location }} → {{ $location->to_location }}</p>
+                                    </div>
                                 </div>
-                                <div class="flex items-center space-x-3">
-                                    <span
-                                        class="to-location-dot inline-flex h-2 w-2 items-center justify-center rounded-full"></span>
-                                    <span
-                                        class="break-words text-xs text-gray-700 sm:text-sm">{{ $location->to_location }}</span>
+                                <div class="text-right">
+                                    <p class="text-sm font-medium text-gray-900">RM {{ number_format($location->distance * 0.6, 2) }}</p>
+                                    <p class="text-xs text-gray-500">{{ $location->distance }} km</p>
                                 </div>
                             </div>
-                            <!-- Route information -->
-                            <div class="grid w-full grid-cols-2 gap-4 sm:grid-cols-2">
-                                <div class="flex items-center space-x-2">
-                                    <div class="rounded-lg bg-blue-50 p-2">
-                                        <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                        </svg>
+                        </div>
+
+                        <!-- Details Grid -->
+                        <div class="p-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- From Location -->
+                                <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="inline-flex h-2 w-2 rounded-full" style="background-color: {{ $routeColors[$index % count($routeColors)] }}"></span>
+                                        <span class="text-xs font-medium text-gray-700">From</span>
                                     </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">Distance</p>
-                                        <p class="text-xs font-medium text-gray-900" data-distance>
-                                            {{ $location->distance }} km</p>
-                                    </div>
+                                    <p class="text-sm text-gray-900 truncate" title="{{ $location->from_location }}">{{ $location->from_location }}</p>
                                 </div>
-                                <div class="flex items-center space-x-2">
-                                    <div class="rounded-lg bg-purple-50 p-2">
-                                        <svg class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
+
+                                <!-- To Location -->
+                                <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="inline-flex h-2 w-2 rounded-full" style="background-color: {{ $routeColors[($index + 1) % count($routeColors)] }}"></span>
+                                        <span class="text-xs font-medium text-gray-700">To</span>
                                     </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500">Cost</p>
-                                        <p class="text-xs font-medium text-gray-900" data-cost>RM
-                                            {{ number_format($location->distance * config('claims.rate_per_km'), 2) }}
-                                        </p>
+                                    <p class="text-sm text-gray-900 truncate" title="{{ $location->to_location }}">{{ $location->to_location }}</p>
+                                </div>
+
+                                <!-- Distance -->
+                                <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <div class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100">
+                                            <svg class="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                            </svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-700">Distance</span>
                                     </div>
+                                    <p class="text-sm font-medium text-gray-900">{{ $location->distance }} km</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 @endif
             @endforeach
+
+            <div class="h-[400px] w-full rounded-lg border border-gray-100 shadow-sm" id="map"></div>
         </div>
     </div>
 </div>
