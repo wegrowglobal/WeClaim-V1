@@ -22,7 +22,7 @@
     }
 
     .stats-pill {
-        @apply flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+        @apply flex items-center gap-2 py-2 rounded-full text-sm font-medium;
     }
 
 

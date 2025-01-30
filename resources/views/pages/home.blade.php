@@ -34,7 +34,7 @@
             <!-- User Welcome Section -->
             <div class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 animate-slide-in mb-8 p-6">
                 <div class="flex flex-col items-center gap-4 text-center sm:flex-row sm:gap-6 sm:text-left">
-                    <x-profile.profile-picture :user="auth()->user()" size="lg" />
+                    <x-profile.profile-picture :user="auth()->user()" size="md" />
                     <div>
                         <h2 class="text-2xl font-semibold text-gray-900 sm:text-3xl">Welcome back, {{ auth()->user()->first_name }}</h2>
                         <p class="mt-1 text-sm text-gray-500 sm:text-base">Manage your claims and track their status</p>

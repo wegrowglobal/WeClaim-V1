@@ -2,7 +2,7 @@
 
 <div class="overflow-hidden rounded-lg bg-white">
     <!-- Filters -->
-    <div class="border-b border-gray-200 py-4">
+    <div class="border-b border-gray-200 pb-4">
         <form class="flex flex-col space-y-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0" method="GET"
             action="{{ route('users.management') }}">
             <div class="flex flex-grow flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
@@ -10,7 +10,7 @@
                     <input
                         class="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-wgg-border focus:outline-none"
                         name="search" type="search" value="{{ $filters['search'] ?? '' }}"
-                        placeholder="Search users...">
+                        placeholder="Search Users...">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
@@ -138,7 +138,7 @@
     </div>
 
     @if ($users->hasPages())
-        <div class="border-t border-gray-200 px-4 py-3">
+        <div class="border-t border-gray-200 py-3">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div class="mb-4 text-sm text-gray-700 sm:mb-0">
                     Showing <span class="font-medium">{{ $users->firstItem() }}</span>

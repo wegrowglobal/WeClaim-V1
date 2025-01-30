@@ -45,7 +45,7 @@
                             @endif
 
                             @if (Auth::check() && Auth::user()->role_id === 5)
-                                <div class="ml-2 h-4 w-px bg-gray-200"></div>
+                                <div class="ml-2 mr-2 h-4 w-px bg-gray-200"></div>
                                 <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('claims.admin') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
                                    href="{{ route('claims.admin') }}">
                                     <svg class="h-4 w-4 {{ request()->routeIs('claims.admin') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">

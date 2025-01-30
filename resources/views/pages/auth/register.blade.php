@@ -3,8 +3,7 @@
 @section('title', 'Request Account - WeClaim')
 
 @section('content')
-    <div
-        class="flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800 md:bg-gradient-to-br md:from-wgg-black-950 md:to-wgg-black-800">
+    <div class="flex min-h-[100dvh] w-full items-center justify-center bg-gradient-to-br from-wgg-black-950 to-wgg-black-800">
         <div class="h-full w-full overflow-y-auto bg-white md:h-auto md:max-w-md md:rounded-3xl md:shadow-2xl">
             <div class="flex min-h-[100dvh] flex-col justify-center px-8 py-12 md:min-h-0">
                 <div class="mb-8 text-center">
@@ -20,90 +19,87 @@
                             d="M12.7409 266L0.0742188 278.666L76.0742 354.666L152.074 430.667L215.408 367.333L278.741 304L341.808 366.933L404.741 430L480.741 354L556.741 278L544.074 265.333L531.408 252.666L468.074 316L404.741 379.333L341.408 316L278.074 252.666L215.008 315.733L152.074 378.667L89.4076 316C55.0076 281.6 26.4742 253.333 26.0742 253.333C25.6742 253.333 19.6742 259.066 12.7409 266Z"
                             fill="#242424" />
                     </svg>
-                    <h1 class="text-3xl font-bold text-gray-900">Request Account</h1>
-                    <p class="mt-2 text-gray-500">Fill in your details to request an account</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Request Account</h1>
+                    <p class="mt-2 text-sm text-gray-500">Fill in your details to request an account</p>
                 </div>
 
-                <form class="space-y-6" method="POST" action="{{ route('register.request') }}">
-                    @csrf
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                            <label class="sr-only" for="first_name">First Name</label>
-                            <input
-                                class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 transition-all focus:bg-white focus:ring-2 focus:ring-gray-500 sm:text-sm"
-                                id="first_name" name="first_name" type="text" value="{{ old('first_name') }}"
-                                placeholder="First Name" required>
-                        </div>
-                        <div>
-                            <label class="sr-only" for="last_name">Last Name</label>
-                            <input
-                                class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 transition-all focus:bg-white focus:ring-2 focus:ring-gray-500 sm:text-sm"
-                                id="last_name" name="last_name" type="text" value="{{ old('last_name') }}"
-                                placeholder="Last Name" required>
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
+                                <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Account Request</p>
+                                <p class="text-xs text-gray-500">Your information will be reviewed</p>
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label class="sr-only" for="email">Email</label>
-                        <input
-                            class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 transition-all focus:bg-white focus:ring-2 focus:ring-gray-500 sm:text-sm"
-                            id="email" name="email" type="email" value="{{ old('email') }}"
-                            placeholder="Work Email" required>
-                    </div>
+                    <div class="p-4">
+                        <form class="space-y-4" method="POST" action="{{ route('register') }}">
+                            @csrf
 
-                    <div>
-                        <label class="sr-only" for="department">Department</label>
-                        <select
-                            class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 transition-all focus:bg-white focus:ring-2 focus:ring-gray-500 sm:text-sm"
-                            id="department" name="department" required>
-                            <option value="">Select Department</option>
-                            <option value="Administration">Administration</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="Finance and Account">Finance and Account</option>
-                            <option value="Marketing">Marketing</option>
-                            <option value="Sales">Sales</option>
-                            <option value="IT and Technical">IT and Technical</option>
-                            <option value="Procurement and Assets">Procurement and Assets</option>
-                            <option value="Retails">Retails</option>
-                            <option value="All">All</option>
-                        </select>
-                    </div>
+                            <div>
+                                <label class="sr-only" for="name">Full Name</label>
+                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('name') border-red-300 @enderror"
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    value="{{ old('name') }}"
+                                    placeholder="Full Name"
+                                    required>
+                                @error('name')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-                    @if ($errors->any())
-                        <div
-                            class="flex items-center gap-2 rounded-lg border border-red-100 bg-red-50/50 p-3 backdrop-blur-sm">
-                            <svg class="h-5 w-5 shrink-0 text-red-500" xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            <ul class="text-sm font-medium text-red-600">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                            <div>
+                                <label class="sr-only" for="email">Email</label>
+                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('email') border-red-300 @enderror"
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value="{{ old('email') }}"
+                                    placeholder="Email"
+                                    required>
+                                @error('email')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
 
-                    <div>
-                        <button
-                            class="flex w-full items-center justify-center gap-2 rounded-lg bg-wgg-black-800 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-wgg-black-950 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                            type="submit">
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Submit Request
-                        </button>
+                            <div>
+                                <label class="sr-only" for="company">Company</label>
+                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('company') border-red-300 @enderror"
+                                    id="company"
+                                    name="company"
+                                    type="text"
+                                    value="{{ old('company') }}"
+                                    placeholder="Company Name"
+                                    required>
+                                @error('company')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                type="submit">
+                                Submit Request
+                            </button>
+                        </form>
                     </div>
-                </form>
+                </div>
 
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600">
                         Already have an account?
-                        <a class="font-medium text-gray-600 hover:text-gray-500" href="{{ route('login') }}">Sign in</a>
+                        <a class="font-medium text-indigo-600 hover:text-indigo-500"
+                            href="{{ route('login') }}">
+                            Sign in
+                        </a>
                     </p>
                 </div>
             </div>
