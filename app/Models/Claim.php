@@ -18,6 +18,7 @@ class Claim extends Model
     const STATUS_APPROVED_ADMIN = 'Approved Admin';
     const STATUS_APPROVED_MANAGER = 'Approved Manager';
     const STATUS_APPROVED_HR = 'Approved HR';
+    const STATUS_PENDING_DATUK = 'Pending Datuk';
     const STATUS_APPROVED_DATUK = 'Approved Datuk';
     const STATUS_APPROVED_FINANCE = 'Approved Finance';
     const STATUS_REJECTED = 'Rejected';
@@ -96,6 +97,8 @@ class Claim extends Model
         return match ($this->status) {
             self::STATUS_SUBMITTED => 'bg-amber-50 text-amber-700',
             self::STATUS_REJECTED => 'bg-red-50 text-red-700',
+            self::STATUS_PENDING_DATUK => 'bg-indigo-50 text-indigo-700',
+            self::STATUS_APPROVED_HR => 'bg-purple-50 text-purple-700',
             default => 'bg-gray-50 text-gray-700'
         };
     }
@@ -105,7 +108,38 @@ class Claim extends Model
         return match ($this->status) {
             self::STATUS_SUBMITTED => 'text-amber-600',
             self::STATUS_REJECTED => 'text-red-600',
+            self::STATUS_PENDING_DATUK => 'text-indigo-600',
+            self::STATUS_APPROVED_HR => 'text-purple-600',
             default => 'text-gray-600'
         };
+    }
+
+    public function getPendingDuration(): ?string
+    {
+        if ($this->status === self::STATUS_PENDING_DATUK) {
+            $lastUpdate = $this->updated_at;
+            $now = now();
+            $days = (int)$lastUpdate->diffInDays($now);
+            $hours = (int)$lastUpdate->diffInHours($now) % 24;
+            $minutes = (int)$lastUpdate->diffInMinutes($now) % 60;
+            
+            if ($days > 0) {
+                return "{$days}d {$hours}h";
+            } elseif ($hours > 0) {
+                return "{$hours}h {$minutes}m";
+            } else {
+                return "{$minutes}m";
+            }
+        }
+        
+        return null;
+    }
+
+    public function isLongPending(): bool
+    {
+        if ($this->status === self::STATUS_PENDING_DATUK) {
+            return $this->updated_at->diffInDays(now()) >= 3;
+        }
+        return false;
     }
 }

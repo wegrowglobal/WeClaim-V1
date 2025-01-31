@@ -7,6 +7,7 @@ use App\Services\ClaimService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class BulkEmailController extends Controller
 {
@@ -24,36 +25,35 @@ class BulkEmailController extends Controller
             return redirect()->route('home')->with('error', 'Unauthorized access.');
         }
 
-        $claims = Claim::with('user')
-            ->where('status', Claim::STATUS_APPROVED_HR)
+        $claims = Claim::with(['user', 'locations'])
+            ->where(function($query) {
+                $query->where('status', Claim::STATUS_APPROVED_HR)
+                      ->orWhere('status', Claim::STATUS_PENDING_DATUK);
+            })
+            ->orderBy('submitted_at', 'desc')
             ->get();
 
-        return view('pages.claims.bulk-email', [
-            'claims' => $claims
-        ]);
+        return view('pages.claims.bulk-email', compact('claims'));
     }
 
-    public function send(Request $request)
+    public function sendBulkEmail(Request $request)
     {
         try {
             $user = Auth::user();
-            if (!$user || $user->role_id !== 3) { // Only HR can send
+            if (!$user || $user->role_id !== 3) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unauthorized. Only HR can send bulk emails to Datuk.'
+                    'message' => 'Unauthorized. Only HR can send claims to Datuk.'
                 ], 403);
             }
 
             $claimIds = $request->input('claims', []);
-            if (empty($claimIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Please select at least one claim to send.'
-                ], 400);
-            }
-
-            $claims = Claim::whereIn('id', $claimIds)
-                ->where('status', Claim::STATUS_APPROVED_HR)
+            $claims = Claim::with(['user', 'locations'])
+                ->whereIn('id', $claimIds)
+                ->where(function($query) {
+                    $query->where('status', Claim::STATUS_APPROVED_HR)
+                          ->orWhere('status', Claim::STATUS_PENDING_DATUK);
+                })
                 ->get();
 
             if ($claims->isEmpty()) {
@@ -63,40 +63,37 @@ class BulkEmailController extends Controller
                 ], 400);
             }
 
-            $successCount = 0;
-            $failedCount = 0;
-
-            foreach ($claims as $claim) {
-                try {
+            DB::beginTransaction();
+            try {
+                foreach ($claims as $claim) {
+                    // Always update to PENDING_DATUK status and reset timer
+                    $claim->status = Claim::STATUS_PENDING_DATUK;
+                    $claim->updated_at = now();
+                    $claim->save();
+                    
                     $this->claimService->sendClaimToDatuk($claim);
-                    $successCount++;
-                } catch (\Exception $e) {
-                    Log::error('Failed to send claim to Datuk', [
-                        'claim_id' => $claim->id,
-                        'error' => $e->getMessage()
-                    ]);
-                    $failedCount++;
                 }
-            }
+                DB::commit();
 
-            $message = "Successfully sent {$successCount} claim(s) to Datuk.";
-            if ($failedCount > 0) {
-                $message .= " Failed to send {$failedCount} claim(s).";
+                $message = $claims->count() > 1 ? 'Claims sent to Datuk successfully.' : 'Claim sent to Datuk successfully.';
+                return response()->json([
+                    'success' => true,
+                    'message' => $message
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
-
-            return response()->json([
-                'success' => true,
-                'message' => $message
-            ]);
         } catch (\Exception $e) {
-            Log::error('Error in bulk email send', [
+            Log::error('Error sending bulk claims to Datuk', [
+                'claim_ids' => $claimIds ?? [],
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send bulk emails: ' . $e->getMessage()
+                'message' => 'An error occurred while sending claims to Datuk.'
             ], 500);
         }
     }

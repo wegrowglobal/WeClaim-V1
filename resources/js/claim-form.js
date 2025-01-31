@@ -299,14 +299,23 @@ class ClaimForm {
             try {
                 const newAccommodations = JSON.parse(accommodationsInput?.value || '[]');
                 if (newAccommodations.length > 0) {
-                    accommodationsData = newAccommodations;
+                    // Remove receipt_path and file-related fields from accommodations data
+                    accommodationsData = newAccommodations.map(acc => {
+                        const {
+                            receipt_path,
+                            receipt_file,
+                            file,
+                            ...rest
+                        } = acc;
+                        return rest;
+                    });
                 }
             } catch (error) {
                 console.error('Error parsing accommodations data:', error);
             }
         }
-        
-        // Create merged data object
+
+        // Create merged data object - excluding document-related fields
         const currentStepData = {
             ...existingData,
             current_step: this.currentStep,
@@ -324,10 +333,25 @@ class ClaimForm {
             total_cost: formData.get('total_cost') || existingData.total_cost || '0',
             total_duration: formData.get('total_duration') || existingData.total_duration || '0',
             
-            // Step 3 data
+            // Step 3 data (excluding document fields)
             accommodations: accommodationsData.length > 0 ? accommodationsData : existingData.accommodations || [],
-            toll_amount: formData.get('toll_amount') || existingData.toll_amount || '0',
+            toll_amount: formData.get('toll_amount') || existingData.toll_amount || '0'
         };
+
+        // Remove any document-related fields that might exist
+        delete currentStepData.toll_file;
+        delete currentStepData.email_file;
+        delete currentStepData.accommodation_receipts;
+        delete currentStepData.accommodation_files;
+        delete currentStepData.files;
+        
+        // Clean up any receipt paths from accommodations
+        if (currentStepData.accommodations) {
+            currentStepData.accommodations = currentStepData.accommodations.map(acc => {
+                const { receipt_path, receipt_file, file, ...rest } = acc;
+                return rest;
+            });
+        }
 
         console.log('SaveCurrentStep - Data to be saved:', {
             currentStepData,
@@ -1017,6 +1041,236 @@ class ClaimForm {
                 icon: 'error'
             });
         }
+    }
+
+    initializeWithExistingData(data) {
+        console.log('Initializing form with existing data:', data);
+
+        const claim = data.claim;
+        
+        // Initialize basic form fields
+        this.setFormValue('claim_company', claim.claim_company);
+        this.setFormValue('date_from', claim.date_from);
+        this.setFormValue('date_to', claim.date_to);
+        this.setFormValue('description', claim.description);
+        this.setFormValue('toll_amount', claim.toll_amount);
+
+        // Initialize locations
+        if (data.locations && data.locations.length > 0) {
+            // Clear existing locations
+            const locationInputs = document.getElementById('location-inputs');
+            if (locationInputs) {
+                locationInputs.innerHTML = '';
+            }
+
+            // Add each location
+            data.locations.forEach((location, index) => {
+                if (window.claimMap) {
+                    window.claimMap.addLocationInput(location.from_location, index);
+                }
+            });
+
+            // Update map and calculations after a short delay
+            setTimeout(() => {
+                if (window.claimMap) {
+                    window.claimMap.updateRoute();
+                }
+            }, 500);
+        }
+
+        // Initialize accommodations
+        if (data.accommodations && data.accommodations.length > 0) {
+            data.accommodations.forEach(accommodation => {
+                this.addAccommodation({
+                    location: accommodation.location,
+                    price: accommodation.price,
+                    check_in: accommodation.check_in,
+                    check_out: accommodation.check_out,
+                    receipt_path: accommodation.receipt_path,
+                    receipt_url: accommodation.receipt_url,
+                    receipt_name: accommodation.receipt_name
+                });
+            });
+        }
+
+        // Initialize documents
+        if (data.documents) {
+            data.documents.forEach(doc => {
+                const previewContainer = document.getElementById(`${doc.type}_preview`);
+                if (previewContainer) {
+                    this.createDocumentPreview(previewContainer, doc);
+                }
+            });
+        }
+
+        // Initialize toll receipts
+        if (data.toll_receipts) {
+            const container = document.getElementById('toll-receipts-container');
+            if (container) {
+                data.toll_receipts.forEach(receipt => {
+                    this.createDocumentPreview(container, receipt);
+                });
+            }
+        }
+
+        // Initialize email approval
+        if (data.email_approval) {
+            const container = document.getElementById('email-approval-preview');
+            if (container) {
+                this.createDocumentPreview(container, data.email_approval);
+            }
+        }
+
+        // Update form state
+        this.updateFormState();
+    }
+
+    updateFormState() {
+        // Update hidden inputs
+        const draftDataInput = document.getElementById('draftData');
+        if (draftDataInput) {
+            const currentData = JSON.parse(draftDataInput.value || '{}');
+            draftDataInput.value = JSON.stringify({
+                ...currentData,
+                total_distance: document.getElementById('total-distance')?.textContent,
+                total_cost: document.getElementById('total-cost')?.textContent,
+                total_duration: document.getElementById('total-duration')?.textContent
+            });
+        }
+    }
+
+    setFormValue(id, value) {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.type === 'date' && value) {
+                // Format date strings to YYYY-MM-DD
+                const date = new Date(value);
+                element.value = date.toISOString().split('T')[0];
+            } else {
+                element.value = value;
+            }
+        }
+    }
+
+    initializeLocations(locations) {
+        // Clear existing locations
+        const locationInputs = document.getElementById('location-inputs');
+        if (locationInputs) {
+            locationInputs.innerHTML = '';
+        }
+
+        // Add each location
+        locations.forEach((location, index) => {
+            this.addLocationInput(location.from_location, index);
+        });
+
+        // Update map and calculations
+        this.updateMapAndCalculations();
+    }
+
+    initializeAccommodations(accommodations) {
+        accommodations.forEach((accommodation, index) => {
+            this.addAccommodation({
+                location: accommodation.location,
+                price: accommodation.price,
+                check_in: accommodation.check_in,
+                check_out: accommodation.check_out,
+                receipt_path: accommodation.receipt_path,
+                receipt_url: accommodation.receipt_url,
+                receipt_name: accommodation.receipt_name
+            });
+        });
+    }
+
+    initializeDocuments(documents) {
+        // Initialize document previews and file inputs
+        documents.forEach(doc => {
+            const previewContainer = document.getElementById(`${doc.type}_preview`);
+            if (previewContainer) {
+                this.createDocumentPreview(previewContainer, doc);
+            }
+        });
+    }
+
+    initializeTollReceipts(receipts) {
+        const container = document.getElementById('toll-receipts-container');
+        if (container && receipts.length > 0) {
+            receipts.forEach(receipt => {
+                this.createDocumentPreview(container, {
+                    name: receipt.name,
+                    url: receipt.url,
+                    path: receipt.path
+                });
+            });
+        }
+    }
+
+    initializeEmailApproval(approval) {
+        const container = document.getElementById('email-approval-preview');
+        if (container) {
+            this.createDocumentPreview(container, {
+                name: approval.name,
+                url: approval.url,
+                path: approval.path
+            });
+        }
+    }
+
+    createDocumentPreview(container, doc) {
+        const preview = document.createElement('div');
+        preview.className = 'document-preview flex items-center justify-between p-3 border rounded-lg bg-gray-50 mb-3';
+        preview.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm text-gray-600">${doc.name}</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <a href="${doc.url}" target="_blank"
+                    class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
+                    <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
+                </a>
+                <button type="button" onclick="window.claimForm.removeDocument(this, '${doc.path}')"
+                    class="inline-flex items-center text-sm text-red-600 hover:text-red-500">
+                    <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Remove
+                </button>
+            </div>
+        `;
+        container.appendChild(preview);
+    }
+
+    removeDocument(button, path) {
+        const preview = button.closest('.document-preview');
+        if (preview) {
+            preview.remove();
+            // Add the path to a hidden input to track removed documents
+            const removedDocsInput = document.getElementById('removed_documents') || this.createRemovedDocsInput();
+            const removedDocs = JSON.parse(removedDocsInput.value || '[]');
+            removedDocs.push(path);
+            removedDocsInput.value = JSON.stringify(removedDocs);
+        }
+    }
+
+    createRemovedDocsInput() {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.id = 'removed_documents';
+        input.name = 'removed_documents';
+        input.value = '[]';
+        document.getElementById('claimForm').appendChild(input);
+        return input;
     }
 }
 

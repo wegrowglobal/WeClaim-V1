@@ -38,7 +38,7 @@
                 <!-- Action Section -->
                 <div class="bg-white px-4 py-3">
                     <div class="space-y-4">
-                        @if ($claim->status !== Claim::STATUS_APPROVED_ADMIN)
+                        @if ($claim->status !== Claim::STATUS_DONE)
                             <!-- Remarks -->
                             <div class="space-y-2">
                                 <label class="block text-sm font-medium text-gray-700" for="remarks">Remarks</label>
@@ -85,7 +85,42 @@
                                         </svg>
                                         Send to Datuk
                                     </button>
-                                @else
+                                @elseif (Auth::user()->role->name === 'Manager')
+                                    <button
+                                        class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                        onclick="approveClaim({{ $claim->id }})">
+                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Approve as Manager
+                                    </button>
+                                    <button
+                                        class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                        onclick="rejectClaim({{ $claim->id }})">
+                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Reject Claim
+                                    </button>
+                                @endif
+                            </div>
+                        @elseif($claim->status === Claim::STATUS_APPROVED_MANAGER)
+                            <div class="flex items-center gap-4">
+                                @if (Auth::user()->role->name === 'HR')
+                                    <button
+                                        class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                        onclick="approveClaim({{ $claim->id }})">
+                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Approve as HR
+                                    </button>
                                     <button
                                         class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                         onclick="rejectClaim({{ $claim->id }})">
@@ -108,7 +143,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    Approve as HR
+                                    Approve as Finance
                                 </button>
                                 <button
                                     class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -146,15 +181,27 @@
                             </div>
                         @elseif($claim->status === Claim::STATUS_APPROVED_FINANCE)
                             <div class="flex items-center gap-4">
-                                <button
-                                    class="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                                    data-action="mark-as-done" onclick="javascript:approveClaim({{ $claim->id }}, true)">
-                                    <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                    </svg>
-                                    Mark as Done
-                                </button>
+                                @if (Auth::user()->role->name === 'Finance')
+                                    <button
+                                        class="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                        data-action="mark-as-done" onclick="javascript:approveClaim({{ $claim->id }}, true)">
+                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Mark as Done
+                                    </button>
+                                    <button
+                                        class="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                        onclick="rejectClaim({{ $claim->id }})">
+                                        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Reject Claim
+                                    </button>
+                                @endif
                             </div>
                         @else
                             <div class="flex items-center space-x-2 text-gray-500">

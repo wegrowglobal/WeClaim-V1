@@ -482,6 +482,7 @@ class ClaimService
             Claim::STATUS_APPROVED_ADMIN => $roleId === self::ROLE_ID_MANAGER,
             Claim::STATUS_APPROVED_MANAGER => $roleId === self::ROLE_ID_HR,
             Claim::STATUS_APPROVED_DATUK => $roleId === self::ROLE_ID_FINANCE,
+            Claim::STATUS_APPROVED_FINANCE => $roleId === self::ROLE_ID_FINANCE,
             default => false,
         };
     }
@@ -523,6 +524,7 @@ class ClaimService
                 'reviewer_id' => $user->getKey(),
                 'department' => $userRole ? $userRole->name : 'Unknown',
                 'status' => 'approved',
+                'review_order' => $claim->reviews()->count() + 1,
                 'reviewed_at' => now()
             ]);
 

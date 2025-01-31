@@ -1,27 +1,40 @@
 <div class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 animate-slide-in delay-200">
     <div class="px-6 py-5" data-step="3">
-        @php
-            $draftData = $draftData ?? [];
+    @php
+        $draftData = $draftData ?? [];
 
-            // Ensure all required data is available
-            $claimCompany = $draftData['claim_company'] ?? '';
-            $dateFrom = $draftData['date_from'] ?? '';
-            $dateTo = $draftData['date_to'] ?? '';
-            $remarks = $draftData['remarks'] ?? '';
-            $totalDistance = $draftData['total_distance'] ?? 0;
-            $totalCost = $draftData['total_cost'] ?? 0;
-            $segmentsData = is_string($draftData['segments_data'] ?? '[]')
-                ? json_decode($draftData['segments_data'], true)
-                : $draftData['segments_data'] ?? [];
+        // Ensure all required data is available with fallbacks
+        $claimCompany = $draftData['claim_company'] ?? '';
+        $dateFrom = $draftData['date_from'] ?? '';
+        $dateTo = $draftData['date_to'] ?? '';
+        $remarks = $draftData['remarks'] ?? '';
+        $totalDistance = $draftData['total_distance'] ?? 0;
+        $totalCost = $draftData['total_cost'] ?? 0;
+        $segmentsData = [];
 
-            // Parse accommodations from draft data
-            $accommodations = [];
-            if (isset($draftData['accommodations'])) {
-                $accommodations = is_string($draftData['accommodations']) 
-                    ? json_decode($draftData['accommodations'], true) 
-                    : $draftData['accommodations'];
+        // Only try to decode segments_data if it exists and is a string
+        if (isset($draftData['segments_data']) && is_string($draftData['segments_data']) && $draftData['segments_data'] !== '[]') {
+            try {
+                $segmentsData = json_decode($draftData['segments_data'], true) ?? [];
+            } catch (\Exception $e) {
+                $segmentsData = [];
             }
-        @endphp
+        }
+
+        // Parse accommodations from draft data and remove receipt_path
+        $accommodations = [];
+        if (isset($draftData['accommodations'])) {
+            $accommodations = is_string($draftData['accommodations']) 
+                ? json_decode($draftData['accommodations'], true) 
+                : $draftData['accommodations'];
+            
+            // Remove receipt_path from each accommodation
+            $accommodations = array_map(function($acc) {
+                unset($acc['receipt_path']);
+                return $acc;
+            }, $accommodations);
+        }
+    @endphp
 
         <script>
             console.log('Step 3 - Initial draft data:', @json($draftData));
@@ -32,20 +45,20 @@
         <input type="hidden" id="accommodations-data" name="accommodations" value="{{ json_encode($accommodations) }}">
         <input type="hidden" id="draftData" name="draft_data" value="{{ json_encode($draftData) }}">
 
-        <!-- Debug information (optional) -->
-        <div class="hidden">
-            <pre>{{ print_r($draftData, true) }}</pre>
-        </div>
+    <!-- Debug information (optional) -->
+    <div class="hidden">
+        <pre>{{ print_r($draftData, true) }}</pre>
+    </div>
 
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
-            <div>
+    <div>
                 <h3 class="text-lg font-medium text-gray-900">Final Details</h3>
                 <p class="text-sm text-gray-500 mt-1">Complete your claim with accommodation and documents</p>
             </div>
-        </div>
+    </div>
 
-        <div class="space-y-6">
+    <div class="space-y-6">
 
             <!-- Accommodation Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -76,9 +89,9 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
-                                    </div>
-                                </div>
-                                
+                    </div>
+                </div>
+
                                 <div class="p-4">
                                     <div class="grid gap-4 sm:grid-cols-2">
                                         <!-- Location -->
@@ -182,12 +195,12 @@
                                                     {{ $accommodation['receipt_name'] ?? 'No file selected' }}
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+            </div>
                             </div>
                         @endforeach
-                    </div>
+        </div>
 
                     <!-- Add Accommodation Button -->
                     <button type="button" 
@@ -195,7 +208,7 @@
                         class="inline-flex items-center rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                         <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+                    </svg>
                         Add Accommodation
                     </button>
                 </div>
@@ -225,13 +238,13 @@
                                 Toll Amount
                             </label>
                             <div class="relative rounded-lg shadow-sm">
-                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <span class="text-gray-500 sm:text-sm">RM</span>
-                                </div>
-                                <input
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <span class="text-gray-500 sm:text-sm">RM</span>
+                </div>
+                <input
                                     class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 pl-12 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
-                                    id="toll_amount" name="toll_amount" type="number" step="0.01" min="0" placeholder="0.00"
-                                    required>
+                    id="toll_amount" name="toll_amount" type="number" step="0.01" min="0" placeholder="0.00"
+                    required>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                     <div class="text-gray-400 cursor-help group">
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,53 +255,53 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            </div>
+        </div>
 
-                    <!-- Document Upload Grid -->
+        <!-- Document Upload Grid -->
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Toll Receipt Upload -->
+            <!-- Toll Receipt Upload -->
                         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                             <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
                                 <div class="flex items-center space-x-3">
                                     <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
                                         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
+                        </svg>
+                    </div>
+                    <div>
                                         <p class="text-sm font-medium text-gray-900">Toll Receipt</p>
                                         <p class="text-xs text-gray-500">Upload your toll receipt (PDF or image)</p>
                                     </div>
-                                </div>
-                            </div>
+                    </div>
+                </div>
 
                             <div class="p-4">
-                                <div class="document-upload-area" id="toll-upload-area">
-                                    <input class="hidden" id="toll_report" name="toll_report" type="file"
-                                        accept=".pdf,.jpg,.jpeg,.png" required>
+                <div class="document-upload-area" id="toll-upload-area">
+                    <input class="hidden" id="toll_report" name="toll_report" type="file"
+                        accept=".pdf,.jpg,.jpeg,.png" required>
                                     <label for="toll_report"
                                         class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
                                             <div class="flex items-center justify-center">
                                                 <svg class="h-8 w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
+                            </svg>
                                             </div>
-                                            <div class="text-sm">
-                                                <span class="font-medium text-indigo-600">Click to upload</span>
+                            <div class="text-sm">
+                                <span class="font-medium text-indigo-600">Click to upload</span>
                                                 <span class="text-gray-500"> or drag and drop</span>
-                                            </div>
+                            </div>
                                             <p class="text-xs text-gray-500">PDF, JPG, JPEG or PNG</p>
-                                        </div>
-                                    </label>
+                        </div>
+                    </label>
                                     <div class="mt-2 hidden" id="toll-preview">
                                         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                                             <div class="flex items-center space-x-2">
                                                 <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                </svg>
+                            </svg>
                                                 <span class="text-sm text-gray-600 truncate" id="toll-filename">No file selected</span>
                                             </div>
                                             <button type="button" onclick="removeFile('toll')"
@@ -296,29 +309,29 @@
                                                 Remove
                                             </button>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Email Approval Upload -->
+            <!-- Email Approval Upload -->
                         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
                             <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
                                 <div class="flex items-center space-x-3">
                                     <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
                                         <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
+                        </svg>
+                    </div>
+                    <div>
                                         <p class="text-sm font-medium text-gray-900">Email Approval</p>
                                         <p class="text-xs text-gray-500">Upload your email approval (PDF or Image)</p>
                                     </div>
-                                </div>
-                            </div>
+                    </div>
+                </div>
 
                             <div class="p-4">
-                                <div class="document-upload-area" id="email-upload-area">
+                <div class="document-upload-area" id="email-upload-area">
                                     <input class="hidden" id="email_report" name="email_report" type="file"
                                         accept=".pdf" required>
                                     <label for="email_report"
@@ -327,21 +340,21 @@
                                             <div class="flex items-center justify-center">
                                                 <svg class="h-8 w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                </svg>
+                            </svg>
                                             </div>
-                                            <div class="text-sm">
-                                                <span class="font-medium text-indigo-600">Click to upload</span>
+                            <div class="text-sm">
+                                <span class="font-medium text-indigo-600">Click to upload</span>
                                                 <span class="text-gray-500"> or drag and drop</span>
-                                            </div>
+                            </div>
                                             <p class="text-xs text-gray-500">PDF, JPG, JPEG or PNG</p>
-                                        </div>
-                                    </label>
+                        </div>
+                    </label>
                                     <div class="mt-2 hidden" id="email-preview">
                                         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                                             <div class="flex items-center space-x-2">
                                                 <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                </svg>
+                            </svg>
                                                 <span class="text-sm text-gray-600 truncate" id="email-filename">No file selected</span>
                                             </div>
                                             <button type="button" onclick="removeFile('email')"
@@ -351,36 +364,36 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Add this hidden input to preserve segments data -->
-        <input id="segments-data" name="segments_data" type="hidden"
-            value="{{ old('segments_data', is_array($segmentsData) ? json_encode($segmentsData) : $draftData['segments_data'] ?? '[]') }}">
+    <!-- Add this hidden input to preserve segments data -->
+    <input id="segments-data" name="segments_data" type="hidden"
+        value="{{ old('segments_data', is_array($segmentsData) ? json_encode($segmentsData) : $draftData['segments_data'] ?? '[]') }}">
 
         <!-- Navigation Buttons -->
         <div class="flex justify-between mt-6">
-            <button
+    <button
                 class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                type="button" onclick="window.claimForm.previousStep(3)">
+        type="button" onclick="window.claimForm.previousStep(3)">
                 <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-                </svg>
-                Previous
-            </button>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+        </svg>
+        Previous
+    </button>
 
-            <button
+    <button
                 class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                type="submit">
+        type="submit">
                 <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Submit
-            </button>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Submit
+    </button>
         </div>
     </div>
 </div>

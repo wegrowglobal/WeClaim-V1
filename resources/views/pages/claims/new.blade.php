@@ -65,6 +65,24 @@
                             @include("components.forms.claim.step-{$currentStep}")
                         </div>
                     </form>
+
+                    <!-- Step-specific Info Boxes -->
+                    @if($currentStep == 1)
+                        <x-forms.info-box
+                            title="Basic Information"
+                            description="Start by selecting your claim company and the date range for your travel. Add any relevant remarks about your claim."
+                        />
+                    @elseif($currentStep == 2)
+                        <x-forms.info-box
+                            title="Trip Details"
+                            description="Add your travel locations in order. You need at least 2 locations to calculate the route. Drag and drop to reorder locations if needed."
+                        />
+                    @elseif($currentStep == 3)
+                        <x-forms.info-box
+                            title="Final Details"
+                            description="Upload your toll receipts and email approval. If you had any accommodations during your trip, add them here with their receipts."
+                        />
+                    @endif
                 @else
                     <div class="rounded-lg bg-white p-6 text-center shadow-sm ring-1 ring-black/5 sm:p-8">
                         <div class="text-red-500">

@@ -75,51 +75,55 @@ Route::group([], function () {
     });
 
     // Claims Routes
-    Route::prefix('claims')->group(function () {
+    Route::prefix('claims')->name('claims.')->group(function () {
         // Main Claims Routes
-        Route::get('/dashboard', [ClaimController::class, 'dashboard'])->name('claims.dashboard');
-        Route::get('/new', [ClaimController::class, 'new'])->name('claims.new');
-        Route::get('/approval', [ClaimController::class, 'approval'])->name('claims.approval');
+        Route::get('/dashboard', [ClaimController::class, 'dashboard'])->name('dashboard');
+        Route::get('/new', [ClaimController::class, 'new'])->name('new');
+        Route::get('/approval', [ClaimController::class, 'approval'])->name('approval');
 
         // Bulk Email Routes
-        Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('claims.bulk-email');
-        Route::post('/bulk-email/send', [BulkEmailController::class, 'send'])->name('bulk-email.send');
+        Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('bulk-email');
+        Route::post('/bulk-email/send', [BulkEmailController::class, 'sendBulkEmail'])->name('bulk-email.send');
 
         // Form Steps Routes
-        Route::post('/save-step', [ClaimController::class, 'saveStep'])->name('claims.save-step');
-        Route::post('/reset-session', [ClaimController::class, 'resetSession'])->name('claims.reset-session');
-        Route::get('/get-step/{step}', [ClaimController::class, 'getStep'])->name('claims.get-step');
+        Route::post('/save-step', [ClaimController::class, 'saveStep'])->name('save-step');
+        Route::post('/reset-session', [ClaimController::class, 'resetSession'])->name('reset-session');
+        Route::get('/get-step/{step}', [ClaimController::class, 'getStep'])->name('get-step');
         Route::get('/get-progress-steps/{step}', [ClaimController::class, 'getProgressSteps'])
-            ->name('claims.progress-steps');
+            ->name('progress-steps');
 
         // Claim Actions
-        Route::post('/store', [ClaimController::class, 'store'])->name('claims.store');
-        Route::get('/{id}/review', [ClaimController::class, 'reviewClaim'])->name('claims.review');
-        Route::post('/{claim}/export', [ClaimController::class, 'export'])->name('claims.export');
-        Route::put('/{claim}/cancel', [ClaimController::class, 'cancelClaim'])->name('claims.cancel');
+        Route::post('/store', [ClaimController::class, 'store'])->name('store');
+        Route::get('/{id}/review', [ClaimController::class, 'reviewClaim'])->name('review');
+        Route::post('/{claim}/export', [ClaimController::class, 'export'])->name('export');
+        Route::put('/{claim}/cancel', [ClaimController::class, 'cancelClaim'])->name('cancel');
 
         // Document Routes
         Route::get('/{claim}/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])
-            ->name('claims.view.document');
+            ->name('view.document');
 
         // Email Actions
         Route::post('/send-to-datuk/{id}', [ClaimController::class, 'sendToDatuk'])
-            ->name('claims.mail.to.datuk');
+            ->name('mail.to.datuk');
         Route::get('/email-action/{id}', [ClaimController::class, 'handleEmailAction'])
-            ->name('claims.email.action');
+            ->name('email.action');
 
         // Resubmission Routes
-        Route::get('/{claim}/resubmit', [ClaimController::class, 'resubmit'])->name('claims.resubmit');
-        Route::post('/{claim}/resubmit', [ClaimController::class, 'processResubmission'])
-            ->name('claims.process-resubmission');
+        Route::get('/resubmit/{claim}', [ClaimController::class, 'resubmit'])
+            ->name('resubmit');
+        Route::post('/resubmit/{claim}', [ClaimController::class, 'processResubmission'])
+            ->name('process-resubmission');
+        Route::get('/resubmit/{claim}/step/{step}', [ClaimController::class, 'resubmit'])
+            ->name('resubmit.step')
+            ->where('step', '[1-3]');
 
         // View Claim
         Route::get('/{id}', [ClaimController::class, 'show'])
             ->defaults('view', 'pages.claims.claim')
-            ->name('claims.view');
+            ->name('view');
 
         // Claim Review Actions
-        Route::post('/{id}/update', [ClaimController::class, 'updateClaim'])->name('claims.update');
+        Route::post('/{id}/update', [ClaimController::class, 'updateClaim'])->name('update');
     });
 
     // Reports & Settings Routes

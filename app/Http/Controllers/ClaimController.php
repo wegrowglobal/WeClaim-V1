@@ -425,6 +425,10 @@ class ClaimController extends Controller
                 ], 400);
             }
 
+            // Update claim status to Pending Datuk
+            $claim->status = Claim::STATUS_PENDING_DATUK;
+            $claim->save();
+
             $this->claimService->sendClaimToDatuk($claim);
 
             return response()->json([
@@ -821,12 +825,15 @@ class ClaimController extends Controller
                 ->with('error', 'You cannot resubmit this claim.');
         }
 
+        // Get current step from query parameter, default to 1
+        $currentStep = request()->query('step', 1);
+
+        // Validate step range
+        $currentStep = max(1, min(3, (int)$currentStep));
+
         return view('pages.claims.resubmit', [
             'claim' => $claim,
-            'rejectionReason' => $claim->reviews()
-                ->where('status', Claim::STATUS_REJECTED)
-                ->latest()
-                ->first()?->remarks
+            'currentStep' => $currentStep
         ]);
     }
 

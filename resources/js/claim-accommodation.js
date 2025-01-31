@@ -53,10 +53,16 @@ class AccommodationManager {
                         accommodations = typeof draftData.accommodations === 'string' 
                             ? JSON.parse(draftData.accommodations) 
                             : draftData.accommodations;
+                            
+                        // Remove any document-related fields
+                        accommodations = accommodations.map(acc => {
+                            const { receipt_path, receipt_file, file, receipt_name, ...rest } = acc;
+                            return rest;
+                        });
                     }
                     
                     console.log('Parsed accommodations:', accommodations);
-                    
+
                     if (Array.isArray(accommodations) && accommodations.length > 0) {
                         // Clear existing entries first
                         const container = document.getElementById('accommodations-container');
@@ -71,12 +77,11 @@ class AccommodationManager {
                                 const template = this.getAccommodationTemplate();
                                 container.insertAdjacentHTML('beforeend', template);
                                 
-                                // Populate the fields
+                                // Populate the fields (excluding document-related fields)
                                 const locationInput = document.getElementById(`accommodation_location_${index}`);
                                 const priceInput = document.getElementById(`accommodation_price_${index}`);
                                 const checkInInput = document.getElementById(`accommodation_check_in_${index}`);
                                 const checkOutInput = document.getElementById(`accommodation_check_out_${index}`);
-                                const receiptNameElement = document.getElementById(`accommodation_receipt_name_${index}`);
                                 
                                 if (locationInput) locationInput.value = accommodation.location || '';
                                 if (priceInput) priceInput.value = accommodation.price || '';
@@ -88,10 +93,7 @@ class AccommodationManager {
                                     checkOutInput.value = accommodation.check_out || '';
                                     this.setupDateValidation(checkOutInput, 'check-out');
                                 }
-                                if (receiptNameElement && accommodation.receipt_name) {
-                                    receiptNameElement.textContent = accommodation.receipt_name;
-                                }
-
+                                
                                 // Initialize autocomplete for this entry
                                 this.initializeAutocomplete(index);
                             }
@@ -242,7 +244,22 @@ class AccommodationManager {
     updateFileName(index, input) {
         const nameElement = document.getElementById(`accommodation_receipt_name_${index}`);
         if (nameElement && input.files.length > 0) {
-            nameElement.textContent = input.files[0].name;
+            const file = input.files[0];
+            nameElement.innerHTML = `
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center space-x-2">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-sm text-gray-600">${file.name}</span>
+                    </div>
+                    <button type="button" onclick="this.closest('.document-upload-area').querySelector('input[type=file]').value = ''; document.getElementById('accommodation_receipt_name_${index}').innerHTML = '';" 
+                        class="text-sm text-red-500 hover:text-red-700">
+                        Remove
+                    </button>
+                </div>`;
+        } else if (nameElement) {
+            nameElement.innerHTML = '';
         }
     }
 
@@ -503,9 +520,7 @@ class AccommodationManager {
                                         </div>
                                     </div>
                                 </label>
-                                <div class="mt-2 text-sm text-gray-500" id="accommodation_receipt_name_${this.accommodationIndex}">
-                                    No file selected
-                                </div>
+                                <div id="accommodation_receipt_name_${this.accommodationIndex}"></div>
                             </div>
                         </div>
                     </div>

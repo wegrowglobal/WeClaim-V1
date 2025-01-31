@@ -29,7 +29,7 @@ export class ResubmitMap extends ClaimMap {
         try {
             await this.initialize();
             this.setupEventListeners();
-            await this.loadLocations(window.existingLocations);
+            await this.loadLocations();
             this.initialized = true;
         } catch (error) {
             console.error('Error initializing resubmit map:', error);
@@ -37,40 +37,141 @@ export class ResubmitMap extends ClaimMap {
         }
     }
 
-    async loadLocations(locations) {
-        if (!locations || !locations.length) return;
-
+    async loadLocations() {
         return await ErrorHandler.handle(async () => {
-            const container = document.getElementById('location-inputs');
-            if (!container) return;
+            if (!window.existingLocations || !window.existingLocations.length) return;
 
-            container.innerHTML = '';
+            const locations = window.existingLocations;
+            console.log('Loading locations into map:', locations);
+
+            // Clear existing markers and route
             this.clearMarkers();
+            if (this.directionsRenderer) {
+                this.directionsRenderer.setMap(null);
+            }
 
-            locations.forEach((location, index) => {
-                const showDelete = index >= 2;
-                const wrapper = this.locationManager.createLocationInput(
-                    index,
-                    location.from_location,
-                    showDelete
-                );
-                container.appendChild(wrapper);
+            // Create location inputs
+            const container = document.getElementById('location-inputs');
+            if (container) {
+                container.innerHTML = '';
                 
-                const input = wrapper.querySelector('.location-input');
-                if (input) {
-                    input.value = index === locations.length - 1 ? 
-                        location.to_location : 
-                        location.from_location;
-                    this.initializeLocationAutocomplete(input);
+                locations.forEach((location, index) => {
+                    const showDelete = index >= 2;
+                    const wrapper = this.locationManager.createLocationInput(
+                        index,
+                        location.location,
+                        showDelete
+                    );
+                    container.appendChild(wrapper);
+                    
+                    const input = wrapper.querySelector('.location-input');
+                    if (input) {
+                        input.value = location.location;
+                        input.dataset.locationId = location.id;
+                        this.initializeLocationAutocomplete(input);
+                    }
+                });
+
+                // Initialize sortable
+                this.initializeSortable(container);
+            }
+
+            // Get all location addresses for route calculation
+            const locationAddresses = locations.map(loc => loc.location);
+
+            // Calculate route between all locations
+            if (locationAddresses.length >= 2) {
+                try {
+                    const routeData = await this.calculateRoute(locationAddresses);
+                    if (routeData) {
+                        this.updateRouteDisplay(routeData);
+                        this.updateSegmentInfo(routeData.legs);
+                        
+                        // Update the bounds to fit all markers
+                        const bounds = new google.maps.LatLngBounds();
+                        this.markers.forEach(marker => bounds.extend(marker.getPosition()));
+                        this.map.fitBounds(bounds);
+                    }
+                } catch (error) {
+                    console.error('Error calculating route:', error);
+                }
+            }
+
+            // Update the hidden input with the current locations
+            document.getElementById('locations').value = JSON.stringify(locations);
+        }, 'loading locations into map');
+    }
+
+    async calculateRoute(locations) {
+        if (locations.length < 2) return null;
+
+        try {
+            // Clear existing renderers
+            if (this.directionsRenderers) {
+                this.directionsRenderers.forEach(renderer => renderer.setMap(null));
+            }
+            this.directionsRenderers = [];
+
+            const routes = [];
+            const legs = [];
+
+            // Calculate route for each segment
+            for (let i = 0; i < locations.length - 1; i++) {
+                const result = await new Promise((resolve, reject) => {
+                    this.directionsService.route({
+                        origin: locations[i],
+                        destination: locations[i + 1],
+                        travelMode: google.maps.TravelMode.DRIVING,
+                        region: 'MY'
+                    }, (response, status) => {
+                        if (status === 'OK') {
+                            resolve(response);
+                        } else {
+                            reject(new Error(`Directions request failed: ${status}`));
+                        }
+                    });
+                });
+
+                routes.push(result);
+                if (result.routes[0] && result.routes[0].legs[0]) {
+                    legs.push(result.routes[0].legs[0]);
+                }
+            }
+
+            return { routes, legs };
+        } catch (error) {
+            console.error('Error calculating route:', error);
+            throw error;
+        }
+    }
+
+    setupEventListeners() {
+        super.setupEventListeners();
+
+        // Add location button
+        const addLocationBtn = document.getElementById('add-location-btn');
+        if (addLocationBtn) {
+            addLocationBtn.addEventListener('click', () => {
+                this.locationManager.addLocation();
+            });
+        }
+    }
+
+    async geocodeAddress(address) {
+        return new Promise((resolve, reject) => {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address, region: 'MY' }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    resolve(results[0]);
+                } else {
+                    reject(new Error(`Geocoding failed for address: ${address}`));
                 }
             });
-
-            this.initializeSortable(container);
-            await this.updateRoute();
-        }, 'loading locations');
+        });
     }
 }
 
+// Initialize when document is ready
 document.addEventListener("DOMContentLoaded", () => {
     const mapElement = document.getElementById('map');
     if (mapElement) {

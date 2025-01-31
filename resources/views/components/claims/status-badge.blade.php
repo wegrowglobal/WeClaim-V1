@@ -10,6 +10,10 @@
             'class' => 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/10',
             'icon' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
         ],
+        Claim::STATUS_APPROVED_MANAGER => [
+            'class' => 'bg-teal-50 text-teal-600 ring-1 ring-teal-500/10',
+            'icon' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        ],
         Claim::STATUS_APPROVED_DATUK => [
             'class' => 'bg-blue-50 text-blue-600 ring-1 ring-blue-500/10',
             'icon' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
@@ -34,6 +38,10 @@
             'class' => 'bg-gray-50 text-gray-600 ring-1 ring-gray-500/10',
             'icon' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>',
         ],
+        Claim::STATUS_PENDING_DATUK => [
+            'class' => 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/10',
+            'icon' => '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        ],
     ];
 
     if ($status === Claim::STATUS_APPROVED_ADMIN) {
@@ -44,6 +52,8 @@
         $statusText = 'Approved HR';
     } elseif ($status === Claim::STATUS_APPROVED_DATUK) {
         $statusText = 'Approved Datuk';
+    } elseif ($status === Claim::STATUS_APPROVED_MANAGER) {
+        $statusText = 'Approved Manager';
     } else {
         $statusText = ucwords(str_replace('_', ' ', strtolower($status)));
         $statusText = str_replace('Hr', 'HR', $statusText);

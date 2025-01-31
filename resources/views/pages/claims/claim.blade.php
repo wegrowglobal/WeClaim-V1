@@ -8,11 +8,13 @@
             <x-claims.claim-details :claim="$claim" />
             <x-claims.toll-details :claim="$claim" />
             <x-claims.accommodations-table :claim="$claim" :accommodations="$claim->accommodations" />
-            <x-claims.cost-summary :claim="$claim" />
+            
 
             <div class="animate-slide-in space-y-4 delay-300">
                 @include('components.claims.locations-table', ['locations' => $claim->locations])
             </div>
+
+            <x-claims.cost-summary :claim="$claim" />
             
             <!-- Action Buttons -->
             <div class="animate-slide-in delay-400">
