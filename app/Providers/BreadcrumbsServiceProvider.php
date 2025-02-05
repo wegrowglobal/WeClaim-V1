@@ -124,6 +124,43 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     'url' => route('admin.system-config')
                 ];
                 break;
+
+            case 'claims.resubmit':
+            case 'claims.resubmit.process':
+                $breadcrumbs[] = [
+                    'name' => 'Claims',
+                    'url' => route('claims.dashboard')
+                ];
+                if (isset($parameters['claim'])) {
+                    $claim = $parameters['claim'];
+                    $breadcrumbs[] = [
+                        'name' => 'Claim #' . $claim->id,
+                        'url' => route('claims.view', $claim->id)
+                    ];
+                    $breadcrumbs[] = [
+                        'name' => 'Resubmit',
+                        'url' => '#'
+                    ];
+                }
+                break;
+
+            case 'claims.resubmit.show':
+                $breadcrumbs[] = [
+                    'name' => 'Claims',
+                    'url' => route('claims.dashboard')
+                ];
+                if (isset($parameters['claim'])) {
+                    $claim = $parameters['claim'];
+                    $breadcrumbs[] = [
+                        'name' => 'Claim #' . $claim->id,
+                        'url' => route('claims.view', $claim->id)
+                    ];
+                    $breadcrumbs[] = [
+                        'name' => 'Resubmission Form',
+                        'url' => '#'
+                    ];
+                }
+                break;
         }
 
         return array_values(array_filter($breadcrumbs));

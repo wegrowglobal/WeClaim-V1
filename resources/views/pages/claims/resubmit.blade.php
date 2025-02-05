@@ -19,69 +19,80 @@
             </div>
         </div>
         <!-- Rejection Notice & Required Updates -->
-        <div class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 p-6 space-y-6 animate-slide-in delay-100">
+        <div class="bg-white rounded-lg animate-slide-in delay-200 space-y-6">
             <!-- Rejection Notice -->
-            <div class="flex items-start space-x-4">
-                <div class="flex-shrink-0">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                        <svg class="h-5 w-5 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                        </svg>
+            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-red-600">
+                                <svg class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Rejection Reason</p>
+                                <p class="text-xs text-gray-500">{{ $latestRejection->remarks }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex-1">
-                    <h3 class="text-sm font-medium text-gray-900">Claim Rejected</h3>
-                    <p class="mt-1 text-sm text-gray-500">{{ $latestRejection->remarks }}</p>
-                </div>
-            </div>
 
-            <!-- Required Updates -->
-            <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-sm font-medium text-gray-900 mb-4">Required Updates</h4>
-                <div class="space-y-3">
-                    @if($latestRejection->requires_basic_info)
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100">
-                                <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                <!-- Required Updates Section -->
+                <div class="bg-white px-4 py-3">
+                    <div class="space-y-3">
+                        @if($latestRejection->requires_basic_info)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100">
+                                        <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-600">Basic Information Update Required</span>
+                                </div>
                             </div>
-                            <span class="text-gray-700">Basic Information</span>
-                        </div>
-                    @endif
+                        @endif
 
-                    @if($latestRejection->requires_trip_details)
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
-                                <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                </svg>
+                        @if($latestRejection->requires_trip_details)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100">
+                                        <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-600">Trip Details Update Required</span>
+                                </div>
                             </div>
-                            <span class="text-gray-700">Trip Details</span>
-                        </div>
-                    @endif
+                        @endif
 
-                    @if($latestRejection->requires_accommodation_details)
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100">
-                                <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                </svg>
+                        @if($latestRejection->requires_accommodation_details)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100">
+                                        <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-600">Accommodation Details Update Required</span>
+                                </div>
                             </div>
-                            <span class="text-gray-700">Accommodation Details</span>
-                        </div>
-                    @endif
+                        @endif
 
-                    @if($latestRejection->requires_documents)
-                        <div class="flex items-center space-x-3 text-sm">
-                            <div class="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100">
-                                <svg class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                        @if($latestRejection->requires_documents)
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100">
+                                        <svg class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-600">Documents Update Required</span>
+                                </div>
                             </div>
-                            <span class="text-gray-700">Documents</span>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -391,11 +402,12 @@
                         </div>
                         <div class="p-4">
                             <!-- Hidden input for existing accommodations data -->
-                            <input type="hidden" id="existing-accommodations" value="{{ json_encode($claim->accommodations) }}">
+                            <input type="hidden" id="existing-accommodations" value="{{ $claim->accommodations->toJson() }}">
                             
                             <div id="accommodations-container" class="space-y-4">
                                 <!-- Accommodation entries will be added here -->
                             </div>
+
                             <button type="button" onclick="window.claimResubmit.addAccommodation()"
                                 class="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                 <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -408,6 +420,7 @@
                 @endif
 
                 @if($latestRejection->requires_documents)
+                    <!-- Update Documents Section -->
                     <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm animate-slide-in delay-700">
                         <div class="border-b border-gray-100 bg-gray-50 px-4 py-2">
                             <div class="flex items-center space-x-3">
@@ -429,19 +442,23 @@
                                     <input type="number" name="toll_amount" step="0.01" value="{{ old('toll_amount', $claim->toll_amount) }}"
                                         class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500">
                                 </div>
-
-                                <!-- Document Upload -->
-                                <div class="space-y-4">
-                                    <div class="space-y-2">
+                                <!-- File upload fields -->
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
                                         <label class="block text-sm font-medium text-gray-700">Toll Receipt</label>
-                                        <input type="file" name="toll_receipt" accept=".pdf,.jpg,.jpeg,.png"
-                                            class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <span class="text-xs text-gray-500">Current file will be kept if no new file is uploaded</span>
                                     </div>
-                                    <div class="space-y-2">
+                                    <input type="file" name="toll_receipt" accept=".pdf,.jpg,.jpeg,.png"
+                                        class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
                                         <label class="block text-sm font-medium text-gray-700">Email Approval</label>
-                                        <input type="file" name="email_approval" accept=".pdf,.jpg,.jpeg,.png"
-                                            class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        <span class="text-xs text-gray-500">Current file will be kept if no new file is uploaded</span>
                                     </div>
+                                    <input type="file" name="email_approval" accept=".pdf,.jpg,.jpeg,.png"
+                                        class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                 </div>
                             </div>
                         </div>
@@ -490,6 +507,5 @@
 @endsection
 
 @push('scripts')
-    
     @vite(['resources/js/claim-resubmit.js'])
 @endpush 

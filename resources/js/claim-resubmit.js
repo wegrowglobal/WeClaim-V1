@@ -423,6 +423,41 @@ function initializeResubmitForm() {
                 });
             }
             
+            // Handle accommodations data
+            const accommodationEntries = document.querySelectorAll('.accommodation-entry');
+            const accommodationsData = [];
+            
+            accommodationEntries.forEach((entry, index) => {
+                const location = entry.querySelector(`input[name="accommodations[${index}][location]"]`)?.value;
+                const checkIn = entry.querySelector(`input[name="accommodations[${index}][check_in]"]`)?.value;
+                const checkOut = entry.querySelector(`input[name="accommodations[${index}][check_out]"]`)?.value;
+                const price = entry.querySelector(`input[name="accommodations[${index}][price]"]`)?.value;
+                const receiptFile = entry.querySelector(`input[name="accommodations[${index}][receipt]"]`)?.files[0];
+
+                if (location && checkIn && checkOut && price) {
+                    accommodationsData.push({
+                        location: location,
+                        location_address: location,
+                        check_in: checkIn,
+                        check_out: checkOut,
+                        price: price
+                    });
+
+                    if (receiptFile) {
+                        formData.append(`accommodations[${index}][receipt]`, receiptFile);
+                    }
+                }
+            });
+
+            // Add accommodations data to formData
+            accommodationsData.forEach((acc, index) => {
+                formData.append(`accommodations[${index}][location]`, acc.location);
+                formData.append(`accommodations[${index}][location_address]`, acc.location_address);
+                formData.append(`accommodations[${index}][check_in]`, acc.check_in);
+                formData.append(`accommodations[${index}][check_out]`, acc.check_out);
+                formData.append(`accommodations[${index}][price]`, acc.price);
+            });
+
             const response = await axios.post(form.action, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -512,7 +547,7 @@ function initializeAccommodations() {
                                     <label class="block text-sm font-medium text-gray-700">Location</label>
                                     <input type="text" 
                                         id="accommodation_location_${index}"
-                                        name="accommodation_location_${index}" 
+                                        name="accommodations[${index}][location]" 
                                         value="${existingData ? existingData.location : ''}"
                                         class="location-autocomplete mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" 
                                         placeholder="Enter or select location"
@@ -520,7 +555,7 @@ function initializeAccommodations() {
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Price (RM)</label>
-                                    <input type="number" name="accommodation_price_${index}" step="0.01"
+                                    <input type="number" name="accommodations[${index}][price]" step="0.01"
                                         value="${existingData ? existingData.price : ''}"
                                         class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                 </div>
@@ -530,28 +565,26 @@ function initializeAccommodations() {
                                     <label class="block text-sm font-medium text-gray-700">Check-in Date</label>
                                     <input type="date" 
                                         id="accommodation_check_in_${index}"
-                                        name="accommodation_check_in_${index}"
+                                        name="accommodations[${index}][check_in]"
                                         value="${existingData ? existingData.check_in : ''}"
                                         min="${document.querySelector('[name="date_from"]')?.value || ''}"
                                         max="${document.querySelector('[name="date_to"]')?.value || ''}"
-                                        onchange="validateAccommodationDates(${index})"
                                         class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Check-out Date</label>
                                     <input type="date" 
                                         id="accommodation_check_out_${index}"
-                                        name="accommodation_check_out_${index}"
+                                        name="accommodations[${index}][check_out]"
                                         value="${existingData ? existingData.check_out : ''}"
                                         min="${document.querySelector('[name="date_from"]')?.value || ''}"
                                         max="${document.querySelector('[name="date_to"]')?.value || ''}"
-                                        onchange="validateAccommodationDates(${index})"
                                         class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Receipt</label>
-                                <input type="file" name="accommodation_receipt_${index}" accept=".pdf,.jpg,.jpeg,.png"
+                                <input type="file" name="accommodations[${index}][receipt]" accept=".pdf,.jpg,.jpeg,.png"
                                     class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                             </div>
                         </div>
@@ -661,7 +694,8 @@ function initializeToggleDetails() {
 
 // Export functions for global use
 window.claimResubmit = {
-    removeAccommodation
+    removeAccommodation,
+    addAccommodation
 };
 
 // Add this new function for details toggle
@@ -708,3 +742,104 @@ function updateTotalDistance() {
     if (petrolAmountInput) petrolAmountInput.value = petrolAmount.toFixed(2);
     if (petrolAmountDisplay) petrolAmountDisplay.textContent = petrolAmount.toFixed(2);
 }
+
+class AccommodationManager {
+    constructor() {
+        this.container = document.getElementById('accommodations-container');
+        this.template = this.createTemplate();
+        this.counter = 0;
+        
+        // Initialize existing accommodations
+        const existingData = document.getElementById('existing-accommodations');
+        if (existingData && existingData.value) {
+            const accommodations = JSON.parse(existingData.value);
+            accommodations.forEach(acc => {
+                this.addAccommodation(acc);
+            });
+        }
+        
+        if (this.container.children.length === 0) {
+            this.addAccommodation(); // Add one empty accommodation if none exists
+        }
+    }
+
+    createTemplate() {
+        return `
+            <div class="accommodation-entry border rounded-lg p-4 relative">
+                <button type="button" class="remove-accommodation absolute top-4 right-4 text-gray-400 hover:text-red-500">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Location</label>
+                        <input type="text" name="accommodations[{index}][location]" required
+                            class="form-input block w-full rounded-lg">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Check In</label>
+                        <input type="date" name="accommodations[{index}][check_in]" required
+                            class="form-input block w-full rounded-lg">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Check Out</label>
+                        <input type="date" name="accommodations[{index}][check_out]" required
+                            class="form-input block w-full rounded-lg">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Price (RM)</label>
+                        <input type="number" name="accommodations[{index}][price]" required
+                            step="0.01" class="form-input block w-full rounded-lg">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700">Receipt</label>
+                        <input type="file" name="accommodations[{index}][receipt]"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            class="form-input block w-full rounded-lg">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    addAccommodation(data = null) {
+        const index = this.counter++;
+        const newEntry = this.template.replace(/{index}/g, index);
+        this.container.insertAdjacentHTML('beforeend', newEntry);
+        
+        // Ensure numeric indexes
+        const entry = this.container.lastElementChild;
+        entry.querySelectorAll('[name]').forEach(input => {
+            input.name = input.name.replace(/{index}/g, index);
+        });
+        
+        if (data) {
+            const entry = this.container.lastElementChild;
+            entry.querySelector('[name$="[location]"]').value = data.location;
+            entry.querySelector('[name$="[check_in]"]').value = data.check_in.split('T')[0];
+            entry.querySelector('[name$="[check_out]"]').value = data.check_out.split('T')[0];
+            entry.querySelector('[name$="[price]"]').value = data.price;
+        }
+        
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        this.container.querySelectorAll('.remove-accommodation').forEach(button => {
+            button.onclick = (e) => {
+                const entry = e.target.closest('.accommodation-entry');
+                if (this.container.children.length > 1) {
+                    entry.remove();
+                }
+            };
+        });
+    }
+}
+
+// Initialize accommodation manager when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    if (document.getElementById('accommodations-container')) {
+        window.claimResubmit = new AccommodationManager();
+    }
+});

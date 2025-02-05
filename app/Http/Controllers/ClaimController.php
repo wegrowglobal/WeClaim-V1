@@ -887,6 +887,24 @@ class ClaimController extends Controller
                     'toll_receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
                     'email_approval' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048'
                 ]);
+                
+                // Add conditional required if no existing documents
+                if (!$claim->documents()->exists()) {
+                    $validationRules['toll_receipt'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                    $validationRules['email_approval'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                }
+            }
+
+            // In the processResubmission method, modify the validation rules and accommodation handling:
+            if ($latestRejection->requires_accommodation_details) {
+                $validationRules = array_merge($validationRules, [
+                    'accommodations' => 'required|array|min:1',
+                    'accommodations.*.location' => 'required|string|max:255',
+                    'accommodations.*.check_in' => 'required|date',
+                    'accommodations.*.check_out' => 'required|date|after_or_equal:accommodations.*.check_in',
+                    'accommodations.*.price' => 'required|numeric|min:0',
+                    'accommodations.*.receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                ]);
             }
 
             $validated = $request->validate($validationRules);
@@ -940,8 +958,57 @@ class ClaimController extends Controller
 
             // Handle Documents revisions
             if ($latestRejection->requires_documents) {
-                $updateData['toll_amount'] = $validated['toll_amount'];
-                // Handle document uploads here
+                // Handle document updates
+                $tollFile = $request->file('toll_receipt');
+                $emailFile = $request->file('email_approval');
+                
+                $claimDocument = $claim->documents()->firstOrNew();
+                
+                if ($tollFile) {
+                    $tollPath = $tollFile->store('uploads/claims/toll', 'public');
+                    $claimDocument->toll_file_name = $tollFile->getClientOriginalName();
+                    $claimDocument->toll_file_path = $tollPath;
+                }
+                
+                if ($emailFile) {
+                    $emailPath = $emailFile->store('uploads/claims/email', 'public');
+                    $claimDocument->email_file_name = $emailFile->getClientOriginalName();
+                    $claimDocument->email_file_path = $emailPath;
+                }
+                
+                $claimDocument->save();
+                
+                // Update toll amount from validated data
+                $claim->toll_amount = $validated['toll_amount'];
+                $claim->save();
+            }
+
+            // Handle accommodations revisions
+            if ($latestRejection->requires_accommodation_details) {
+                // Only process if accommodations are provided in the request
+                if ($request->has('accommodations')) {
+                    $claim->accommodations()->delete();
+                    foreach ($validated['accommodations'] as $accomData) {
+                        $newAccommodation = $claim->accommodations()->create([
+                            'location' => $accomData['location'],
+                            'check_in' => $accomData['check_in'],
+                            'check_out' => $accomData['check_out'],
+                            'price' => $accomData['price'],
+                        ]);
+
+                        // Handle receipt upload if provided
+                        if (isset($accomData['receipt']) && $accomData['receipt'] instanceof \Illuminate\Http\UploadedFile) {
+                            $receiptPath = $accomData['receipt']->store('uploads/claims/accommodations', 'public');
+                            $newAccommodation->update([
+                                'receipt_path' => $receiptPath,
+                                'receipt_name' => $accomData['receipt']->getClientOriginalName()
+                            ]);
+                        }
+                    }
+                } else {
+                    // Keep existing accommodations if none provided
+                    Log::info('Keeping existing accommodations for claim', ['claim_id' => $claim->id]);
+                }
             }
 
             // Update the claim with accumulated data
