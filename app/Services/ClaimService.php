@@ -113,22 +113,17 @@ class ClaimService
     private function createAccommodations(Claim $claim, array $accommodations): void
     {
         foreach ($accommodations as $accommodation) {
-            // Handle file upload if it exists
             $receiptPath = null;
             if (isset($accommodation['receipt']) && $accommodation['receipt']->isValid()) {
                 $receiptPath = Storage::disk('public')->put(
                     'accommodation_receipts',
                     $accommodation['receipt']
                 );
-            } else if (isset($accommodation['receipt_name'])) {
-                // If we have an existing receipt name, use that
-                $receiptPath = $accommodation['receipt_name'];
             }
 
-            // Create the accommodation record
             $claim->accommodations()->create([
                 'location' => $accommodation['location'],
-                'location_address' => $accommodation['location_address'] ?? $accommodation['location'],
+                'location_address' => $accommodation['location'],
                 'price' => $accommodation['price'],
                 'check_in' => $accommodation['check_in'],
                 'check_out' => $accommodation['check_out'],
@@ -517,13 +512,17 @@ class ClaimService
                 'reviewer_id' => $nextReviewerId
             ]);
 
-            // Create review record
+            // Get remarks from request
+            $remarks = request()->input('remarks');
+
+            // Create review record with remarks
             $userRole = $user->role()->first();
             ClaimReview::create([
                 'claim_id' => $claim->getKey(),
                 'reviewer_id' => $user->getKey(),
                 'department' => $userRole ? $userRole->name : 'Unknown',
                 'status' => 'approved',
+                'remarks' => $remarks ?? 'No remarks provided', // Use provided remarks
                 'review_order' => $claim->reviews()->count() + 1,
                 'reviewed_at' => now()
             ]);
@@ -541,9 +540,9 @@ class ClaimService
 
     //////////////////////////////////////////////////////////////////
 
-    public function rejectClaim(User $user, Claim $claim)
+    public function rejectClaim(User $user, Claim $claim, array $rejectionDetails)
     {
-        DB::transaction(function () use ($user, $claim) {
+        DB::transaction(function () use ($user, $claim, $rejectionDetails) {
             // Set status to REJECTED
             $claim->status = Claim::STATUS_REJECTED;
 
@@ -558,14 +557,19 @@ class ClaimService
 
             $claim->save();
 
-            // Create review record
+            // Create review record with rejection details
             $claim->reviews()->create([
                 'reviewer_id' => $user->id,
-                'remarks' => 'Claim rejected',
+                'remarks' => $rejectionDetails['remarks'] ?? 'No remarks provided', // Use provided remarks
                 'department' => $user->role->name,
                 'review_order' => $claim->reviews()->count() + 1,
                 'status' => $claim->status,
-                'reviewed_at' => now()
+                'reviewed_at' => now(),
+                'requires_basic_info' => $rejectionDetails['requires_basic_info'] ?? false,
+                'requires_trip_details' => $rejectionDetails['requires_trip_details'] ?? false,
+                'requires_accommodation_details' => $rejectionDetails['requires_accommodation_details'] ?? false,
+                'requires_documents' => $rejectionDetails['requires_documents'] ?? false,
+                'rejection_details' => $rejectionDetails
             ]);
 
             // Send rejection notification
@@ -734,37 +738,75 @@ class ClaimService
         }
     }
 
-    public function handleResubmission(Claim $claim, array $data)
+    public function handleResubmission(Claim $claim, array $data, array $sectionsToRevise)
     {
-        return DB::transaction(function () use ($claim, $data) {
+        return DB::transaction(function () use ($claim, $data, $sectionsToRevise) {
             // Get the previous non-rejected status
             $previousStatus = $this->getPreviousNonRejectedStatus($claim) ?? Claim::STATUS_SUBMITTED;
 
-            // Update claim with new data
-            $claim->update([
-                'description' => $data['description'],
-                'claim_company' => $data['claim_company'],
-                'petrol_amount' => $data['petrol_amount'],
-                'toll_amount' => $data['toll_amount'],
-                'total_distance' => $data['total_distance'],
-                'date_from' => $data['date_from'],
-                'date_to' => $data['date_to'],
-                'status' => $previousStatus,
-                'submitted_at' => now()
-            ]);
+            // Update only the sections that need revision
+            $updateData = [];
 
-            // Clear old locations and create new ones
-            $claim->locations()->delete();
-            $locations = json_decode($data['locations'], true);
-            foreach ($locations as $location) {
-                $claim->locations()->create($location);
+            if ($sectionsToRevise['basic_info'] ?? false) {
+                $updateData += [
+                    'description' => $data['description'],
+                    'claim_company' => $data['claim_company'],
+                    'date_from' => $data['date_from'],
+                    'date_to' => $data['date_to']
+                ];
             }
+
+            if ($sectionsToRevise['trip_details'] ?? false) {
+                $updateData += [
+                    'petrol_amount' => $data['petrol_amount'],
+                    'total_distance' => $data['total_distance']
+                ];
+
+                // Update locations if provided
+                if (isset($data['locations'])) {
+                    $claim->locations()->delete();
+                    $locations = is_array($data['locations']) ? $data['locations'] : json_decode($data['locations'], true);
+                    
+                    foreach ($locations as $index => $location) {
+                        $claim->locations()->create([
+                            'from_location' => $location,
+                            'to_location' => $locations[$index + 1] ?? '',
+                            'distance' => $distances[$index] ?? 0,
+                            'order' => $index + 1
+                        ]);
+                    }
+                }
+            }
+
+            if ($sectionsToRevise['documents'] ?? false) {
+                $updateData['toll_amount'] = $data['toll_amount'];
+
+                // Handle document uploads
+                if (isset($data['toll_file']) || isset($data['email_file'])) {
+                    $this->handleFileUploadsAndDocuments($claim, $data['toll_file'] ?? null, $data['email_file'] ?? null);
+                }
+            }
+
+            if ($sectionsToRevise['accommodation_details'] ?? false) {
+                if (!empty($data['accommodations'])) {
+                    $claim->accommodations()->delete();
+                    $this->createAccommodations($claim, $data['accommodations']);
+                } else {
+                    // Preserve existing accommodations if none provided
+                    Log::info('Preserving existing accommodations for claim', ['claim_id' => $claim->id]);
+                }
+            }
+
+            // Update claim with revised data
+            $updateData['status'] = $previousStatus;
+            $updateData['submitted_at'] = now();
+            $claim->update($updateData);
 
             // Create resubmission review record
             $claim->reviews()->create([
-                'reviewer_id' => auth()->id(),
+                'reviewer_id' => Auth::id(),
                 'remarks' => 'Claim resubmitted after rejection',
-                'department' => auth()->user()->role->name,
+                'department' => Auth::user()->role->name,
                 'review_order' => $claim->reviews()->count() + 1,
                 'status' => $previousStatus,
                 'reviewed_at' => now()
@@ -772,6 +814,13 @@ class ClaimService
 
             // Send notifications
             $this->notifyRelevantUsers($claim, 'resubmitted');
+
+            // Add to handleResubmission
+            Log::debug('Accommodation data received', [
+                'has_accommodations' => !empty($data['accommodations']),
+                'count' => !empty($data['accommodations']) ? count($data['accommodations']) : 0,
+                'data_sample' => !empty($data['accommodations']) ? $data['accommodations'][0] : null
+            ]);
 
             return true;
         });

@@ -552,4 +552,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 'AccommodationManager.initialization');
 });
 
-export default AccommodationManager; 
+export default AccommodationManager;
+
+// Export the required functions
+export function addAccommodationInput() {
+    if (window.accommodationManager) {
+        window.accommodationManager.addAccommodation();
+    }
+}
+
+export function loadAccommodations(accommodations) {
+    // This function will be called when loading existing accommodations
+    if (window.accommodationManager) {
+        accommodations.forEach(() => {
+            window.accommodationManager.addAccommodation();
+        });
+    }
+} 

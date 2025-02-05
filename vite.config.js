@@ -4,6 +4,15 @@ import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
     server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: '192.168.0.60',
+            protocol: 'http'
+        },
+        watch: {
+            usePolling: true
+        },
         cors: true
     },
     plugins: [
@@ -46,7 +55,8 @@ export default defineConfig({
                 'resources/js/admin.js',
                 
                 // Config
-                'resources/js/config.js'
+                'resources/js/config.js',
+                'resources/js/bulk-email.js',
             ],
             refresh: true,
         }),

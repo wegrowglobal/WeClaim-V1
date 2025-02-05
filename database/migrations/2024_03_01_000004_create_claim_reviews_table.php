@@ -23,6 +23,11 @@ return new class extends Migration
             $table->string('department');
             $table->string('status');
             $table->timestamp('reviewed_at');
+            $table->json('rejection_details')->nullable();
+            $table->boolean('requires_basic_info')->default(false);
+            $table->boolean('requires_trip_details')->default(false);
+            $table->boolean('requires_accommodation_details')->default(false);
+            $table->boolean('requires_documents')->default(false);
             $table->timestamps();
         });
     }

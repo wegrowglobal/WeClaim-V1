@@ -51,7 +51,7 @@
     @include('partials.mobile-menu')
 
     <!-- Main Content -->
-    <main class="content-container min-h-screen bg-white px-4 py-4 md:px-0 md:py-8">
+    <main class="content-container bg-white px-4 py-4 md:px-0 md:py-8">
         <div class="max-w-8xl mx-auto px-0 md:px-6 lg:px-8">
             @yield('content')
         </div>

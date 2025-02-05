@@ -75,7 +75,7 @@ Route::group([], function () {
     });
 
     // Claims Routes
-    Route::prefix('claims')->name('claims.')->group(function () {
+    Route::middleware(['auth'])->prefix('claims')->name('claims.')->group(function () {
         // Main Claims Routes
         Route::get('/dashboard', [ClaimController::class, 'dashboard'])->name('dashboard');
         Route::get('/new', [ClaimController::class, 'new'])->name('new');
@@ -108,14 +108,9 @@ Route::group([], function () {
         Route::get('/email-action/{id}', [ClaimController::class, 'handleEmailAction'])
             ->name('email.action');
 
-        // Resubmission Routes
-        Route::get('/resubmit/{claim}', [ClaimController::class, 'resubmit'])
-            ->name('resubmit');
-        Route::post('/resubmit/{claim}', [ClaimController::class, 'processResubmission'])
-            ->name('process-resubmission');
-        Route::get('/resubmit/{claim}/step/{step}', [ClaimController::class, 'resubmit'])
-            ->name('resubmit.step')
-            ->where('step', '[1-3]');
+        // Resubmit Routes
+        Route::get('/resubmit/{claim}', [ClaimController::class, 'showResubmitForm'])->name('resubmit');
+        Route::post('/resubmit/{claim}', [ClaimController::class, 'processResubmission'])->name('resubmit.process');
 
         // View Claim
         Route::get('/{id}', [ClaimController::class, 'show'])

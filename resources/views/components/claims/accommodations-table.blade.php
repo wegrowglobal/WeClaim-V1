@@ -43,7 +43,7 @@
                                     </svg>
                                     <span class="text-sm text-gray-600">Receipt</span>
                                 </div>
-                                <a href="{{ Storage::disk('public')->url($accommodation->receipt_path) }}" 
+                                <a href="{{ Storage::url($accommodation->receipt_path) }}" 
                                    target="_blank"
                                    class="inline-flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-500">
                                     <span>View</span>

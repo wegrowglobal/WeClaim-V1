@@ -87,6 +87,11 @@ class Claim extends Model
         return $this->hasMany(ClaimReview::class);
     }
 
+    public function rejections()
+    {
+        return $this->hasMany(ClaimReview::class)->where('status', self::STATUS_REJECTED);
+    }
+
     public function getTotalAmount(): float
     {
         return $this->petrol_amount + $this->toll_amount;
@@ -141,5 +146,28 @@ class Claim extends Model
             return $this->updated_at->diffInDays(now()) >= 3;
         }
         return false;
+    }
+
+    public function storeTripDetails(array $locations)
+    {
+        // Validate locations before processing
+        if (empty($locations)) {
+            throw new \InvalidArgumentException('Cannot store empty locations');
+        }
+
+        $this->locations()->delete();
+
+        foreach ($locations as $location) {
+            if (empty($location['from_location'])) {
+                throw new \InvalidArgumentException('Invalid location data');
+            }
+
+            $this->locations()->create([
+                'from_location' => $location['from_location'],
+                'to_location' => $location['to_location'],
+                'distance' => (float) ($location['distance'] ?? 0),
+                'order' => (int) ($location['order'] ?? 1)
+            ]);
+        }
     }
 }

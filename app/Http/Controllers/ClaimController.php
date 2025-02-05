@@ -22,6 +22,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use App\Services\ClaimTemplateMapper;
 use App\Services\ClaimExcelExportService;
 use App\Services\ClaimWordExportService;
+use Illuminate\Validation\ValidationException;
 
 class ClaimController extends Controller
 {
@@ -284,13 +285,18 @@ class ClaimController extends Controller
             $request->validate([
                 'remarks' => 'required|string',
                 'action' => 'required|in:approve,reject',
+                'rejection_details' => 'required_if:action,reject|array',
+                'rejection_details.requires_basic_info' => 'boolean',
+                'rejection_details.requires_trip_details' => 'boolean',
+                'rejection_details.requires_accommodation_details' => 'boolean',
+                'rejection_details.requires_documents' => 'boolean',
             ]);
 
             DB::transaction(function () use ($request, $user, $claim) {
                 if ($request->action === 'approve') {
                     $this->claimService->approveClaim($user, $claim);
                 } else {
-                    $this->claimService->rejectClaim($user, $claim);
+                    $this->claimService->rejectClaim($user, $claim, $request->rejection_details);
                     return;
                 }
 
@@ -314,7 +320,7 @@ class ClaimController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
-            ], 422);
+            ], 500);
         }
     }
 
@@ -817,6 +823,9 @@ class ClaimController extends Controller
         ])->render();
     }
 
+    /**
+     * Show the resubmit form for a rejected claim.
+     */
     public function resubmit(Claim $claim)
     {
         // Validate if user can resubmit
@@ -825,47 +834,139 @@ class ClaimController extends Controller
                 ->with('error', 'You cannot resubmit this claim.');
         }
 
-        // Get current step from query parameter, default to 1
-        $currentStep = request()->query('step', 1);
-
-        // Validate step range
-        $currentStep = max(1, min(3, (int)$currentStep));
+        // Get the latest rejection review to determine which sections need revision
+        $latestRejection = $claim->reviews()
+            ->where('status', Claim::STATUS_REJECTED)
+            ->latest()
+            ->first();
 
         return view('pages.claims.resubmit', [
             'claim' => $claim,
-            'currentStep' => $currentStep
+            'latestRejection' => $latestRejection
         ]);
     }
 
+    /**
+     * Process the resubmission of a claim.
+     */
     public function processResubmission(Request $request, Claim $claim)
     {
         try {
-            $this->claimService->handleResubmission($claim, [
-                'description' => $request->description,
-                'claim_company' => $request->claim_company,
-                'petrol_amount' => $request->petrol_amount,
-                'toll_amount' => $request->toll_amount,
-                'total_distance' => $request->total_distance,
-                'date_from' => $request->date_from,
-                'date_to' => $request->date_to,
-                'locations' => $request->locations
-            ]);
+            $latestRejection = $claim->reviews()
+                ->where('status', Claim::STATUS_REJECTED)
+                ->latest()
+                ->first();
+
+            $validationRules = [
+            ];
+
+            // Conditionally add validation rules based on required revisions
+            if ($latestRejection->requires_basic_info) {
+                $validationRules = array_merge($validationRules, [
+                    'description' => 'required|string|max:500',
+                    'date_from' => 'required|date',
+                    'date_to' => 'required|date|after_or_equal:date_from',
+                    'claim_company' => 'required|in:WGG,WGE,WGS',
+                ]);
+            }
+
+            if ($latestRejection->requires_trip_details) {
+                $validationRules = array_merge($validationRules, [
+                    'distances' => 'required|array',
+                    'distances.*' => 'required|numeric|min:0',
+                    'locations' => 'required|array|min:2',
+                    'locations.*' => 'required|string|max:255',
+                    'petrol_amount' => 'required|numeric|min:0',
+                    'total_distance' => 'required|numeric|min:0',
+                ]);
+            }
+
+            if ($latestRejection->requires_documents) {
+                $validationRules = array_merge($validationRules, [
+                    'toll_amount' => 'required|numeric|min:0',
+                    'toll_receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'email_approval' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048'
+                ]);
+            }
+
+            $validated = $request->validate($validationRules);
+            
+            DB::beginTransaction();
+
+            // Base update data
+            $updateData = [
+                'status' => Claim::STATUS_SUBMITTED,
+                'submitted_at' => now()
+            ];
+
+            // Handle Basic Info revisions
+            if ($latestRejection->requires_basic_info) {
+                $updateData = array_merge($updateData, [
+                    'description' => $validated['description'],
+                    'date_from' => $validated['date_from'],
+                    'date_to' => $validated['date_to'],
+                    'claim_company' => $validated['claim_company']
+                ]);
+            }
+
+            // Handle Trip Details revisions
+            if ($latestRejection->requires_trip_details) {
+                $updateData = array_merge($updateData, [
+                    'petrol_amount' => $validated['petrol_amount'],
+                    'total_distance' => $validated['total_distance']
+                ]);
+
+                $claim->locations()->delete();
+                $locations = $validated['locations'];
+                $distances = $validated['distances'];
+
+                // Create location pairs for all consecutive locations
+                for ($i = 0; $i < count($locations) - 1; $i++) {
+                    $claim->locations()->create([
+                        'from_location' => $locations[$i],
+                        'to_location' => $locations[$i + 1],
+                        'distance' => $distances[$i],
+                        'order' => $i + 1,
+                    ]);
+                }
+
+                // Add explicit check for last location pair
+                if (count($locations) >= 2) {
+                    $totalDistance = array_sum($distances);
+                    $updateData['total_distance'] = $totalDistance;
+                    $updateData['petrol_amount'] = $totalDistance * config('claims.rate_per_km', 0.60);
+                }
+            }
+
+            // Handle Documents revisions
+            if ($latestRejection->requires_documents) {
+                $updateData['toll_amount'] = $validated['toll_amount'];
+                // Handle document uploads here
+            }
+
+            // Update the claim with accumulated data
+            $claim->update($updateData);
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
+                'redirect' => route('claims.dashboard'),
                 'message' => 'Claim resubmitted successfully'
             ]);
-        } catch (\Exception $e) {
-            Log::error('Claim resubmission failed:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id(),
-                'claim_id' => $claim->id
-            ]);
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to resubmit claim: ' . $e->getMessage()
+                'errors' => $e->errors(),
+                'message' => 'Validation failed'
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Resubmission error: ' . $e->getMessage());
+            return response()->json([
+                'error' => $e->getMessage(),
+                'message' => 'Resubmission failed'
             ], 500);
         }
     }
@@ -942,5 +1043,29 @@ class ClaimController extends Controller
                 'error' => 'Error loading step'
             ], 500);
         }
+    }
+
+    public function showResubmitForm(Claim $claim)
+    {
+        // Validate if user can resubmit
+        if ($claim->status !== Claim::STATUS_REJECTED || $claim->user_id !== Auth::id()) {
+            return redirect()->route('claims.dashboard')
+                ->with('error', 'You cannot resubmit this claim.');
+        }
+
+        // Get the latest rejection review
+        $latestRejection = $claim->reviews()
+            ->where('status', Claim::STATUS_REJECTED)
+            ->latest()
+            ->first();
+
+        // Load accommodations relationship
+        $claim->load('accommodations');
+
+        return view('pages.claims.resubmit', [
+            'claim' => $claim,
+            'latestRejection' => $latestRejection,
+            'accommodations' => $claim->accommodations
+        ]);
     }
 }
