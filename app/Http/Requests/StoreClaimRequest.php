@@ -30,11 +30,11 @@ class StoreClaimRequest extends FormRequest
             
             // Validate accommodations
             'accommodations' => 'nullable|array',
-            'accommodations.*.location' => 'required_with:accommodations|string',
+            'accommodations.*.location' => 'required_with:accommodations|string|max:255',
+            'accommodations.*.check_in' => 'required_with:accommodations|date',
+            'accommodations.*.check_out' => 'required_with:accommodations|date|after_or_equal:accommodations.*.check_in',
             'accommodations.*.price' => 'required_with:accommodations|numeric|min:0',
-            'accommodations.*.check_in' => 'required_with:accommodations|date|after_or_equal:date_from|before_or_equal:date_to',
-            'accommodations.*.check_out' => 'required_with:accommodations|date|after_or_equal:accommodations.*.check_in|before_or_equal:date_to',
-            'accommodations.*.receipt' => 'required_with:accommodations|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'accommodations.*.receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
             
             // File validations
             'toll_file' => 'required|file|mimes:pdf|max:10240', // 10MB max
@@ -58,5 +58,12 @@ class StoreClaimRequest extends FormRequest
             'accommodations.*.check_out.after_or_equal' => 'Check-out date must be after or equal to check-in date.',
             'accommodations.*.check_out.before_or_equal' => 'Check-out date must be within the claim period.',
         ];
+    }
+
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'accommodations' => json_decode($this->input('accommodations', '[]'), true) ?? []
+        ]);
     }
 }

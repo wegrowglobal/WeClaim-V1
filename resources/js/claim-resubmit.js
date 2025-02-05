@@ -618,6 +618,14 @@ function initializeAccommodations() {
                     }
                 });
                 return entries.length + 1; // Return next number for new entries
+            },
+            
+            removeAllAccommodations: function() {
+                const container = document.getElementById('accommodations-container');
+                container.innerHTML = '';
+                this.activeIndices.clear();
+                this.updateEntryNumbers();
+                document.getElementById('remove_all_accommodations').value = '1';
             }
         };
 
@@ -695,7 +703,8 @@ function initializeToggleDetails() {
 // Export functions for global use
 window.claimResubmit = {
     removeAccommodation,
-    addAccommodation
+    addAccommodation,
+    removeAllAccommodations: () => accommodationManager.removeAllAccommodations()
 };
 
 // Add this new function for details toggle
@@ -834,6 +843,13 @@ class AccommodationManager {
                 }
             };
         });
+    }
+
+    removeAllAccommodations() {
+        this.container.innerHTML = '';
+        this.counter = 0;
+        this.entries.clear();
+        document.getElementById('remove_all_accommodations').value = '1';
     }
 }
 

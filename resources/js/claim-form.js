@@ -427,13 +427,16 @@ class ClaimForm {
         let accommodationsData = [];
         const accommodationEntries = document.querySelectorAll('.accommodation-entry');
         accommodationEntries.forEach((acc, index) => {
-            const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
-            const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
-            const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
-            const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
+            // Only add if at least one field is filled
+            const hasContent = Array.from(acc.querySelectorAll('input'))
+                .some(input => input.value.trim() !== '');
+            
+            if (hasContent) {
+                const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
+                const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
+                const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
+                const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
 
-            // Only add accommodation if ALL required fields are filled
-            if (location && price && checkIn && checkOut) {
                 accommodationsData.push({
                     location: location,
                     price: price,
@@ -467,6 +470,9 @@ class ClaimForm {
         // Only add accommodations if there are valid entries
         if (accommodationsData.length > 0) {
             claimData.accommodations = accommodationsData;
+        } else {
+            // Explicitly set to empty array if no accommodations
+            claimData.accommodations = [];
         }
 
         // Merge all data
@@ -645,13 +651,16 @@ class ClaimForm {
             let accommodationsData = [];
             const accommodationEntries = document.querySelectorAll('.accommodation-entry');
             accommodationEntries.forEach((acc, index) => {
-                const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
-                const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
-                const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
-                const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
+                // Only add if at least one field is filled
+                const hasContent = Array.from(acc.querySelectorAll('input'))
+                    .some(input => input.value.trim() !== '');
+                
+                if (hasContent) {
+                    const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
+                    const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
+                    const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
+                    const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
 
-                // Only add accommodation if ALL required fields are filled
-                if (location && price && checkIn && checkOut) {
                     accommodationsData.push({
                         location: location,
                         price: price,
@@ -685,6 +694,9 @@ class ClaimForm {
             // Only add accommodations if there are valid entries
             if (accommodationsData.length > 0) {
                 claimData.accommodations = accommodationsData;
+            } else {
+                // Explicitly set to empty array if no accommodations
+                claimData.accommodations = [];
             }
 
             Object.entries(claimData).forEach(([key, value]) => {

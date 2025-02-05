@@ -898,11 +898,11 @@ class ClaimController extends Controller
             // In the processResubmission method, modify the validation rules and accommodation handling:
             if ($latestRejection->requires_accommodation_details) {
                 $validationRules = array_merge($validationRules, [
-                    'accommodations' => 'required|array|min:1',
-                    'accommodations.*.location' => 'required|string|max:255',
-                    'accommodations.*.check_in' => 'required|date',
-                    'accommodations.*.check_out' => 'required|date|after_or_equal:accommodations.*.check_in',
-                    'accommodations.*.price' => 'required|numeric|min:0',
+                    'accommodations' => 'sometimes|array|min:1',
+                    'accommodations.*.location' => 'required_with:accommodations|string|max:255',
+                    'accommodations.*.check_in' => 'required_with:accommodations|date',
+                    'accommodations.*.check_out' => 'required_with:accommodations|date|after_or_equal:accommodations.*.check_in',
+                    'accommodations.*.price' => 'required_with:accommodations|numeric|min:0',
                     'accommodations.*.receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
                 ]);
             }
@@ -985,8 +985,13 @@ class ClaimController extends Controller
 
             // Handle accommodations revisions
             if ($latestRejection->requires_accommodation_details) {
-                // Only process if accommodations are provided in the request
-                if ($request->has('accommodations')) {
+                // Handle accommodation removal
+                if ($request->input('remove_all_accommodations') == '1') {
+                    $claim->accommodations()->delete();
+                    Log::info('All accommodations removed per user request', ['claim_id' => $claim->id]);
+                }
+                // Handle new accommodations
+                elseif ($request->has('accommodations')) {
                     $claim->accommodations()->delete();
                     foreach ($validated['accommodations'] as $accomData) {
                         $newAccommodation = $claim->accommodations()->create([
@@ -1005,9 +1010,10 @@ class ClaimController extends Controller
                             ]);
                         }
                     }
-                } else {
-                    // Keep existing accommodations if none provided
-                    Log::info('Keeping existing accommodations for claim', ['claim_id' => $claim->id]);
+                }
+                // Preserve existing if neither removal nor new accommodations
+                else {
+                    Log::info('Preserving existing accommodations', ['claim_id' => $claim->id]);
                 }
             }
 

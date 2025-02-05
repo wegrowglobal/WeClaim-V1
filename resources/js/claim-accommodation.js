@@ -528,6 +528,23 @@ class AccommodationManager {
             </div>
         `;
     }
+
+    validateAccommodationEntry(entry) {
+        const inputs = entry.querySelectorAll('input');
+        let filledFields = 0;
+        
+        inputs.forEach(input => {
+            if (input.value.trim() !== '') filledFields++;
+        });
+
+        // Require all fields if any are filled, but allow completely empty
+        if (filledFields > 0 && filledFields < inputs.length) {
+            this.showError('Please fill all fields or remove the accommodation entry');
+            return false;
+        }
+        
+        return true;
+    }
 }
 
 // Initialize when document is ready and Google Maps is loaded

@@ -54,7 +54,7 @@
         <div class="flex items-center justify-between mb-6">
     <div>
                 <h3 class="text-lg font-medium text-gray-900">Final Details</h3>
-                <p class="text-sm text-gray-500 mt-1">Complete your claim with accommodation and documents</p>
+                <p class="text-xs text-gray-500">If you had any accommodations during your trip, you can add them here with their receipts</p>
             </div>
     </div>
 
@@ -209,7 +209,7 @@
                         <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                        Add Accommodation
+                        Add Accommodation (Optional)
                     </button>
                 </div>
             </div>

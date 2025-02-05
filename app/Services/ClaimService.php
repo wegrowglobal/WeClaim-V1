@@ -789,11 +789,11 @@ class ClaimService
 
             if ($sectionsToRevise['accommodation_details'] ?? false) {
                 if (!empty($data['accommodations'])) {
-                    $claim->accommodations()->delete();
-                    $this->createAccommodations($claim, $data['accommodations']);
+                $claim->accommodations()->delete();
+                $this->createAccommodations($claim, $data['accommodations']);
                 } else {
-                    // Preserve existing accommodations if none provided
-                    Log::info('Preserving existing accommodations for claim', ['claim_id' => $claim->id]);
+                    // Completely optional - no action needed if not provided
+                    Log::info('No accommodations provided, preserving existing if any', ['claim_id' => $claim->id]);
                 }
             }
 
