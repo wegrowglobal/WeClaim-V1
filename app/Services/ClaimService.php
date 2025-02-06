@@ -97,15 +97,28 @@ class ClaimService
     {
         $locations = json_decode($locationsJson, true);
 
-        foreach ($locations as $location) {
-            // Ensure we have an order value
-            $order = $location['order'] ?? 0;
+        if (empty($locations)) {
+            throw new \InvalidArgumentException('Cannot store empty locations');
+        }
+
+        // Clear existing locations
+        $claim->locations()->delete();
+
+        foreach ($locations as $index => $location) {
+            // Ensure we have required fields
+            if (empty($location['from_location'])) {
+                throw new \InvalidArgumentException('Invalid location data: missing from_location');
+            }
+
+            // Get the to_location from the location data or the next location's from_location
+            $toLocation = $location['to_location'] ?? 
+                         ($locations[$index + 1]['from_location'] ?? $location['from_location']);
 
             $claim->locations()->create([
                 'from_location' => $location['from_location']['address'] ?? $location['from_location'],
-                'to_location' => $location['to_location']['address'] ?? $location['to_location'],
-                'distance' => (float) $location['distance'],
-                'order' => (int) $order
+                'to_location' => $toLocation['address'] ?? $toLocation,
+                'distance' => (float) ($location['distance'] ?? 0),
+                'order' => (int) ($location['order'] ?? $index + 1)
             ]);
         }
     }

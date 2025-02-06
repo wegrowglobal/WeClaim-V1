@@ -157,16 +157,20 @@ class Claim extends Model
 
         $this->locations()->delete();
 
-        foreach ($locations as $location) {
+        foreach ($locations as $index => $location) {
             if (empty($location['from_location'])) {
-                throw new \InvalidArgumentException('Invalid location data');
+                throw new \InvalidArgumentException('Invalid location data: missing from_location');
             }
+
+            // Get the to_location from the location data or the next location's from_location
+            $toLocation = $location['to_location'] ?? 
+                         ($locations[$index + 1]['from_location'] ?? $location['from_location']);
 
             $this->locations()->create([
                 'from_location' => $location['from_location'],
-                'to_location' => $location['to_location'],
+                'to_location' => $toLocation,
                 'distance' => (float) ($location['distance'] ?? 0),
-                'order' => (int) ($location['order'] ?? 1)
+                'order' => (int) ($location['order'] ?? $index + 1)
             ]);
         }
     }

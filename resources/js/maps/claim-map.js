@@ -215,7 +215,13 @@ export class ClaimMap extends BaseMap {
                     }, (result, status) => {
                         if (status === 'OK') {
                             resolve(result);
-                            legs.push(...result.routes[0].legs);
+                            const leg = result.routes[0].legs[0];
+                            legs.push({
+                                start_address: locations[i],
+                                end_address: locations[i + 1],
+                                distance: leg.distance,
+                                duration: leg.duration
+                            });
                         } else {
                             reject(new Error(`Directions request failed: ${status}`));
                         }
@@ -231,7 +237,28 @@ export class ClaimMap extends BaseMap {
         }
     }
 
-    async updateRouteDisplay(routeData) {
+    createLocationsData(legs) {
+        const inputs = Array.from(document.querySelectorAll('.location-input'));
+        if (inputs.length < 2) return [];
+
+        const locations = [];
+
+        // Process each leg to create location pairs
+        legs.forEach((leg, index) => {
+            if (leg.start_address && leg.end_address) {
+                locations.push({
+                    from_location: leg.start_address,
+                    to_location: leg.end_address,
+                    distance: leg.distance.value / 1000,
+                    order: index + 1
+                });
+            }
+        });
+
+        return locations;
+    }
+
+    updateRouteDisplay(routeData) {
         if (!routeData?.routes) return;
 
         // Clear existing renderers
@@ -263,29 +290,11 @@ export class ClaimMap extends BaseMap {
 
         this.updateSegmentInfo(routeData.legs);
         
-        // Save the segments data
-        const segmentsData = routeData.legs.map((leg, index) => ({
-            from_location: leg.start_address,
-            to_location: leg.end_address,
-            distance: leg.distance.value / 1000,
-            duration: leg.duration.text,
-            cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
-            order: index + 1
-        }));
-        
-        this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
+        // Create and save the locations data
+        const locationsData = this.createLocationsData(routeData.legs);
+        this.updateHiddenInput('segments-data', JSON.stringify(locationsData));
+        this.updateHiddenInput('locations', JSON.stringify(locationsData));
         this.updateNextButtonState();
-    }
-
-    createLocationsData(legs) {
-        return Array.from(document.querySelectorAll('.location-input'))
-            .map((input, index) => ({
-                from_location: legs[index]?.start_address || input.value.trim(),
-                to_location: legs[index]?.end_address || '',
-                distance: (legs[index]?.distance.value || 0) / 1000,
-                order: index + 1
-            }))
-            .filter(loc => loc.from_location);
     }
 
     updateSegmentInfo(legs) {
@@ -350,7 +359,7 @@ export class ClaimMap extends BaseMap {
                                     </div>
                                     <span class="text-xs font-medium text-gray-700">Distance</span>
                                 </div>
-                                <p class="text-sm font-medium text-gray-900">${(leg.distance.value / 1000).toFixed(2)} km</p>
+                                <p class="text-sm font-medium text-gray-900">${index === legs.length - 1 ? 'N/A' : `${(leg.distance.value / 1000).toFixed(2)} km`}</p>
                             </div>
                         </div>
                     </div>
@@ -495,27 +504,11 @@ export class ClaimMap extends BaseMap {
         this.updateHiddenInput('total-duration-input', this.formatDuration(totalDuration));
         this.updateHiddenInput('total-cost-input', totalCost.toFixed(2));
 
-        const locations = Array.from(document.querySelectorAll('.location-input'))
-            .map((input, index) => ({
-                from_location: legs[index]?.start_address || input.value.trim(),
-                to_location: legs[index]?.end_address || '',
-                distance: (legs[index]?.distance.value || 0) / 1000,
-                order: index + 1
-            }))
-            .filter(loc => loc.from_location);
+        // Create location pairs from the legs data
+        const locationsData = this.createLocationsData(legs);
+        this.updateHiddenInput('segments-data', JSON.stringify(locationsData));
+        this.updateHiddenInput('locations', JSON.stringify(locationsData));
 
-        this.updateHiddenInput('locations', JSON.stringify(locations));
-
-        const segmentsData = legs.map((leg, index) => ({
-            from_location: leg.start_address,
-            to_location: leg.end_address,
-            distance: leg.distance.value / 1000,
-            duration: leg.duration.text,
-            cost: (leg.distance.value / 1000) * parseFloat(document.getElementById('rate-per-km')?.value || 0.60),
-            order: index + 1
-        }));
-        
-        this.updateHiddenInput('segments-data', JSON.stringify(segmentsData));
         this.updateNextButtonState();
     };
 

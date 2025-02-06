@@ -195,10 +195,10 @@ function updateDistanceVisibility() {
                 const distanceDisplay = distanceInfo.querySelector('.distance-display');
                 const petrolDisplay = distanceInfo.querySelector('.petrol-amount-display');
                 if (distanceDisplay) {
-                    distanceDisplay.textContent = 'Add next location to calculate distance';
+                    distanceDisplay.textContent = 'N/A';
                 }
                 if (petrolDisplay) {
-                    petrolDisplay.textContent = 'Add next location to calculate petrol cost';
+                    petrolDisplay.textContent = 'N/A';
                 }
             }
         }
@@ -242,12 +242,12 @@ async function calculateDistances() {
         const petrolDisplay = pair.querySelector('.petrol-amount-display');
         if (distanceDisplay) {
             distanceDisplay.textContent = index === locationInputs.length - 1 
-                ? 'Add next location' 
+                ? 'N/A' 
                 : 'Calculating...';
         }
         if (petrolDisplay) {
             petrolDisplay.textContent = index === locationInputs.length - 1 
-                ? 'Add next location' 
+                ? 'N/A' 
                 : 'Calculating...';
         }
     });
@@ -260,10 +260,10 @@ async function calculateDistances() {
     }
 
     // Update the directionsService route call with better error handling
-    for (let i = 0; i < validLocations.length; i++) {
+    for (let i = 0; i < validLocations.length - 1; i++) {
         try {
             const origin = validLocations[i];
-            const destination = validLocations[i + 1] || validLocations[validLocations.length - 1];
+            const destination = validLocations[i + 1];
             
             if (!origin || !destination) {
                 throw new Error('Invalid location pair');
@@ -339,6 +339,19 @@ async function calculateDistances() {
         }
     }
 
+    // Update the last location pair to show N/A
+    const lastLocationPair = document.querySelectorAll('.location-pair')[validLocations.length - 1];
+    if (lastLocationPair) {
+        const distanceDisplay = lastLocationPair.querySelector('.distance-display');
+        const petrolDisplay = lastLocationPair.querySelector('.petrol-amount-display');
+        if (distanceDisplay) {
+            distanceDisplay.textContent = 'N/A';
+        }
+        if (petrolDisplay) {
+            petrolDisplay.textContent = 'N/A';
+        }
+    }
+
     // Update totals
     const totalDistanceInput = document.getElementById('total-distance-input');
     const totalDistanceDisplay = document.getElementById('total-distance-display');
@@ -368,140 +381,266 @@ function initializeResubmitForm() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Show loading state
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Submitting...
-        `;
+        // Get rejection details from data attributes on the form
+        const form = e.target;
+        const requiresBasicInfo = form.dataset.requiresBasicInfo === 'true';
+        const requiresTripDetails = form.dataset.requiresTripDetails === 'true';
+        const requiresAccommodationDetails = form.dataset.requiresAccommodationDetails === 'true';
+        const requiresDocuments = form.dataset.requiresDocuments === 'true';
 
-        try {
-            const formData = new FormData(form);
-            const locationInputs = document.querySelectorAll('.location-input');
-            const locations = [];
-            const distances = [];
-            
-            // Format locations and distances data
-            locationInputs.forEach((input, index) => {
-                locations.push(input.value.trim());
-                // Always calculate distance if there's a next location
-                if (index < locationInputs.length - 1) {
-                    const distanceText = input.closest('.location-pair').querySelector('.distance-display')?.textContent || '';
-                    const distance = parseFloat(distanceText.match(/[\d.]+/) || 0);
+        // Prepare locations and distances data
+        const locationInputs = document.querySelectorAll('.location-input');
+        const locations = Array.from(locationInputs).map(input => input.value.trim()).filter(Boolean);
+        const distances = [];
+        
+        // Get distances from the display elements
+        locationInputs.forEach((input, index) => {
+            if (index < locationInputs.length - 1) {
+                const distanceText = input.closest('.location-pair').querySelector('.distance-display')?.textContent || '';
+                const distance = parseFloat(distanceText.match(/[\d.]+/) || 0);
+                if (!isNaN(distance)) {
                     distances.push(distance);
                 }
-            });
-
-            // Clear existing array values
-            formData.delete('locations');
-            formData.delete('distances');
-
-            // Add locations and distances as array values
-            locations.forEach((location, index) => {
-                formData.append(`locations[${index}]`, location);
-            });
-            
-            distances.forEach((distance, index) => {
-                formData.append(`distances[${index}]`, distance);
-            });
-
-            const requiresTripDetails = document.querySelector('[data-requires-trip-details]') !== null;
-
-            if (!requiresTripDetails) {
-                // Add existing locations and distances from hidden inputs
-                document.querySelectorAll('input[name="locations[]"]').forEach((input, index) => {
-                    formData.append(`locations[${index}]`, input.value);
-                });
-                
-                document.querySelectorAll('input[name="distances[]"]').forEach((input, index) => {
-                    formData.append(`distances[${index}]`, input.value);
-                });
             }
-            
-            // Handle accommodations data
-            const accommodationEntries = document.querySelectorAll('.accommodation-entry');
-            const accommodationsData = [];
-            
-            accommodationEntries.forEach((entry, index) => {
-                const location = entry.querySelector(`input[name="accommodations[${index}][location]"]`)?.value;
-                const checkIn = entry.querySelector(`input[name="accommodations[${index}][check_in]"]`)?.value;
-                const checkOut = entry.querySelector(`input[name="accommodations[${index}][check_out]"]`)?.value;
-                const price = entry.querySelector(`input[name="accommodations[${index}][price]"]`)?.value;
-                const receiptFile = entry.querySelector(`input[name="accommodations[${index}][receipt]"]`)?.files[0];
+        });
 
-                if (location && checkIn && checkOut && price) {
-                    accommodationsData.push({
-                        location: location,
-                        location_address: location,
-                        check_in: checkIn,
-                        check_out: checkOut,
-                        price: price
-                    });
+        // Create FormData object
+        const formData = new FormData(form);
 
-                    if (receiptFile) {
-                        formData.append(`accommodations[${index}][receipt]`, receiptFile);
+        // Add locations and distances as arrays
+        formData.delete('locations');
+        formData.delete('distances');
+
+        // Add each location as a separate array item
+        locations.forEach((location, index) => {
+            formData.append(`locations[]`, location);
+        });
+        
+        // Add each distance as a separate array item
+        distances.forEach((distance, index) => {
+            formData.append(`distances[]`, distance.toString());
+        });
+
+        // Show confirmation dialog
+        const result = await Swal.fire({
+            title: 'Confirm Resubmission',
+            html: `
+                <div class="text-left space-y-8">
+                    <!-- Main Question -->
+                    <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                        <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-blue-900">Are you sure you want to resubmit this claim?</p>
+                    </div>
+                    
+                    <!-- Required Updates Section -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <h3 class="font-medium text-gray-900">Required Updates</h3>
+                        </div>
+                        <div class="space-y-2">
+                            ${requiresBasicInfo ? `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100">
+                                        <svg class="h-3 w-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-700">Basic Information</span>
+                                </div>
+                            ` : ''}
+                            ${requiresTripDetails ? `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100">
+                                        <svg class="h-3 w-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-700">Trip Details</span>
+                                </div>
+                            ` : ''}
+                            ${requiresAccommodationDetails ? `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100">
+                                        <svg class="h-3 w-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-700">Accommodation Details</span>
+                                </div>
+                            ` : ''}
+                            ${requiresDocuments ? `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100">
+                                        <svg class="h-3 w-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span class="text-sm text-gray-700">Documents</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Updated Details Section -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <h3 class="font-medium text-gray-900">Updated Details</h3>
+                        </div>
+                        <div class="space-y-3">
+                            ${requiresBasicInfo ? `
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <span class="text-sm">Company: <span class="font-medium">${document.querySelector('[name="claim_company"]')?.value || 'Not specified'}</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span class="text-sm">Date Range: <span class="font-medium">${document.querySelector('[name="date_from"]')?.value || 'Not specified'} to ${document.querySelector('[name="date_to"]')?.value || 'Not specified'}</span></span>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <svg class="h-5 w-5 text-gray-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+                                        </svg>
+                                        <span class="text-sm">Remarks: <span class="font-medium">${document.querySelector('[name="description"]')?.value || 'Not specified'}</span></span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${requiresTripDetails ? `
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                                        </svg>
+                                        <span class="text-sm">Total Distance: <span class="font-medium">${document.getElementById('total-distance-display')?.textContent || '0.00'} km</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span class="text-sm">Petrol Amount: <span class="font-medium">RM ${document.getElementById('petrol-amount-display')?.textContent || '0.00'}</span></span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${requiresAccommodationDetails ? `
+                                <div class="flex items-center gap-2">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <span class="text-sm">Accommodations: <span class="font-medium">${document.querySelectorAll('.accommodation-entry').length} entries</span></span>
+                                </div>
+                            ` : ''}
+                            ${requiresDocuments ? `
+                                <div class="flex items-center gap-2">
+                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span class="text-sm">Documents have been updated</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `,
+            width: '32rem',
+            padding: '1.5rem',
+            showCancelButton: true,
+            confirmButtonText: 'Resubmit',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#4F46E5',
+            cancelButtonColor: '#DC2626',
+            customClass: {
+                container: 'resubmit-confirmation-dialog',
+                popup: 'rounded-xl shadow-xl border border-gray-200',
+                title: 'text-xl font-semibold text-gray-900 mb-2',
+                htmlContainer: 'text-base text-gray-600',
+                actions: 'space-x-3 mt-6',
+                confirmButton: 'px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200',
+                cancelButton: 'px-5 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-200'
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                // Show loading state
+                const loadingDialog = Swal.fire({
+                    title: 'Resubmitting Claim',
+                    html: 'Please wait while we process your resubmission...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    willOpen: () => {
+                        Swal.showLoading();
                     }
+                });
+
+                // Submit the form using FormData
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', form.action, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                
+                // Get the CSRF token
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (token) {
+                    xhr.setRequestHeader('X-CSRF-TOKEN', token);
                 }
-            });
 
-            // Add accommodations data to formData
-            accommodationsData.forEach((acc, index) => {
-                formData.append(`accommodations[${index}][location]`, acc.location);
-                formData.append(`accommodations[${index}][location_address]`, acc.location_address);
-                formData.append(`accommodations[${index}][check_in]`, acc.check_in);
-                formData.append(`accommodations[${index}][check_out]`, acc.check_out);
-                formData.append(`accommodations[${index}][price]`, acc.price);
-            });
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Your claim has been resubmitted successfully.',
+                            icon: 'success',
+                            confirmButtonColor: '#4F46E5',
+                            confirmButtonText: 'OK',
+                            allowOutsideClick: false,
+                            customClass: {
+                                popup: 'rounded-xl shadow-xl border border-gray-200',
+                                title: 'text-xl font-semibold text-gray-900',
+                                confirmButton: 'px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-200'
+                            }
+                        }).then((result) => {
+                            window.location.href = '/claims/dashboard';
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'There was an error submitting your claim. Please try again.',
+                            icon: 'error',
+                            confirmButtonColor: '#4F46E5'
+                        });
+                    }
+                };
 
-            const response = await axios.post(form.action, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                withCredentials: true
-            });
+                xhr.onerror = function() {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'There was an error submitting your claim. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#4F46E5'
+                    });
+                };
 
-            if (response.data.success) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Success',
-                    text: 'Claim has been resubmitted successfully.',
+                xhr.send(formData);
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'There was an error submitting your claim. Please try again.',
+                    icon: 'error',
                     confirmButtonColor: '#4F46E5'
                 });
-
-                // Redirect to dashboard
-                window.location.href = '/claims/dashboard';
-            } else {
-                throw new Error(response.data.message || 'Failed to resubmit claim');
             }
-        } catch (error) {
-            console.error('Resubmission error:', error);
-            
-            let errorMessage = 'Failed to resubmit claim. Please try again.';
-            if (error.response?.data?.errors) {
-                const errors = error.response.data.errors;
-                errorMessage = Object.values(errors).flat().join('\n');
-            } else if (error.response?.data?.message) {
-                errorMessage = error.response.data.message;
-            }
-            
-            await Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMessage,
-                confirmButtonColor: '#4F46E5'
-            });
-
-            // Reset submit button
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
         }
     });
 }
