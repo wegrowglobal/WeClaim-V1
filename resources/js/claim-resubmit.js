@@ -36,6 +36,9 @@ function initializeLocationInputs() {
         });
     });
 
+    // Initialize delete buttons for existing locations
+    initializeDeleteButtons();
+
     // Calculate initial distances
     calculateDistances();
 
@@ -81,14 +84,12 @@ function addLocationInput() {
                         </div>
                         <label class="block text-sm font-medium text-gray-700">Location ${locationCount + 1}</label>
                     </div>
-                    ${locationCount > 0 ? `
-                        <button type="button" 
-                            class="delete-location inline-flex items-center rounded-md text-gray-400 hover:text-rose-500 focus:outline-none transition-colors">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    ` : ''}
+                    <button type="button" 
+                        class="delete-location inline-flex items-center rounded-md text-gray-400 hover:text-rose-500 focus:outline-none transition-colors">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
                 <div class="mt-1">
                     <input type="text" 
@@ -121,17 +122,8 @@ function addLocationInput() {
     const newInput = wrapper.querySelector('.location-input');
     initializeAutocomplete(newInput);
     
-    // Add delete handler
-    const deleteBtn = wrapper.querySelector('.delete-location');
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', () => {
-            wrapper.remove();
-            // Recalculate distances and update stop numbers
-            updateStopNumbers();
-            calculateDistances();
-            updateDistanceVisibility();
-        });
-    }
+    // Initialize delete buttons after adding new location
+    initializeDeleteButtons();
 
     // Add input event listener to trigger calculations
     newInput.addEventListener('input', () => {
@@ -145,7 +137,7 @@ function addLocationInput() {
     updateDistanceVisibility();
 }
 
-// Add this new function to update stop numbers
+// Update the updateStopNumbers function to handle minimum locations
 function updateStopNumbers() {
     const locationPairs = document.querySelectorAll('.location-pair');
     locationPairs.forEach((pair, index) => {
@@ -171,7 +163,7 @@ function updateStopNumbers() {
         // Update delete button visibility
         const deleteBtn = pair.querySelector('.delete-location');
         if (deleteBtn) {
-            if (index > 0) {
+            if (locationPairs.length > 2 && index > 0) {
                 deleteBtn.style.display = 'flex';
             } else {
                 deleteBtn.style.display = 'none';
@@ -998,3 +990,56 @@ document.addEventListener('DOMContentLoaded', () => {
         window.claimResubmit = new AccommodationManager();
     }
 });
+
+// Add new function to initialize delete buttons
+function initializeDeleteButtons() {
+    const container = document.getElementById('location-inputs');
+    const locationPairs = container.querySelectorAll('.location-pair');
+
+    locationPairs.forEach((pair, index) => {
+        const deleteBtn = pair.querySelector('.delete-location');
+        // Only show delete button if not the first location and there are more than 2 locations
+        if (index > 0) {
+            if (!deleteBtn && locationPairs.length > 2) {
+                // Create delete button if it doesn't exist
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'delete-location inline-flex items-center rounded-md text-gray-400 hover:text-rose-500 focus:outline-none transition-colors';
+                deleteButton.innerHTML = `
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                `;
+                const buttonContainer = pair.querySelector('.flex.items-center.justify-between');
+                if (buttonContainer) {
+                    buttonContainer.appendChild(deleteButton);
+                }
+            }
+            // Add or update delete button event listener
+            const currentDeleteBtn = deleteBtn || pair.querySelector('.delete-location');
+            if (currentDeleteBtn) {
+                currentDeleteBtn.style.display = locationPairs.length > 2 ? 'flex' : 'none';
+                // Remove existing event listeners
+                currentDeleteBtn.replaceWith(currentDeleteBtn.cloneNode(true));
+                const newDeleteBtn = pair.querySelector('.delete-location');
+                newDeleteBtn.addEventListener('click', () => {
+                    if (locationPairs.length > 2) {
+                        pair.remove();
+                        updateStopNumbers();
+                        calculateDistances();
+                        updateDistanceVisibility();
+                        // Reinitialize delete buttons after removal
+                        initializeDeleteButtons();
+                    } else {
+                        Swal.fire({
+                            title: 'Cannot Remove Location',
+                            text: 'A minimum of 2 locations is required for the trip.',
+                            icon: 'warning',
+                            confirmButtonColor: '#4F46E5'
+                        });
+                    }
+                });
+            }
+        }
+    });
+}
