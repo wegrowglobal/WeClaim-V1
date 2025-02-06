@@ -279,8 +279,7 @@
 
                             <div class="p-4">
                 <div class="document-upload-area" id="toll-upload-area">
-                    <input class="hidden" id="toll_report" name="toll_report" type="file"
-                        accept=".pdf,.jpg,.jpeg,.png" required>
+                    <input class="hidden" id="toll_report" name="toll_report" type="file" accept=".pdf,.jpg,.jpeg,.png">
                                     <label for="toll_report"
                                         class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
@@ -332,8 +331,7 @@
 
                             <div class="p-4">
                 <div class="document-upload-area" id="email-upload-area">
-                                    <input class="hidden" id="email_report" name="email_report" type="file"
-                                        accept=".pdf" required>
+                                    <input class="hidden" id="email_report" name="email_report" type="file" accept=".pdf">
                                     <label for="email_report"
                                         class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
@@ -374,28 +372,6 @@
     <!-- Add this hidden input to preserve segments data -->
     <input id="segments-data" name="segments_data" type="hidden"
         value="{{ old('segments_data', is_array($segmentsData) ? json_encode($segmentsData) : $draftData['segments_data'] ?? '[]') }}">
-
-        <!-- Navigation Buttons -->
-        <div class="flex justify-between mt-6">
-    <button
-                class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-        type="button" onclick="window.claimForm.previousStep(3)">
-                <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-        </svg>
-        Previous
-    </button>
-
-    <button
-                class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        type="submit">
-                <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        Submit
-    </button>
-        </div>
-    </div>
 </div>
 
 @push('scripts')

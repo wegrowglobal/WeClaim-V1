@@ -54,6 +54,12 @@ class ClaimForm {
 
         this.bindEvents();
         this.verifyDraftData();
+
+        // Add novalidate attribute to the form
+        const form = document.getElementById('claimForm');
+        if (form) {
+            form.setAttribute('novalidate', true);
+        }
     }
 
     loadDraftData() {
@@ -187,7 +193,13 @@ class ClaimForm {
             }
             
             const locationCount = Array.isArray(locations) ? 
-                locations.filter(loc => loc && loc.trim() !== '').length : 0;
+                locations.reduce((count, loc) => {
+                    if (loc && loc.from_location && loc.to_location && 
+                        loc.from_location.trim() !== '' && loc.to_location.trim() !== '') {
+                        return count + 2;
+                    }
+                    return count;
+                }, 0) : 0;
                 
             if (totalLocationsEl) totalLocationsEl.textContent = `${locationCount} stops`;
         }
@@ -633,130 +645,298 @@ class ClaimForm {
 
     async handleSubmit(e) {
         e.preventDefault();
-        Logger.group('Claim Form Submission');
+        this.submitClaim();
+    }
 
-        // Show loading state
-        const submitButton = document.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.innerHTML;
-        submitButton.disabled = true;
-        submitButton.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Submitting...
-        `;
-
+    async submitClaim() {
         try {
+            // Validate mandatory fields
             const form = document.getElementById('claimForm');
+            const draftData = JSON.parse(document.getElementById('draftData').value);
+            const tollAmount = form.querySelector('#toll_amount');
+            const tollReceipt = form.querySelector('#toll_report');
+            const emailApproval = form.querySelector('#email_report');
+            
+            // Check for mandatory fields
+            const missingFields = [];
+            
+            if (!draftData.claim_company) missingFields.push('Company');
+            if (!draftData.date_from) missingFields.push('Start Date');
+            if (!draftData.date_to) missingFields.push('End Date');
+            if (!tollAmount || !tollAmount.value) missingFields.push('Toll Amount');
+            if (!tollReceipt || !tollReceipt.files[0]) missingFields.push('Toll Receipt');
+            if (!emailApproval || !emailApproval.files[0]) missingFields.push('Email Approval');
+
+            if (missingFields.length > 0) {
+                Swal.fire({
+                    title: 'Missing Information',
+                    html: `Please fill in the following required fields:<br><br>
+                          <ul class="text-left list-disc pl-5">
+                              ${missingFields.map(field => `<li>${field}</li>`).join('')}
+                          </ul>`,
+                    icon: 'warning'
+                });
+                return;
+            }
+
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                submitButton.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Submitting...
+                `;
+            }
+
+            // Get form data
             const formData = new FormData(form);
-            const draftDataInput = document.getElementById('draftData');
-            let draftData = {};
             
-            try {
-                draftData = JSON.parse(draftDataInput?.value || '{}');
-            } catch (error) {
-                Logger.error('Error parsing draft data', error);
+            // Parse locations from draft data
+            const locations = typeof draftData.locations === 'string' ? 
+                JSON.parse(draftData.locations) : draftData.locations;
+
+            // Parse accommodations from draft data
+            const accommodations = typeof draftData.accommodations === 'string' ? 
+                JSON.parse(draftData.accommodations) : draftData.accommodations;
+
+            // Add required fields to formData
+            formData.append('claim_company', draftData.claim_company);
+            formData.append('date_from', draftData.date_from);
+            formData.append('date_to', draftData.date_to);
+            formData.append('total_distance', draftData.total_distance || '0');
+            formData.append('petrol_amount', draftData.total_cost || '0');
+            formData.append('toll_amount', tollAmount.value || '0');
+            formData.append('status', 'Submitted');
+            formData.append('title', `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`);
+            formData.append('claim_type', 'Petrol');
+            formData.append('remarks', draftData.remarks || '');
+            
+            // Add locations
+            if (Array.isArray(locations)) {
+                const validLocations = locations.filter(loc => 
+                    loc && loc.from_location && loc.to_location && 
+                    loc.from_location.trim() !== '' && loc.to_location.trim() !== ''
+                );
+                formData.append('locations', JSON.stringify(validLocations));
             }
 
-            // Handle accommodations data and files
-            let accommodationsData = [];
-            const accommodationEntries = document.querySelectorAll('.accommodation-entry');
-            accommodationEntries.forEach((acc, index) => {
-                // Only add if at least one field is filled
-                const hasContent = Array.from(acc.querySelectorAll('input'))
-                    .some(input => input.value.trim() !== '');
-                
-                if (hasContent) {
-                    const location = acc.querySelector(`input[name="accommodation_location_${index}"]`)?.value?.trim() || '';
-                    const price = acc.querySelector(`input[name="accommodation_price_${index}"]`)?.value?.trim() || '';
-                    const checkIn = acc.querySelector(`input[name="accommodation_check_in_${index}"]`)?.value?.trim() || '';
-                    const checkOut = acc.querySelector(`input[name="accommodation_check_out_${index}"]`)?.value?.trim() || '';
+            // Add accommodations if they exist
+            if (accommodations && accommodations.length > 0) {
+                formData.append('accommodations', JSON.stringify(accommodations));
+            }
 
-                    accommodationsData.push({
-                        location: location,
-                        price: price,
-                        check_in: checkIn,
-                        check_out: checkOut
-                    });
+            // Add files
+            if (tollReceipt && tollReceipt.files[0]) {
+                formData.append('toll_file', tollReceipt.files[0]);
+            }
+            if (emailApproval && emailApproval.files[0]) {
+                formData.append('email_file', emailApproval.files[0]);
+            }
 
-                    // Add accommodation receipt file if it exists
-                    const receiptFile = document.getElementById(`accommodation_receipt_${index}`)?.files[0];
-                    if (receiptFile) {
-                        formData.append(`accommodation_receipts[${index}]`, receiptFile);
+            // Show confirmation dialog
+            const result = await Swal.fire({
+                title: 'Review Claim Details',
+                html: `
+                    <div class="space-y-6 px-4">
+                        <!-- Basic Information -->
+                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 shrink-0">
+                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-sm font-medium text-gray-900">Basic Information</p>
+                                        <p class="text-xs text-gray-500">Claim details and date range</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Company:</span>
+                                    <span class="font-medium ${draftData.claim_company ? 'text-gray-900' : 'text-red-600'}">
+                                        ${draftData.claim_company || 'Missing'}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Date Range:</span>
+                                    <span class="font-medium ${(draftData.date_from && draftData.date_to) ? 'text-gray-900' : 'text-red-600'}">
+                                        ${(draftData.date_from && draftData.date_to) ? 
+                                          `${draftData.date_from} to ${draftData.date_to}` : 
+                                          'Missing'}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Remarks:</span>
+                                    <span class="font-medium text-gray-900">
+                                        ${draftData.remarks || 'None'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Trip Details -->
+                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 shrink-0">
+                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-sm font-medium text-gray-900">Trip Details</p>
+                                        <p class="text-xs text-gray-500">Route and distance information</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Total Distance:</span>
+                                    <span class="font-medium text-gray-900">${parseFloat(draftData.total_distance).toFixed(2)} km</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Total Locations:</span>
+                                    <span class="font-medium text-gray-900">${locations.length} Stops</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Petrol Claim:</span>
+                                    <span class="font-medium text-gray-900">RM ${parseFloat(draftData.total_cost).toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Expenses -->
+                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 shrink-0">
+                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-sm font-medium text-gray-900">Additional Expenses</p>
+                                        <p class="text-xs text-gray-500">Toll and accommodation charges</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Toll Amount:</span>
+                                    <span class="font-medium ${tollAmount && tollAmount.value ? 'text-gray-900' : 'text-red-600'}">
+                                        RM ${tollAmount && tollAmount.value ? parseFloat(tollAmount.value).toFixed(2) : 'Missing'}
+                                    </span>
+                                </div>
+                                ${accommodations && accommodations.length > 0 ? `
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">Accommodation:</span>
+                                        <span class="font-medium text-gray-900">RM ${accommodations.reduce((sum, acc) => sum + parseFloat(acc.price || 0), 0).toFixed(2)}</span>
+                                    </div>
+                                    ${accommodations.map((acc, index) => `
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-gray-600">Accommodation #${index + 1}:</span>
+                                            <span class="font-medium ${acc.location && acc.price && acc.check_in && acc.check_out ? 'text-gray-900' : 'text-red-600'}">
+                                                ${acc.location && acc.price && acc.check_in && acc.check_out ? 'Complete' : 'Incomplete'}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Documents -->
+                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shrink-0">
+                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-left">
+                                        <p class="text-sm font-medium text-gray-900">Required Documents</p>
+                                        <p class="text-xs text-gray-500">Uploaded files and receipts</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-4 space-y-3">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Toll Receipt:</span>
+                                    <span class="font-medium ${tollReceipt && tollReceipt.files[0] ? 'text-green-600' : 'text-red-600'}">
+                                        ${tollReceipt && tollReceipt.files[0] ? '✓ Uploaded' : '✗ Missing'}
+                                    </span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-gray-600">Email Approval:</span>
+                                    <span class="font-medium ${emailApproval && emailApproval.files[0] ? 'text-green-600' : 'text-red-600'}">
+                                        ${emailApproval && emailApproval.files[0] ? '✓ Uploaded' : '✗ Missing'}
+                                    </span>
+                                </div>
+                                ${accommodations && accommodations.length > 0 ? `
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">Accommodation Receipts:</span>
+                                        <span class="font-medium text-green-600">✓ ${accommodations.length} Uploaded</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Submit Claim',
+                cancelButtonText: 'Review Again',
+                customClass: {
+                    popup: 'rounded-lg shadow-xl border border-gray-200',
+                    title: 'text-xl font-medium text-gray-900 border-b border-gray-100 pb-3 text-left',
+                    htmlContainer: 'p-0',
+                    actions: 'w-full flex flex-row-reverse justify-between px-4 pb-4 gap-4',
+                    confirmButton: 'w-fit flex-1 order-2 inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
+                    cancelButton: 'w-fit flex-1 order-1 inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200'
+                },
+                buttonsStyling: false,
+                width: '32rem',
+                showClass: {
+                    popup: 'animate-popup-show'
+                },
+                hideClass: {
+                    popup: 'animate-popup-hide'
+                }
+            });
+
+            if (result.isConfirmed) {
+                // Continue with form submission
+                const response = await fetch('/claims/store', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json'
                     }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to submit claim');
                 }
-            });
 
-            // Only include accommodations in claimData if there are valid entries
-            const claimData = {
-                claim_company: formData.get('claim_company') || draftData.claim_company,
-                date_from: formData.get('date_from') || draftData.date_from,
-                date_to: formData.get('date_to') || draftData.date_to,
-                remarks: formData.get('remarks') || draftData.remarks,
-                total_distance: draftData.total_distance || '0',
-                petrol_amount: draftData.total_cost || '0',
-                toll_amount: formData.get('toll_amount') || '0',
-                locations: draftData.locations || [],
-                status: 'Submitted',
-                title: `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`,
-                claim_type: 'Petrol',
-            };
-
-            // Only add accommodations if there are valid entries
-            if (accommodationsData.length > 0) {
-                claimData.accommodations = accommodationsData;
-            } else {
-                // Explicitly set to empty array if no accommodations
-                claimData.accommodations = [];
-            }
-
-            Object.entries(claimData).forEach(([key, value]) => {
-                if (key === 'locations' || key === 'accommodations') {
-                    formData.append(key, JSON.stringify(value));
-                } else {
-                    const cleanValue = typeof value === 'string' ? 
-                        value.trim() : 
-                        String(value).trim();
-                    formData.append(key, cleanValue);
-                }
-            });
-
-            // Add files if they exist
-            const tollFile = document.getElementById('toll_report')?.files[0];
-            const emailFile = document.getElementById('email_report')?.files[0];
-            
-            if (tollFile) {
-                formData.append('toll_file', tollFile);
-            }
-            if (emailFile) {
-                formData.append('email_file', emailFile);
-            }
-
-            const response = await fetch('/claims/store', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                if (result.errors) {
-                    throw new Error(Object.values(result.errors).flat().join('\n'));
-                }
-                throw new Error(result.message || 'Submission failed');
-            }
-
-            if (result.success) {
+                // Show success message and redirect
                 await Swal.fire({
-                    title: 'Success!',
-                    text: 'Your claim has been submitted successfully.',
                     icon: 'success',
-                    confirmButtonText: 'Go to Dashboard'
+                    title: 'Claim Submitted Successfully',
+                    text: 'Your claim has been submitted and is pending review.',
+                    customClass: {
+                        popup: 'rounded-lg shadow-xl border border-gray-200',
+                        title: 'text-xl font-medium text-gray-900',
+                        confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
+                    }
                 });
 
                 // Clear all stored data
@@ -769,22 +949,131 @@ class ClaimForm {
                     window.claimMap.clearMapData();
                 }
 
-                window.location.href = '/claims/dashboard';
+                window.location.href = data.redirect || '/claims/dashboard';
             }
         } catch (error) {
-            Logger.error('Submission error', error);
+            Logger.error('Error submitting claim:', error);
+            ErrorHandler.handle(error);
+            
             Swal.fire({
                 title: 'Error!',
                 text: error.message || 'Failed to submit claim. Please try again.',
                 icon: 'error',
-                confirmButtonText: 'OK'
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: 'rounded-lg shadow-xl border border-gray-200',
+                    title: 'text-xl font-medium text-gray-900',
+                    confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
+                }
             });
         } finally {
-            Logger.groupEnd();
-            // Reset button state
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalButtonText;
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                submitButton.innerHTML = `
+                    Submit Claim
+                    <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                `;
+            }
         }
+    }
+
+    validateDraftData() {
+        const draftData = JSON.parse(document.getElementById('draftData')?.value || '{}');
+        const form = document.getElementById('claimForm');
+        
+        // Document validation
+        const tollFile = form.toll_report?.files[0];
+        const emailFile = form.email_report?.files[0];
+        
+        // Trip Details Validation
+        let locations = [];
+        try {
+            locations = typeof draftData.locations === 'string' ? 
+                JSON.parse(draftData.locations) : 
+                draftData.locations || [];
+        } catch (e) {
+            console.error('Error parsing locations:', e);
+        }
+        
+        const tripDetails = {
+            valid: true,
+            fields: [
+                { 
+                    label: 'Locations', 
+                    value: `${locations.length} ${locations.length === 1 ? 'Location' : 'Locations'}`, 
+                    valid: locations.length >= 2 
+                },
+                { 
+                    label: 'Total Distance', 
+                    value: `${draftData.total_distance || 0} km`, 
+                    valid: parseFloat(draftData.total_distance) > 0 
+                }
+            ]
+        };
+        tripDetails.valid = tripDetails.fields.every(f => f.valid);
+
+        // Accommodations Validation (only if entries exist)
+        const accommodations = {
+            valid: true,
+            fields: [],
+            hasEntries: false
+        };
+        const accData = draftData.accommodations || [];
+        if (accData.length > 0) {
+            accommodations.hasEntries = true;
+            accommodations.fields = accData.map((acc, index) => {
+                const isValid = acc.location && acc.price && acc.check_in && acc.check_out;
+                if (!isValid) accommodations.valid = false;
+                return {
+                    label: `Accommodation ${index + 1}`,
+                    value: isValid ? 'Complete' : 'Incomplete',
+                    valid: isValid
+                };
+            });
+        }
+
+        // Basic Info Validation
+        const basicInfo = {
+            valid: true,
+            fields: [
+                { label: 'Company', value: draftData.claim_company, valid: !!draftData.claim_company },
+                { label: 'Start Date', value: draftData.date_from, valid: !!draftData.date_from },
+                { label: 'End Date', value: draftData.date_to, valid: !!draftData.date_to }
+            ]
+        };
+        basicInfo.valid = basicInfo.fields.every(f => f.valid);
+
+        // Documents Validation
+        const documents = {
+            valid: true,
+            fields: [
+                {
+                    label: 'Toll Receipts',
+                    value: tollFile ? tollFile.name : 'Missing',
+                    valid: !!tollFile
+                },
+                {
+                    label: 'Email Approval',
+                    value: emailFile ? emailFile.name : 'Missing',
+                    valid: !!emailFile
+                }
+            ]
+        };
+        documents.valid = documents.fields.every(f => f.valid);
+
+        const isValid = basicInfo.valid && tripDetails.valid && documents.valid && accommodations.valid;
+
+        return {
+            isValid,
+            basicInfo,
+            tripDetails,
+            documents,
+            accommodations
+        };
     }
 
     // Helper method to get location segments

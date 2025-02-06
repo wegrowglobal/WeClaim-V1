@@ -158,18 +158,6 @@
                     'locations' => old('locations', $draftData['locations'] ?? '[]'),
                     'accommodations' => $accommodations
                 ]) }}">
-
-            <!-- Navigation Buttons -->
-            <div class="flex justify-end mt-6">
-                <button
-                    class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    id="next-step-button" type="button" onclick="window.claimForm.nextStep(1)">
-                    Next Step
-                    <svg class="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </button>
-            </div>
         </div>
     </div>
 </div>
