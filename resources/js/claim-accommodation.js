@@ -284,48 +284,83 @@ class AccommodationManager {
 
     updateAccommodationsData() {
         ErrorHandler.handle(() => {
-            console.log('UpdateAccommodationsData - Starting update');
-            
+            const accommodations = [];
             const entries = document.querySelectorAll('.accommodation-entry');
-            const data = Array.from(entries).map(entry => {
-                const index = entry.dataset.index;
-                const locationInput = document.getElementById(`accommodation_location_${index}`);
-                const receiptNameElement = document.getElementById(`accommodation_receipt_name_${index}`);
-                
-                const accommodationData = {
-                    location: locationInput?.value || '',
-                    location_address: locationInput?.value || '',
-                    price: document.getElementById(`accommodation_price_${index}`)?.value || '',
-                    check_in: document.getElementById(`accommodation_check_in_${index}`)?.value || '',
-                    check_out: document.getElementById(`accommodation_check_out_${index}`)?.value || '',
-                    receipt_name: receiptNameElement?.textContent?.trim() === 'No file selected' ? '' : receiptNameElement?.textContent || ''
-                };
-
-                console.log(`Accommodation ${index} data:`, accommodationData);
-                return accommodationData;
-            });
-
-            // Update both hidden inputs
-            const accommodationsDataInput = document.getElementById('accommodations-data');
-            const draftDataInput = document.getElementById('draftData');
             
-            if (accommodationsDataInput) {
-                accommodationsDataInput.value = JSON.stringify(data);
+            entries.forEach((entry, index) => {
+                const locationInput = document.getElementById(`accommodation_location_${index}`);
+                const priceInput = document.getElementById(`accommodation_price_${index}`);
+                const checkInInput = document.getElementById(`accommodation_check_in_${index}`);
+                const checkOutInput = document.getElementById(`accommodation_check_out_${index}`);
+                const receiptInput = document.getElementById(`accommodation_receipt_${index}`);
+                
+                // Skip if any required field is missing or empty
+                if (!locationInput?.value || 
+                    !priceInput?.value || 
+                    !checkInInput?.value || 
+                    !checkOutInput?.value) {
+                    console.warn('Skipping incomplete accommodation entry', { index });
+                    return;
+                }
+                
+                // Create accommodation entry
+                const accommodation = {
+                    location: locationInput.value.trim(),
+                    price: parseFloat(priceInput.value),
+                    check_in: checkInInput.value,
+                    check_out: checkOutInput.value
+                };
+                
+                // Add receipt if present
+                if (receiptInput?.files?.length > 0) {
+                    accommodation.receipt = receiptInput.files[0];
+                    accommodation.receipt_name = receiptInput.files[0].name;
+                }
+                
+                // Validate data
+                if (accommodation.price <= 0) {
+                    console.warn('Skipping accommodation entry with invalid price', { index, price: accommodation.price });
+                    return;
+                }
+                
+                // Validate dates
+                const checkIn = new Date(accommodation.check_in);
+                const checkOut = new Date(accommodation.check_out);
+                const claimDateFrom = this.claimDateFrom ? new Date(this.claimDateFrom) : null;
+                const claimDateTo = this.claimDateTo ? new Date(this.claimDateTo) : null;
+                
+                if (checkIn > checkOut || 
+                    (claimDateFrom && checkIn < claimDateFrom) || 
+                    (claimDateTo && checkOut > claimDateTo)) {
+                    console.warn('Skipping accommodation entry with invalid dates', {
+                        index,
+                        check_in: accommodation.check_in,
+                        check_out: accommodation.check_out,
+                        claim_date_from: this.claimDateFrom,
+                        claim_date_to: this.claimDateTo
+                    });
+                    return;
+                }
+                
+                accommodations.push(accommodation);
+            });
+            
+            // Update hidden input with validated data
+            const accommodationsInput = document.getElementById('accommodations-data');
+            if (accommodationsInput) {
+                accommodationsInput.value = JSON.stringify(accommodations);
+                console.log('Updated accommodations data', { count: accommodations.length, data: accommodations });
             }
             
+            // Update draft data
+            const draftDataInput = document.getElementById('draftData');
             if (draftDataInput) {
                 try {
                     const draftData = JSON.parse(draftDataInput.value || '{}');
-                    draftData.accommodations = data;
+                    draftData.accommodations = accommodations;
                     draftDataInput.value = JSON.stringify(draftData);
-                    
-                    console.log('Draft data updated with accommodations:', {
-                        accommodationsCount: data.length,
-                        accommodations: data,
-                        fullDraftData: draftData
-                    });
                 } catch (error) {
-                    console.error('Error updating draft data:', error);
+                    console.error('Error updating draft data with accommodations', error);
                 }
             }
         }, 'AccommodationManager.updateAccommodationsData');

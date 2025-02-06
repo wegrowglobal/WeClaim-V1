@@ -125,23 +125,120 @@ class ClaimService
 
     private function createAccommodations(Claim $claim, array $accommodations): void
     {
-        foreach ($accommodations as $accommodation) {
-            $receiptPath = null;
-            if (isset($accommodation['receipt']) && $accommodation['receipt']->isValid()) {
-                $receiptPath = Storage::disk('public')->put(
-                    'accommodation_receipts',
-                    $accommodation['receipt']
-                );
+        Log::info('Creating accommodations for claim', [
+            'claim_id' => $claim->id,
+            'accommodations_count' => count($accommodations)
+        ]);
+
+        try {
+            // If no accommodations, just return
+            if (empty($accommodations)) {
+                Log::info('No accommodations to create', ['claim_id' => $claim->id]);
+                return;
             }
 
-            $claim->accommodations()->create([
-                'location' => $accommodation['location'],
-                'location_address' => $accommodation['location'],
-                'price' => $accommodation['price'],
-                'check_in' => $accommodation['check_in'],
-                'check_out' => $accommodation['check_out'],
-                'receipt_path' => $receiptPath
+            // Clear existing accommodations if any
+            $claim->accommodations()->delete();
+
+            foreach ($accommodations as $index => $accommodation) {
+                Log::info('Processing accommodation entry', [
+                    'claim_id' => $claim->id,
+                    'index' => $index,
+                    'data' => array_diff_key($accommodation, ['receipt' => true])
+                ]);
+
+                // Skip if missing required fields
+                if (!isset($accommodation['location']) || 
+                    !isset($accommodation['check_in']) || 
+                    !isset($accommodation['check_out']) || 
+                    !isset($accommodation['price'])) {
+                    Log::warning('Skipping invalid accommodation - missing required fields', [
+                        'claim_id' => $claim->id,
+                        'index' => $index,
+                        'accommodation' => array_diff_key($accommodation, ['receipt' => true])
+                    ]);
+                    continue;
+                }
+
+                // Validate data types and formats
+                try {
+                    $location = trim($accommodation['location']);
+                    $checkIn = date('Y-m-d', strtotime($accommodation['check_in']));
+                    $checkOut = date('Y-m-d', strtotime($accommodation['check_out']));
+                    $price = (float) $accommodation['price'];
+
+                    if (empty($location) || $price <= 0) {
+                        Log::warning('Skipping invalid accommodation - invalid data', [
+                            'claim_id' => $claim->id,
+                            'location' => $location,
+                            'price' => $price
+                        ]);
+                        continue;
+                    }
+
+                    $accommodationData = [
+                        'location' => $location,
+                        'price' => $price,
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut
+                    ];
+
+                    // Handle file upload if a receipt is present
+                    if (isset($accommodation['receipt']) && $accommodation['receipt']->isValid()) {
+                        try {
+                            $receiptPath = Storage::disk('public')->put(
+                                'accommodation_receipts',
+                                $accommodation['receipt']
+                            );
+                            
+                            if ($receiptPath) {
+                                $accommodationData['receipt_path'] = $receiptPath;
+                                Log::info('Uploaded accommodation receipt', [
+                                    'claim_id' => $claim->id,
+                                    'index' => $index,
+                                    'receipt_path' => $receiptPath
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Error uploading receipt file', [
+                                'claim_id' => $claim->id,
+                                'index' => $index,
+                                'error' => $e->getMessage()
+                            ]);
+                            // Continue without receipt if upload fails
+                        }
+                    }
+
+                    // Create accommodation record
+                    $created = $claim->accommodations()->create($accommodationData);
+                    
+                    Log::info('Created accommodation record', [
+                        'claim_id' => $claim->id,
+                        'accommodation_id' => $created->id,
+                        'location' => $location,
+                        'check_in' => $checkIn,
+                        'check_out' => $checkOut,
+                        'price' => $price,
+                        'has_receipt' => isset($accommodationData['receipt_path'])
+                    ]);
+
+                } catch (\Exception $e) {
+                    Log::error('Error processing accommodation entry', [
+                        'claim_id' => $claim->id,
+                        'index' => $index,
+                        'error' => $e->getMessage(),
+                        'accommodation' => array_diff_key($accommodation, ['receipt' => true])
+                    ]);
+                    continue; // Skip this entry but continue with others
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error creating accommodations', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+            throw $e;
         }
     }
 
