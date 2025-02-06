@@ -444,9 +444,27 @@ export class ClaimMap extends BaseMap {
             container.innerHTML = ''; // Clear existing inputs
             this.clearMarkers();
 
-            // Create and populate location inputs
-            locations.forEach((loc, index) => {
-                const location = typeof loc === 'string' ? loc : loc.from_location;
+            // Create a set of unique locations in order
+            const uniqueLocations = new Set();
+            
+            // Add locations from segments
+            locations.forEach(loc => {
+                if (typeof loc === 'string') {
+                    uniqueLocations.add(loc);
+                } else {
+                    // Handle location objects with from_location and to_location
+                    if (loc.from_location) {
+                        uniqueLocations.add(loc.from_location);
+                    }
+                    // Add the final to_location from the last segment
+                    if (loc === locations[locations.length - 1] && loc.to_location) {
+                        uniqueLocations.add(loc.to_location);
+                    }
+                }
+            });
+
+            // Convert back to array and create inputs
+            Array.from(uniqueLocations).forEach((location, index) => {
                 const showDelete = index >= 2;
                 const wrapper = this.locationManager.createLocationInput(index, location, showDelete);
                 container.appendChild(wrapper);
@@ -461,7 +479,7 @@ export class ClaimMap extends BaseMap {
             this.initializeSortable(container);
 
             const mapContainer = document.getElementById('map');
-            const loadingState = locations.length >= 2 ? 
+            const loadingState = uniqueLocations.size >= 2 ? 
                 await SwalUtils.showMapLoading(mapContainer) : 
                 null;
 

@@ -111,41 +111,53 @@ class ClaimForm {
     }
 
     populateStep2(data) {
-        
         if (!window.claimMap) {
             console.warn('Map not initialized');
             return;
         }
-    
+
         // Show loading overlay
         const loadingOverlay = document.getElementById('map-loading-overlay');
         if (loadingOverlay) {
             loadingOverlay.classList.remove('hidden');
         }
-    
+
         // Wait for map initialization
         const checkMapAndPopulate = () => {
             if (window.claimMap.initialized) {
-                
-                // Check if there are any location inputs
-                const locationInputs = document.querySelectorAll('.location-input');
-                if (locationInputs.length === 0) {
-                    window.claimMap.addInitialLocationInputs();
-                } else {
-                    window.claimMap.loadSavedData();
-                }
-    
-                // Hide loading overlay after a short delay
-                setTimeout(() => {
-                    if (loadingOverlay) {
-                        loadingOverlay.classList.add('hidden');
+                // Get locations from draft data
+                let locations = [];
+                if (data.locations) {
+                    try {
+                        locations = typeof data.locations === 'string' ? 
+                            JSON.parse(data.locations) : data.locations;
+                    } catch (error) {
+                        console.error('Error parsing locations:', error);
                     }
-                }, 500);
+                }
+
+                // Clear existing location inputs
+                const locationInputs = document.getElementById('location-inputs');
+                if (locationInputs) {
+                    locationInputs.innerHTML = '';
+                }
+
+                if (locations.length > 0) {
+                    window.claimMap.loadLocations(locations);
+                } else {
+                    // If no locations, add initial inputs
+                    window.claimMap.addInitialLocationInputs();
+                }
+
+                // Hide loading overlay
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('hidden');
+                }
             } else {
                 setTimeout(checkMapAndPopulate, 100);
             }
         };
-    
+
         checkMapAndPopulate();
     }
 
