@@ -20,16 +20,32 @@ export class LocationManager {
         const locationPairs = document.querySelectorAll('.location-pair');
         locationPairs.forEach((pair, index) => {
             // Update the label letter
-            const label = pair.querySelector('.rounded-full');
-            if (label) {
-                label.textContent = String.fromCharCode(65 + index);
-                label.style.backgroundColor = this.getColorForIndex(index);
+            const letterLabel = pair.querySelector('.location-letter');
+            const letterContainer = pair.querySelector('.location-letter-container');
+            if (letterLabel) {
+                letterLabel.textContent = String.fromCharCode(65 + index);
+            }
+            if (letterContainer) {
+                letterContainer.style.color = this.getColorForIndex(index);
+            }
+
+            // Update the location number and title
+            const locationTitle = pair.querySelector('.location-title');
+            if (locationTitle) {
+                locationTitle.textContent = `Location ${index + 1}`;
             }
 
             // Update delete button visibility
             const deleteButton = pair.querySelector('.delete-location-btn');
             if (deleteButton) {
                 deleteButton.style.display = index >= 2 ? 'flex' : 'none';
+            }
+
+            // Update input name and aria-label if they exist
+            const input = pair.querySelector('.location-input');
+            if (input) {
+                input.name = `location_${index}`;
+                input.setAttribute('aria-label', `Location ${index + 1}`);
             }
         });
     }
@@ -39,16 +55,16 @@ export class LocationManager {
         wrapper.className = 'location-pair bg-white shadow-sm ring-1 ring-black/5 p-4 relative flex flex-col gap-3';
         
         const letter = String.fromCharCode(65 + index);
-        const color = this.routeColors[index % this.routeColors.length];
+        const color = this.getColorForIndex(index);
         
         wrapper.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="flex h-6 w-6 items-center justify-center rounded-full bg-white">
-                        <span class="text-sm font-medium" style="color: ${color}">${letter}</span>
+                    <div class="location-letter-container flex h-6 w-6 items-center justify-center rounded-full bg-white" style="color: ${color}">
+                        <span class="location-letter text-sm font-medium">${letter}</span>
                     </div>
                     <div>
-                        <h3 class="text-sm font-medium text-gray-900">Location ${index + 1}</h3>
+                        <h3 class="location-title text-sm font-medium text-gray-900">Location ${index + 1}</h3>
                         <p class="text-xs text-gray-500">Enter the address or select from map</p>
                     </div>
                 </div>
@@ -68,9 +84,11 @@ export class LocationManager {
                     </svg>
                 </div>
                 <input type="text" 
-                       class="location-input block w-full pl-10 pr-10 py-2 text-sm border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-gray-400 rounded-lg transition-all" 
+                       class="location-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 pl-10 pr-10 py-2 text-sm transition-all focus:border-gray-400 focus:bg-white"
+                       name="location_${index}"
                        placeholder="Enter location"
                        value="${value}"
+                       aria-label="Location ${index + 1}"
                        autocomplete="off">
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                     <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
