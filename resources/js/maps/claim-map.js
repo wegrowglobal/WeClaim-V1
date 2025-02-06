@@ -359,7 +359,9 @@ export class ClaimMap extends BaseMap {
                                     </div>
                                     <span class="text-xs font-medium text-gray-700">Distance</span>
                                 </div>
-                                <p class="text-sm font-medium text-gray-900">${index === legs.length - 1 ? 'N/A' : `${(leg.distance.value / 1000).toFixed(2)} km`}</p>
+                                <p class="text-sm font-medium text-gray-900">
+                                    ${(leg.distance.value / 1000).toFixed(2)} km
+                                </p>
                             </div>
                         </div>
                     </div>
