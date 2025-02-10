@@ -6,137 +6,142 @@ use App\Models\Claim;
 use App\Models\User;
 use App\Notifications\ClaimStatusNotification;
 use Illuminate\Support\Facades\Log;
+use App\Services\ClaimService;
 
 class NotificationService
 {
-    public function sendClaimStatusNotification(Claim $claim, string $status, string $action)
+    private const NOTIFICATION_MAP = [
+        'submitted' => [
+            'recipients' => ['admin'],
+            'owner_message' => 'Your claim #{id} has been submitted for Admin review',
+            'reviewer_message' => 'New claim #{id} from {user} requires Admin review'
+        ],
+        'approved_admin' => [
+            'recipients' => ['owner', 'manager'],
+            'owner_message' => 'Your claim #{id} has been approved by Admin',
+            'reviewer_message' => 'Claim #{id} requires Manager review'
+        ],
+        'approved_manager' => [
+            'recipients' => ['owner', 'hr'],
+            'owner_message' => 'Your claim #{id} has been approved by Manager',
+            'reviewer_message' => 'Claim #{id} requires HR review'
+        ],
+        'approved_hr' => [
+            'recipients' => ['owner', 'datuk_email'],
+            'owner_message' => 'Your claim #{id} has been approved by HR and sent to Datuk',
+            'reviewer_message' => 'Claim #{id} requires Datuk email approval'
+        ],
+        'approved_datuk' => [
+            'recipients' => ['owner', 'finance'],
+            'owner_message' => 'Your claim #{id} has been approved by Datuk',
+            'reviewer_message' => 'Claim #{id} requires Finance review'
+        ],
+        'approved_finance' => [
+            'recipients' => ['owner'],
+            'owner_message' => 'Your claim #{id} has been approved by Finance',
+            'reviewer_message' => null
+        ],
+        'rejected' => [
+            'recipients' => ['owner'],
+            'owner_message' => 'Your claim #{id} has been rejected by {role}',
+            'reviewer_message' => null
+        ],
+        'resubmitted' => [
+            'recipients' => ['previous_reviewer'],
+            'owner_message' => 'Your claim #{id} has been resubmitted',
+            'reviewer_message' => 'Resubmitted claim #{id} requires your review'
+        ],
+        'completed' => [
+            'recipients' => ['owner'],
+            'owner_message' => 'Your claim #{id} has been completed',
+            'reviewer_message' => null
+        ]
+    ];
+
+    public function __construct(
+        private ClaimService $claimService
+    ) {}
+
+    public function sendNotifications(Claim $claim, string $action, ?User $triggeredBy = null): void
     {
-        Log::info('Sending claim status notification', [
-            'claim_id' => $claim->id,
-            'status' => $status,
-            'action' => $action,
-            'user_id' => $claim->user_id ?? 'null'
-        ]);
+        $config = self::NOTIFICATION_MAP[$action] ?? null;
+        if (!$config) {
+            Log::error("Unknown notification action: {$action}");
+            return;
+        }
 
         try {
-            // Only notify claim owner for specific actions
-            $claimOwner = $claim->user;
-            if ($claimOwner && $this->shouldNotifyOwner($action)) {
-                $notification = new ClaimStatusNotification(
-                    $claim,
-                    $status,
-                    $action,
-                    true
-                );
-
-                $claimOwner->notify($notification);
+            // Notify claim owner
+            if (in_array('owner', $config['recipients'])) {
+                $this->notifyOwner($claim, $config['owner_message'], $action, $triggeredBy);
             }
 
-            // Skip reviewer notifications for certain actions
-            if (in_array($action, [
-                'approved_admin',
-                'approved_manager',
-                'approved_hr',
-                'approved_datuk',
-                'approved_finance'
-            ])) {
-                return;
-            }
-
-            // For other cases, proceed with normal notification flow
-            $nextReviewerRole = $this->determineNextReviewerRole($status);
-            if ($nextReviewerRole) {
-                $reviewers = User::whereHas('role', function ($query) use ($nextReviewerRole) {
-                    $query->where('name', $nextReviewerRole);
-                })->get();
-
-                $reviewerAction = $this->determineReviewerAction($status, $claim);
-
-                foreach ($reviewers as $reviewer) {
-                    if ($reviewer->id === $claim->user_id) {
-                        continue;
-                    }
-
-                    try {
-                        $notification = new ClaimStatusNotification(
-                            $claim,
-                            $status,
-                            $reviewerAction,
-                            false
-                        );
-                        $reviewer->notify($notification);
-                    } catch (\Exception $e) {
-                        Log::error('Failed to send notification to reviewer', [
-                            'reviewer_id' => $reviewer->id,
-                            'error' => $e->getMessage()
-                        ]);
-                    }
-                }
+            // Notify other recipients
+            foreach ($config['recipients'] as $recipientType) {
+                match ($recipientType) {
+                    'admin' => $this->notifyRole($claim, 'Admin', $config['reviewer_message'], $action, $triggeredBy),
+                    'manager' => $this->notifyRole($claim, 'Manager', $config['reviewer_message'], $action, $triggeredBy),
+                    'hr' => $this->notifyRole($claim, 'HR', $config['reviewer_message'], $action, $triggeredBy),
+                    'finance' => $this->notifyRole($claim, 'Finance', $config['reviewer_message'], $action, $triggeredBy),
+                    'datuk_email' => $this->handleDatukNotification($claim),
+                    'previous_reviewer' => $this->notifyPreviousReviewer($claim, $config['reviewer_message'], $action, $triggeredBy),
+                    default => null
+                };
             }
         } catch (\Exception $e) {
-            Log::error('Error in sendClaimStatusNotification', [
-                'claim_id' => $claim->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error("Notification failed for claim {$claim->id}: " . $e->getMessage());
         }
     }
 
-    private function determineNextReviewerRole(string $status): ?string
+    private function notifyOwner(Claim $claim, string $messageTemplate, string $action, ?User $triggeredBy): void
     {
-        return match ($status) {
-            Claim::STATUS_SUBMITTED => 'Admin',
-            Claim::STATUS_APPROVED_ADMIN => 'Manager',
-            Claim::STATUS_APPROVED_MANAGER => 'HR',
-            Claim::STATUS_APPROVED_HR => 'HR', // HR still handles Datuk email
-            Claim::STATUS_APPROVED_DATUK => 'Finance',
-            Claim::STATUS_APPROVED_FINANCE => 'Finance',
-            Claim::STATUS_DONE => null,
-            default => null
-        };
+        $message = $this->replacePlaceholders($messageTemplate, $claim, $triggeredBy);
+        $notification = new ClaimStatusNotification($claim, $action, $message, true);
+        $claim->user->notify($notification);
     }
 
-    private function determineReviewerAction(string $status, Claim $claim): string
+    private function notifyRole(Claim $claim, string $role, string $messageTemplate, string $action, ?User $triggeredBy): void
     {
-        if ($this->isResubmission($claim)) {
-            return match ($status) {
-                Claim::STATUS_SUBMITTED => 'resubmitted_admin',
-                Claim::STATUS_APPROVED_HR => 'resubmitted_review',
-                default => 'pending_review'
-            };
+        $users = User::whereHas('role', fn($q) => $q->where('name', $role))->get();
+        $message = $this->replacePlaceholders($messageTemplate, $claim, $triggeredBy);
+
+        foreach ($users as $user) {
+            $notification = new ClaimStatusNotification($claim, $action, $message, false);
+            $user->notify($notification);
         }
-
-        return match ($status) {
-            Claim::STATUS_SUBMITTED => 'pending_admin_review',
-            Claim::STATUS_APPROVED_ADMIN => 'pending_manager_review',
-            Claim::STATUS_APPROVED_MANAGER => 'pending_hr_review',
-            Claim::STATUS_APPROVED_HR => 'pending_datuk_review',
-            Claim::STATUS_APPROVED_DATUK => 'pending_finance_review',
-            default => 'pending_review'
-        };
     }
 
-    private function isResubmission(Claim $claim): bool
+    private function handleDatukNotification(Claim $claim): void
     {
-        return $claim->reviews()
-            ->where('status', Claim::STATUS_REJECTED)
-            ->exists();
-    }
-
-    private function shouldNotifyOwner(string $action): bool
-    {
-        return in_array($action, [
-            'approved_admin',
-            'approved_manager',
-            'approved_hr',
-            'approved_datuk',
-            'approved_finance',
-            'rejected_admin',
-            'rejected_manager',
-            'rejected_hr',
-            'rejected_datuk',
-            'rejected_finance',
-            'completed'
+        // Trigger email to Datuk instead of system notification
+        $this->claimService->sendClaimToDatuk($claim);
+        
+        // Update claim status to pending Datuk approval
+        $claim->update([
+            'status' => Claim::STATUS_PENDING_DATUK,
+            'pending_reviewer_id' => null // No system user for Datuk
         ]);
+    }
+
+    private function notifyPreviousReviewer(Claim $claim, string $messageTemplate, string $action, ?User $triggeredBy): void
+    {
+        if ($lastRejection = $claim->reviews()->latest()->where('status', 'rejected')->first()) {
+            $message = $this->replacePlaceholders($messageTemplate, $claim, $triggeredBy);
+            $notification = new ClaimStatusNotification($claim, $action, $message, false);
+            $lastRejection->reviewer->notify($notification);
+        }
+    }
+
+    private function replacePlaceholders(string $message, Claim $claim, ?User $triggeredBy = null): string
+    {
+        return str_replace(
+            ['{id}', '{user}', '{role}'],
+            [
+                $claim->id,
+                $claim->user->full_name,
+                $triggeredBy?->role->name ?? $claim->pendingReviewer?->role->name ?? 'System'
+            ],
+            $message
+        );
     }
 }

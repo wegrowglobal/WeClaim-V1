@@ -16,14 +16,19 @@ class ClaimActionMail extends Mailable
 
     public function __construct($data)
     {
-        $this->claim = $data['claim'];
-        $this->locations = $data['locations'];
+        if ($data instanceof \App\Models\Claim) {
+            $this->claim = $data;
+            $this->locations = $data->locations;
+        } else {
+            $this->claim = $data['claim'];
+            $this->locations = $data['locations'];
+        }
     }
 
     public function build()
     {
         return $this->view('emails.claim-action')
-                    ->subject('Claim Approval Request')
+                    ->subject('Claim Review Required - WeClaim')
                     ->with([
                         'claim' => $this->claim,
                         'locations' => $this->locations,

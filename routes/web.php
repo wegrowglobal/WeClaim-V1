@@ -105,7 +105,7 @@ Route::group([], function () {
         // Email Actions
         Route::post('/send-to-datuk/{id}', [ClaimController::class, 'sendToDatuk'])
             ->name('mail.to.datuk');
-        Route::get('/email-action/{id}', [ClaimController::class, 'handleEmailAction'])
+        Route::get('/email-action/{id}/{action}', [ClaimController::class, 'handleEmailAction'])
             ->name('email.action');
 
         // Resubmit Routes
@@ -203,6 +203,9 @@ Route::get('/set-password/{token}', [RegistrationRequestController::class, 'show
 
 Route::post('/set-password/{token}', [RegistrationRequestController::class, 'setPassword'])
     ->name('password.setup');
+
+Route::get('/password/setup-success', [RegistrationRequestController::class, 'showPasswordSetupSuccess'])
+    ->name('password.setup.success');
 
 Route::get('/coming-soon', function () {
     return view('pages.coming-soon');

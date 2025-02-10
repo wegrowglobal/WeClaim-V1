@@ -52,7 +52,7 @@
                             @elseif (Auth::user()->role->name === 'Manager')
                                 <button
                                     class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    onclick="approveClaim({{ $claim->id }})">
+                                    onclick="showApprovalForm({{ $claim->id }})">
                                     <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -77,7 +77,7 @@
                             @if (Auth::user()->role->name === 'HR')
                                 <button
                                     class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    onclick="approveClaim({{ $claim->id }})">
+                                    onclick="showApprovalForm({{ $claim->id }})">
                                     <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -101,7 +101,7 @@
                         <div class="flex items-center gap-4">
                             <button
                                 class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                onclick="approveClaim({{ $claim->id }})">
+                                onclick="showApprovalForm({{ $claim->id }})">
                                 <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -124,7 +124,7 @@
                         <div class="flex items-center gap-4">
                             <button
                                 class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                onclick="approveClaim({{ $claim->id }})">
+                                onclick="showApprovalForm({{ $claim->id }})">
                                 <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -148,7 +148,7 @@
                             @if (Auth::user()->role->name === 'Finance')
                                 <button
                                     class="inline-flex items-center justify-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                                    data-action="mark-as-done" onclick="javascript:approveClaim({{ $claim->id }}, true)">
+                                    onclick="showApprovalForm({{ $claim->id }}, true)">
                                     <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -198,9 +198,9 @@
         });
     }
 
-    function showApprovalForm(claimId) {
+    function showApprovalForm(claimId, isDone = false) {
         Swal.fire({
-            title: 'Approve Claim',
+            title: isDone ? 'Mark Claim as Done' : 'Approve Claim',
             html: `<div class="approval-form">@include('components.claims.approval-form', ['claim' => $claim])</div>`,
             showConfirmButton: false,
             showCloseButton: true,

@@ -43,8 +43,14 @@
 
                     <div class="p-4">
                         @if (session('status'))
-                            <div class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-600">
-                                {{ session('status') }}
+                            <div class="mb-4 flex items-center gap-2 rounded-lg border border-green-100 bg-green-50/50 p-3 backdrop-blur-sm">
+                                <svg class="h-5 w-5 shrink-0 text-green-500" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                                        clip-rule="evenodd"/>
+                                </svg>
+                                <p class="text-sm font-medium text-green-600">{{ session('status') }}</p>
                             </div>
                         @endif
 
@@ -52,7 +58,7 @@
                             @csrf
 
                             <!-- Email Input -->
-                            <div>
+                            <div class="relative">
                                 <label class="sr-only" for="email">Email</label>
                                 <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('email') border-red-300 @enderror"
                                     id="email"
@@ -77,9 +83,12 @@
 
                 <!-- Back to Login -->
                 <div class="mt-6 text-center">
-                    <a class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    <a class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500"
                         href="{{ route('login') }}">
-                        ← Back to login
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clip-rule="evenodd"/>
+                        </svg>
+                        Back to login
                     </a>
                 </div>
             </div>

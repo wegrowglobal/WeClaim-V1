@@ -99,7 +99,27 @@ class BulkEmailHandler {
             });
 
             if (response.data.success) {
-                await SwalUtils.showSuccess(response.data.message);
+                let message = response.data.message;
+                const failedClaims = response.data.failed_claims || [];
+
+                if (failedClaims.length > 0) {
+                    // Show warning message for partial success
+                    await Swal.fire({
+                        title: 'Partial Success',
+                        text: message,
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    // Show success message for complete success
+                    await Swal.fire({
+                        title: 'Success',
+                        text: message,
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                }
+
                 window.location.reload();
                 return true;
             }

@@ -640,130 +640,16 @@ function initializeResubmitForm() {
 function initializeAccommodations() {
     const existingAccommodationsInput = document.getElementById('existing-accommodations');
     if (existingAccommodationsInput) {
-        const accommodations = JSON.parse(existingAccommodationsInput.value || '[]');
-        
-        // Initialize accommodation container
-        window.claimResubmit = {
-            // Add a Set to track active indices
-            activeIndices: new Set(),
+        try {
+            const accommodations = JSON.parse(existingAccommodationsInput.value || '[]');
             
-            getNextIndex: function() {
-                let index = 1;
-                while (this.activeIndices.has(index)) {
-                    index++;
-                }
-                return index;
-            },
-            
-            addAccommodation: function(existingData = null) {
-                const container = document.getElementById('accommodations-container');
-                const index = this.getNextIndex();
-                this.activeIndices.add(index);
-                
-                const html = `
-                    <div class="accommodation-entry mb-4 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" data-index="${index}">
-                        <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-gray-900">Accommodation Entry #${this.updateEntryNumbers()}</p>
-                                <button type="button" onclick="window.claimResubmit.removeAccommodation(${index})" class="text-red-600 hover:text-red-700">
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="p-4 space-y-4">
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Location</label>
-                                    <input type="text" 
-                                        id="accommodation_location_${index}"
-                                        name="accommodations[${index}][location]" 
-                                        value="${existingData ? existingData.location : ''}"
-                                        class="location-autocomplete mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" 
-                                        placeholder="Enter or select location"
-                                        required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Price (RM)</label>
-                                    <input type="number" name="accommodations[${index}][price]" step="0.01"
-                                        value="${existingData ? existingData.price : ''}"
-                                        class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Check-in Date</label>
-                                    <input type="date" 
-                                        id="accommodation_check_in_${index}"
-                                        name="accommodations[${index}][check_in]"
-                                        value="${existingData ? existingData.check_in : ''}"
-                                        min="${document.querySelector('[name="date_from"]')?.value || ''}"
-                                        max="${document.querySelector('[name="date_to"]')?.value || ''}"
-                                        class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Check-out Date</label>
-                                    <input type="date" 
-                                        id="accommodation_check_out_${index}"
-                                        name="accommodations[${index}][check_out]"
-                                        value="${existingData ? existingData.check_out : ''}"
-                                        min="${document.querySelector('[name="date_from"]')?.value || ''}"
-                                        max="${document.querySelector('[name="date_to"]')?.value || ''}"
-                                        class="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Receipt</label>
-                                <input type="file" name="accommodations[${index}][receipt]" accept=".pdf,.jpg,.jpeg,.png"
-                                    class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                container.insertAdjacentHTML('beforeend', html);
-                
-                // Initialize Google Maps autocomplete for the new location input
-                const locationInput = document.getElementById(`accommodation_location_${index}`);
-                if (locationInput) {
-                    initializeAccommodationAutocomplete(locationInput);
-                }
-            },
-            
-            removeAccommodation: function(index) {
-                const entry = document.querySelector(`.accommodation-entry[data-index="${index}"]`);
-                if (entry) {
-                    entry.remove();
-                    this.activeIndices.delete(index);
-                    this.updateEntryNumbers();
-                }
-            },
-            
-            updateEntryNumbers: function() {
-                const entries = document.querySelectorAll('.accommodation-entry');
-                entries.forEach((entry, i) => {
-                    const titleElement = entry.querySelector('p');
-                    if (titleElement) {
-                        titleElement.textContent = `Accommodation Entry #${i + 1}`;
-                    }
-                });
-                return entries.length + 1; // Return next number for new entries
-            },
-            
-            removeAllAccommodations: function() {
-                const container = document.getElementById('accommodations-container');
-                container.innerHTML = '';
-                this.activeIndices.clear();
-                this.updateEntryNumbers();
-                document.getElementById('remove_all_accommodations').value = '1';
-            }
-        };
-
-        // Populate existing accommodations
-        accommodations.forEach(accommodation => {
-            window.claimResubmit.addAccommodation(accommodation);
-        });
+            // Populate existing accommodations
+            accommodations.forEach(accommodation => {
+                window.claimResubmit.addAccommodation(accommodation);
+            });
+        } catch (error) {
+            console.error('Error initializing accommodations:', error);
+        }
     }
 }
 

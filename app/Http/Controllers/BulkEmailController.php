@@ -48,6 +48,18 @@ class BulkEmailController extends Controller
             }
 
             $claimIds = $request->input('claims', []);
+            if (empty($claimIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please select at least one claim to send.'
+                ], 400);
+            }
+
+            Log::info('Starting bulk email process', [
+                'user_id' => $user->id,
+                'claim_ids' => $claimIds
+            ]);
+
             $claims = Claim::with(['user', 'locations'])
                 ->whereIn('id', $claimIds)
                 ->where(function($query) {
@@ -57,33 +69,82 @@ class BulkEmailController extends Controller
                 ->get();
 
             if ($claims->isEmpty()) {
+                Log::warning('No valid claims found for bulk email', [
+                    'requested_ids' => $claimIds
+                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'No valid claims found to send.'
                 ], 400);
             }
 
-            DB::beginTransaction();
-            try {
-                foreach ($claims as $claim) {
-                    // Always update to PENDING_DATUK status and reset timer
-                    $claim->status = Claim::STATUS_PENDING_DATUK;
-                    $claim->updated_at = now();
-                    $claim->save();
-                    
-                    $this->claimService->sendClaimToDatuk($claim);
-                }
-                DB::commit();
+            $successCount = 0;
+            $failedClaims = [];
+            $errors = [];
 
-                $message = $claims->count() > 1 ? 'Claims sent to Datuk successfully.' : 'Claim sent to Datuk successfully.';
-                return response()->json([
-                    'success' => true,
-                    'message' => $message
-                ]);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
+            foreach ($claims as $claim) {
+                try {
+                    Log::info('Processing claim for bulk email', [
+                        'claim_id' => $claim->id,
+                        'current_status' => $claim->status
+                    ]);
+
+                    // First try to send the email
+                    $emailSent = $this->claimService->sendClaimToDatuk($claim);
+
+                    if ($emailSent) {
+                        Log::info('Successfully processed claim', [
+                            'claim_id' => $claim->id,
+                            'token_expires_at' => $claim->approval_token_expires_at
+                        ]);
+                        
+                        $successCount++;
+                    } else {
+                        $failedClaims[] = [
+                            'id' => $claim->id,
+                            'error' => 'Email sending failed'
+                        ];
+                        $errors[] = "Failed to send email for claim #{$claim->id}";
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to process claim', [
+                        'claim_id' => $claim->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                    $failedClaims[] = [
+                        'id' => $claim->id,
+                        'error' => $e->getMessage()
+                    ];
+                    $errors[] = "Error processing claim #{$claim->id}: {$e->getMessage()}";
+                }
             }
+
+            // Determine response based on success/failure ratio
+            if ($successCount === 0) {
+                $message = 'Failed to send any claims. ' . implode(' ', $errors);
+                $statusCode = 500;
+                $success = false;
+            } else if ($successCount === count($claims)) {
+                $message = $successCount === 1 
+                    ? 'Claim sent to Datuk successfully.' 
+                    : "{$successCount} claims sent to Datuk successfully.";
+                $statusCode = 200;
+                $success = true;
+            } else {
+                $message = "{$successCount} out of " . count($claims) . " claims sent successfully. " . implode(' ', $errors);
+                $statusCode = 207; // Multi-Status
+                $success = true;
+            }
+
+            return response()->json([
+                'success' => $success,
+                'message' => $message,
+                'failed_claims' => $failedClaims,
+                'success_count' => $successCount,
+                'total_claims' => count($claims)
+            ], $statusCode);
+
         } catch (\Exception $e) {
             Log::error('Error sending bulk claims to Datuk', [
                 'claim_ids' => $claimIds ?? [],
@@ -93,8 +154,20 @@ class BulkEmailController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while sending claims to Datuk.'
+                'message' => 'An error occurred while sending claims to Datuk: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    private function generateResponseMessage(int $successCount, array $failedClaims): string
+    {
+        if (empty($failedClaims)) {
+            return $successCount > 1 
+                ? "{$successCount} claims sent to Datuk successfully." 
+                : "Claim sent to Datuk successfully.";
+        }
+
+        $failedCount = count($failedClaims);
+        return "{$successCount} claim(s) sent successfully, {$failedCount} failed. Failed claim IDs: " . implode(', ', $failedClaims);
     }
 } 

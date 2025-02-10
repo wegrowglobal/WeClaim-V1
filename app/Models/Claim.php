@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\User;
+use Illuminate\Support\Str;
 
 class Claim extends Model
 {
@@ -38,13 +40,16 @@ class Claim extends Model
         'date_from',
         'date_to',
         'status',
-        'submitted_at'
+        'submitted_at',
+        'approval_token',
+        'approval_token_expires_at'
     ];
 
     protected $casts = [
         'date_from' => 'date',
         'date_to' => 'date',
         'submitted_at' => 'datetime',
+        'approval_token_expires_at' => 'datetime',
         'petrol_amount' => 'decimal:2',
         'toll_amount' => 'decimal:2',
         'total_distance' => 'decimal:2'
@@ -173,5 +178,33 @@ class Claim extends Model
                 'order' => (int) ($location['order'] ?? $index + 1)
             ]);
         }
+    }
+
+    public function generateApprovalToken(): void
+    {
+        $this->approval_token = Str::random(64);
+        $this->approval_token_expires_at = now()->addDays(7);
+        $this->save();
+    }
+
+    public function isApprovalTokenValid(?string $token): bool
+    {
+        if (!$token || !$this->approval_token || !$this->approval_token_expires_at) {
+            return false;
+        }
+
+        return $token === $this->approval_token && $this->approval_token_expires_at->isFuture();
+    }
+
+    public function invalidateApprovalToken(): void
+    {
+        $this->approval_token = null;
+        $this->approval_token_expires_at = null;
+        $this->save();
+    }
+
+    public function canBeApprovedByDatuk(): bool
+    {
+        return $this->status === self::STATUS_PENDING_DATUK;
     }
 }

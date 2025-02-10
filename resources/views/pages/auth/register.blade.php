@@ -40,24 +40,38 @@
                     </div>
 
                     <div class="p-4">
-                        <form class="space-y-4" method="POST" action="{{ route('register') }}">
+                        <form class="space-y-4" method="POST" action="{{ route('register.request') }}">
                             @csrf
 
-                            <div>
-                                <label class="sr-only" for="name">Full Name</label>
-                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('name') border-red-300 @enderror"
-                                    id="name"
-                                    name="name"
+                            <div class="relative">
+                                <label class="sr-only" for="first_name">First Name</label>
+                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('first_name') border-red-300 @enderror"
+                                    id="first_name"
+                                    name="first_name"
                                     type="text"
-                                    value="{{ old('name') }}"
-                                    placeholder="Full Name"
+                                    value="{{ old('first_name') }}"
+                                    placeholder="First Name"
                                     required>
-                                @error('name')
+                                @error('first_name')
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
-                            <div>
+                            <div class="relative">
+                                <label class="sr-only" for="last_name">Last Name</label>
+                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('last_name') border-red-300 @enderror"
+                                    id="last_name"
+                                    name="last_name"
+                                    type="text"
+                                    value="{{ old('last_name') }}"
+                                    placeholder="Last Name"
+                                    required>
+                                @error('last_name')
+                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div class="relative">
                                 <label class="sr-only" for="email">Email</label>
                                 <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('email') border-red-300 @enderror"
                                     id="email"
@@ -71,16 +85,24 @@
                                 @enderror
                             </div>
 
-                            <div>
-                                <label class="sr-only" for="company">Company</label>
-                                <input class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('company') border-red-300 @enderror"
-                                    id="company"
-                                    name="company"
-                                    type="text"
-                                    value="{{ old('company') }}"
-                                    placeholder="Company Name"
+                            <div class="relative">
+                                <label class="sr-only" for="department">Department</label>
+                                <select class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600 @error('department') border-red-300 @enderror"
+                                    id="department"
+                                    name="department"
                                     required>
-                                @error('company')
+                                    <option value="" disabled {{ old('department') ? '' : 'selected' }}>Select Department</option>
+                                    <option value="Administration" {{ old('department') == 'Administration' ? 'selected' : '' }}>Administration</option>
+                                    <option value="Human Resources" {{ old('department') == 'Human Resources' ? 'selected' : '' }}>Human Resources</option>
+                                    <option value="Finance and Account" {{ old('department') == 'Finance and Account' ? 'selected' : '' }}>Finance and Account</option>
+                                    <option value="Marketing" {{ old('department') == 'Marketing' ? 'selected' : '' }}>Marketing</option>
+                                    <option value="Sales" {{ old('department') == 'Sales' ? 'selected' : '' }}>Sales</option>
+                                    <option value="IT and Technical" {{ old('department') == 'IT and Technical' ? 'selected' : '' }}>IT and Technical</option>
+                                    <option value="Procurement and Assets" {{ old('department') == 'Procurement and Assets' ? 'selected' : '' }}>Procurement and Assets</option>
+                                    <option value="Retails" {{ old('department') == 'Retails' ? 'selected' : '' }}>Retails</option>
+                                    <option value="All" {{ old('department') == 'All' ? 'selected' : '' }}>All</option>
+                                </select>
+                                @error('department')
                                     <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>

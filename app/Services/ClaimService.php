@@ -653,27 +653,16 @@ class ClaimService
     public function rejectClaim(User $user, Claim $claim, array $rejectionDetails)
     {
         DB::transaction(function () use ($user, $claim, $rejectionDetails) {
-            // Set status to REJECTED
             $claim->status = Claim::STATUS_REJECTED;
-
-            // Set reviewer back to Admin for resubmission
-            $nextReviewer = User::whereHas('role', function ($query) {
-                $query->where('name', 'Admin');
-            })->first();
-
-            if ($nextReviewer) {
-                $claim->reviewer_id = $nextReviewer->id;
-            }
-
             $claim->save();
 
-            // Create review record with rejection details
+            // Create review record
             $claim->reviews()->create([
                 'reviewer_id' => $user->id,
-                'remarks' => $rejectionDetails['remarks'] ?? 'No remarks provided', // Use provided remarks
+                'status' => Claim::STATUS_REJECTED,
+                'remarks' => $rejectionDetails['remarks'],
                 'department' => $user->role->name,
                 'review_order' => $claim->reviews()->count() + 1,
-                'status' => $claim->status,
                 'reviewed_at' => now(),
                 'requires_basic_info' => $rejectionDetails['requires_basic_info'] ?? false,
                 'requires_trip_details' => $rejectionDetails['requires_trip_details'] ?? false,
@@ -682,12 +671,11 @@ class ClaimService
                 'rejection_details' => $rejectionDetails
             ]);
 
-            // Send rejection notification
-            $notificationService = app(NotificationService::class);
-            $notificationService->sendClaimStatusNotification(
-                $claim,
-                $claim->status,
-                'rejected_' . strtolower($user->role->name)
+            // Send notification
+            app(NotificationService::class)->sendNotifications(
+                $claim, 
+                'rejected',
+                $user // Pass the rejecting user
             );
         });
     }
@@ -794,55 +782,224 @@ class ClaimService
         };
     }
 
-    public function sendClaimToDatuk(Claim $claim)
+    public function sendClaimToDatuk(Claim $claim): bool
     {
-        Log::info('Starting sendClaimToDatuk process', [
-            'claim_id' => $claim->id,
-            'user_id' => $claim->user_id,
-            'status' => $claim->status
-        ]);
-
         try {
-            // Force fresh load of the claim with user relationship
+            Log::info('Starting to send claim to Datuk', [
+                'claim_id' => $claim->id,
+                'current_status' => $claim->status
+            ]);
+
+            // Force fresh load of the claim with its relationships
             $claim = Claim::with(['user', 'locations'])->findOrFail($claim->id);
 
-            Log::info('Claim loaded with relationships', [
-                'claim_id' => $claim->id,
-                'user_loaded' => $claim->relationLoaded('user'),
-                'user_exists' => $claim->user !== null,
-                'user_details' => $claim->user ? [
-                    'id' => $claim->user->id,
-                    'name' => $claim->user->first_name . ' ' . $claim->user->second_name
-                ] : null
-            ]);
-
-            if (!$claim->user) {
-                // Check if user_id exists but relationship is broken
-                $userExists = DB::table('users')->where('id', $claim->user_id)->exists();
-                Log::error('User relationship issue detected', [
+            // Validate claim status
+            if (!in_array($claim->status, [Claim::STATUS_APPROVED_HR, Claim::STATUS_PENDING_DATUK])) {
+                Log::error('Invalid claim status for sending to Datuk', [
                     'claim_id' => $claim->id,
-                    'user_id' => $claim->user_id,
-                    'user_exists_in_db' => $userExists
+                    'current_status' => $claim->status,
+                    'expected_statuses' => [Claim::STATUS_APPROVED_HR, Claim::STATUS_PENDING_DATUK]
                 ]);
-                throw new \Exception('Claim user relationship is invalid. User ID: ' . $claim->user_id);
+                throw new \Exception('Claim must be in Approved HR or Pending Datuk status to be sent to Datuk.');
             }
 
+            // Validate required relationships
+            if (!$claim->user || $claim->locations->isEmpty()) {
+                Log::error('Missing required claim data', [
+                    'claim_id' => $claim->id,
+                    'has_user' => (bool)$claim->user,
+                    'locations_count' => $claim->locations->count()
+                ]);
+                throw new \Exception('Claim is missing required data (user or locations).');
+            }
+
+            // Generate new approval token if not exists
+            if (!$claim->approval_token || !$claim->approval_token_expires_at) {
+                $claim->generateApprovalToken();
+                Log::info('Generated new approval token', [
+                    'claim_id' => $claim->id,
+                    'token_expires_at' => $claim->approval_token_expires_at
+                ]);
+            }
+
+            // Get Datuk's email from config
+            $datukEmail = config('mail.datuk_email');
+            Log::info('Attempting to get Datuk email configuration', [
+                'config_value' => $datukEmail,
+                'env_value' => env('MAIL_DATUK_EMAIL'),
+                'all_mail_config' => config('mail')
+            ]);
+
+            if (!$datukEmail) {
+                // Try to get from environment directly as fallback
+                $datukEmail = env('MAIL_DATUK_EMAIL');
+                
+                if (!$datukEmail) {
+                    Log::error('Datuk email not configured', [
+                        'claim_id' => $claim->id,
+                        'config_value' => config('mail.datuk_email'),
+                        'env_value' => env('MAIL_DATUK_EMAIL')
+                    ]);
+                    throw new \Exception('Datuk email address is not configured.');
+                }
+                
+                Log::info('Using Datuk email from environment', [
+                    'email' => $datukEmail
+                ]);
+            }
+
+            // Prepare data for email
             $data = [
                 'claim' => $claim,
-                'locations' => $claim->locations,
+                'locations' => $claim->locations
             ];
 
-            Mail::to('ammar@wegrow-global.com')->send(new ClaimActionMail($data));
-
-            Log::info('Claim sent to Datuk successfully', [
+            Log::info('Attempting to send email to Datuk', [
                 'claim_id' => $claim->id,
-                'user_id' => $claim->user->id
+                'datuk_email' => $datukEmail,
+                'locations_count' => $claim->locations->count(),
+                'token_expires_at' => $claim->approval_token_expires_at,
+                'mail_config' => [
+                    'mailer' => config('mail.mailer'),
+                    'host' => config('mail.host'),
+                    'port' => config('mail.port'),
+                    'from_address' => config('mail.from.address')
+                ]
             ]);
+
+            try {
+                // Configure mailer with specific SSL/TLS settings
+                config([
+                    'mail.mailers.smtp.verify_peer' => false,
+                    'mail.mailers.smtp.verify_peer_name' => false,
+                    'mail.mailers.smtp.allow_self_signed' => true
+                ]);
+
+                // Send email to Datuk with retry mechanism
+                $maxRetries = 3;
+                $attempt = 1;
+                $lastError = null;
+
+                while ($attempt <= $maxRetries) {
+                    try {
+                        Mail::to($datukEmail)
+                            ->send(new ClaimActionMail($data));
+
+                        // If we reach here, email was sent successfully
+                        Log::info('Claim email sent to Datuk successfully', [
+                            'claim_id' => $claim->id,
+                            'datuk_email' => $datukEmail,
+                            'attempt' => $attempt
+                        ]);
+
+                        // Update claim status to pending Datuk only after successful email
+                        $claim->status = Claim::STATUS_PENDING_DATUK;
+                        $claim->save();
+
+                        return true;
+
+                    } catch (\Exception $e) {
+                        $lastError = $e->getMessage();
+                        Log::warning('Email send attempt failed', [
+                            'claim_id' => $claim->id,
+                            'attempt' => $attempt,
+                            'error' => $lastError
+                        ]);
+
+                        if ($attempt < $maxRetries) {
+                            sleep(2 * $attempt); // Exponential backoff
+                        }
+                        $attempt++;
+                    }
+                }
+
+                Log::error('All email send attempts failed', [
+                    'claim_id' => $claim->id,
+                    'datuk_email' => $datukEmail,
+                    'attempts' => $maxRetries,
+                    'last_error' => $lastError
+                ]);
+                throw new \Exception('Failed to send email after ' . $maxRetries . ' attempts: ' . $lastError);
+            } catch (\Exception $e) {
+                Log::error('Mail sending failed', [
+                    'claim_id' => $claim->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
+            }
         } catch (\Exception $e) {
-            Log::error('Error sending claim to Datuk', [
+            Log::error('Failed to send claim to Datuk', [
                 'claim_id' => $claim->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
+    public function handleDatukAction(Claim $claim, string $action, ?string $token): bool
+    {
+        if (!$claim->isApprovalTokenValid($token)) {
+            Log::warning('Invalid or expired approval token', [
+                'claim_id' => $claim->id,
+                'action' => $action
+            ]);
+            return false;
+        }
+
+        if (!$claim->canBeApprovedByDatuk()) {
+            Log::warning('Claim cannot be approved by Datuk - invalid status', [
+                'claim_id' => $claim->id,
+                'current_status' => $claim->status
+            ]);
+            return false;
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update claim status
+            $claim->status = $action === 'approve' ? 
+                Claim::STATUS_APPROVED_DATUK : 
+                Claim::STATUS_REJECTED;
+            
+            // Create review record
+            $claim->reviews()->create([
+                'reviewer_id' => null, // Email action, no specific reviewer
+                'status' => $claim->status,
+                'remarks' => $action === 'approve' ? 
+                    'Approved via email by Datuk' : 
+                    'Rejected via email by Datuk',
+                'department' => 'Management',
+                'review_order' => $claim->reviews()->count() + 1,
+                'reviewed_at' => now()
+            ]);
+
+            // Invalidate the token after use
+            $claim->invalidateApprovalToken();
+            
+            DB::commit();
+
+            // Send notifications
+            app(NotificationService::class)->sendNotifications(
+                $claim,
+                $action === 'approve' ? 'approved_datuk' : 'rejected',
+                null
+            );
+
+            Log::info('Datuk action processed successfully', [
+                'claim_id' => $claim->id,
+                'action' => $action,
+                'new_status' => $claim->status
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to process Datuk action', [
+                'claim_id' => $claim->id,
+                'action' => $action,
+                'error' => $e->getMessage()
             ]);
             throw $e;
         }
@@ -939,7 +1096,7 @@ class ClaimService
     private function notifyRelevantUsers(Claim $claim, string $action)
     {
         $notificationService = app(NotificationService::class);
-        $notificationService->sendClaimStatusNotification($claim, $claim->status, $action);
+        $notificationService->sendNotifications($claim, $action, Auth::user());
     }
 
     public function calculateClaimAmount($distance)

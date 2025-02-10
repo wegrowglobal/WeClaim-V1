@@ -40,6 +40,7 @@
                 </a>
 
                 @auth
+                    @if (Auth::user()->role_id === 1)
                     <a class="navbar-item {{ request()->routeIs('claims.dashboard') ? 'navbar-item-active' : 'navbar-item-active-hover' }}"
                         href="{{ route('claims.dashboard') }}">
                         <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -49,6 +50,7 @@
                         </svg>
                         Claims
                     </a>
+                    @endif
 
                     @if (Auth::user()->role_id != 1)
                         <a class="navbar-item {{ request()->routeIs('claims.approval') ? 'navbar-item-active' : 'navbar-item-active-hover' }}"
@@ -83,24 +85,13 @@
                         New Claim
                     </a>
 
-                    <a class="navbar-item {{ request()->routeIs('notifications') ? 'navbar-item-active' : 'navbar-item-active-hover' }}"
-                        href="{{ route('notifications') }}">
-                        <div class="flex w-full items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                </svg>
-                                Notifications
-                            </div>
-                            <span
-                                class="{{ Auth::user()->unreadNotifications->count() > 0 ? '' : 'hidden' }} flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white"
-                                id="notification-count">
-                                {{ Auth::user()->unreadNotifications->count() }}
-                            </span>
-                        </div>
-                    </a>
+                    <!-- Notifications -->
+                    <button class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed" disabled>
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        Notifications
+                    </button>
 
                     <a class="navbar-item-inactive" href="#" onclick="return false;">
                         <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
