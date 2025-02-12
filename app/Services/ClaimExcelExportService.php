@@ -76,6 +76,10 @@ class ClaimExcelExportService
         $this->currentRow += 1;
         $this->addTripDetails();
         $this->currentRow += 1;
+        if ($this->claim->accommodations->count() > 0) {
+            $this->addAccommodationDetails();
+            $this->currentRow += 1;
+        }
         $this->addFinancialSummary();
         $this->currentRow += 1;
         $this->addApprovalHistory();
@@ -258,19 +262,129 @@ class ClaimExcelExportService
             $this->sheet->setCellValue('C' . $this->currentRow, $location['to']);
             $this->sheet->setCellValue('D' . $this->currentRow, $location['distance']);
 
+            // Base style with consistent padding
             $style = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
                 'alignment' => [
-                    'vertical' => Alignment::VERTICAL_CENTER
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'indent' => 1
                 ]
             ];
 
-            // Align trip detail numbers to the left
-            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
-                ->setIndent(1);
-
             if ($index % 2 === 1) {
+                $style['fill'] = [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['rgb' => 'F9FAFB']
+                ];
+            }
+
+            // Apply base style to all cells
+            $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+                ->applyFromArray($style);
+
+            // Set specific alignments while maintaining the indent
+            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            
+            $this->sheet->getStyle('B' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                
+            $this->sheet->getStyle('C' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+            $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(35);
+            $this->currentRow++;
+        }
+    }
+
+    protected function addAccommodationDetails()
+    {
+        $this->currentRow = $this->addSectionHeader('Accommodation Details', $this->currentRow);
+
+        // Headers
+        $headers = ['No.', 'Location', 'Check In', 'Check Out', 'Cost (RM)'];
+        $columns = ['A', 'B', 'C', 'D'];
+
+        // Set headers
+        $this->sheet->setCellValue('A' . $this->currentRow, $headers[0]);
+        $this->sheet->mergeCells('B' . $this->currentRow . ':C' . $this->currentRow);
+        $this->sheet->setCellValue('B' . $this->currentRow, $headers[1]);
+        $this->sheet->setCellValue('D' . $this->currentRow, $headers[4]);
+
+        // Header styling with consistent padding
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::HEADER_BG_COLOR]],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 1]
+        ];
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($headerStyle);
+
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(30);
+        $this->currentRow++;
+
+        // Add date header row
+        $this->sheet->setCellValue('A' . $this->currentRow, '');
+        $this->sheet->setCellValue('B' . $this->currentRow, $headers[2]);
+        $this->sheet->setCellValue('C' . $this->currentRow, $headers[3]);
+        $this->sheet->setCellValue('D' . $this->currentRow, '');
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($headerStyle);
+
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(30);
+        $this->currentRow++;
+
+        // Content
+        foreach ($this->claim->accommodations as $index => $accommodation) {
+            // First row: Number and Location
+            $this->sheet->setCellValue('A' . $this->currentRow, $index + 1);
+            $this->sheet->mergeCells('B' . $this->currentRow . ':C' . $this->currentRow);
+            $this->sheet->setCellValue('B' . $this->currentRow, $accommodation->location);
+            $this->sheet->setCellValue('D' . $this->currentRow, number_format($accommodation->price, 2));
+
+            // Base style with consistent padding
+            $style = [
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'indent' => 1
+                ]
+            ];
+
+            if ($index % 2 === 0) {
+                $style['fill'] = [
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['rgb' => 'F9FAFB']
+                ];
+            }
+
+            // Apply base style to all cells
+            $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+                ->applyFromArray($style);
+
+            // Ensure number column is left-aligned
+            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+
+            // Set cost column to right alignment
+            $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+
+            // Second row: Dates
+            $this->currentRow++;
+            $this->sheet->setCellValue('A' . $this->currentRow, '');
+            $this->sheet->setCellValue('B' . $this->currentRow, $accommodation->check_in->format('d/m/Y'));
+            $this->sheet->setCellValue('C' . $this->currentRow, $accommodation->check_out->format('d/m/Y'));
+            $this->sheet->setCellValue('D' . $this->currentRow, '');
+
+            // Apply same style to second row
+            if ($index % 2 === 0) {
                 $style['fill'] = [
                     'fillType' => Fill::FILL_SOLID,
                     'color' => ['rgb' => 'F9FAFB']
@@ -280,7 +394,9 @@ class ClaimExcelExportService
             $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                 ->applyFromArray($style);
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(35);
+            // Set consistent row heights
+            $this->sheet->getRowDimension($this->currentRow - 1)->setRowHeight(25);
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
             $this->currentRow++;
         }
     }
@@ -318,23 +434,30 @@ class ClaimExcelExportService
                             'borderStyle' => Border::BORDER_THIN,
                             'color' => ['rgb' => 'D1D5DB']
                         ]
+                    ],
+                    'alignment' => [
+                        'indent' => 1
                     ]
                 ];
 
                 $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                     ->applyFromArray($totalRowStyle);
 
-                // Align label left and value right
+                // Align label left and value right with indent
                 $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                    ->setIndent(1);
                 $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+                    ->setIndent(1);
             } else {
-                // Regular rows
+                // Regular rows with consistent padding
                 $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                    ->setIndent(1);
                 $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+                    ->setIndent(1);
             }
 
             $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
@@ -354,12 +477,17 @@ class ClaimExcelExportService
             $this->sheet->setCellValue($col . $this->currentRow, $header);
         }
 
-        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)->applyFromArray([
+        // Header styling with consistent padding
+        $headerStyle = [
             'font' => ['bold' => true],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::HEADER_BG_COLOR]],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 1]
-        ]);
+        ];
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($headerStyle);
+
         $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
         $this->currentRow++;
 
@@ -369,9 +497,13 @@ class ClaimExcelExportService
             $this->sheet->setCellValue('C' . $this->currentRow, $this->formatApprovalStatus($review['department'], $review['status']));
             $this->sheet->setCellValue('D' . $this->currentRow, $review['remarks']);
 
+            // Base style with consistent padding
             $style = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-                'alignment' => ['indent' => 1]
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'indent' => 1
+                ]
             ];
 
             if ($index % 2 === 1) {
@@ -381,8 +513,15 @@ class ClaimExcelExportService
                 ];
             }
 
+            // Apply base style to all cells
             $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                 ->applyFromArray($style);
+
+            // Set specific alignments while maintaining the indent
+            foreach ($columns as $col) {
+                $this->sheet->getStyle($col . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            }
 
             $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
             $this->currentRow++;
