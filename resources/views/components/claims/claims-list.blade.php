@@ -88,7 +88,7 @@
                                         Review
                                     </a>
                                 @endif
-                                @if ($claim->status === Claim::STATUS_DONE)
+                                @if (in_array($claim->status, [Claim::STATUS_APPROVED_FINANCE, Claim::STATUS_DONE]))
                                     <form class="inline" action="{{ route('claims.export', $claim->id) }}" method="POST">
                                         @csrf
                                         @method('POST')

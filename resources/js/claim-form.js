@@ -487,7 +487,7 @@ class ClaimForm {
             toll_amount: formData.get('toll_amount') || '0',
             locations: existingData.locations || [],
             status: 'Submitted',
-            title: `Petrol Claim ${existingData.date_from} to ${existingData.date_to}`,
+            title: `Petrol Claim - ${formData.get('claim_company') || existingData.claim_company}`,
             claim_type: 'Petrol',
         };
 
@@ -711,7 +711,7 @@ class ClaimForm {
             formData.append('petrol_amount', draftData.total_cost || '0');
             formData.append('toll_amount', tollAmount.value || '0');
             formData.append('status', 'Submitted');
-            formData.append('title', `Petrol Claim ${draftData.date_from} to ${draftData.date_to}`);
+            formData.append('title', `Petrol Claim - ${draftData.claim_company}`);
             formData.append('claim_type', 'Petrol');
             formData.append('remarks', draftData.remarks || '');
             

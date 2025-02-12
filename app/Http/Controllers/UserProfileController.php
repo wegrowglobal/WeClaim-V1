@@ -62,12 +62,15 @@ class UserProfileController extends Controller
                 'country' => 'required|string',
                 'bank_name' => 'required|string',
                 'account_holder' => 'required|string',
-                'account_number' => 'required|string'
+                'account_number' => 'required|string',
+                'signature_path' => 'nullable|string'
             ]);
 
             Log::info('Starting profile update', [
                 'user_id' => $user->id,
-                'has_file' => $request->hasFile('profile_picture')
+                'has_file' => $request->hasFile('profile_picture'),
+                'signature_path' => $request->signature_path,
+                'all_data' => $request->all()
             ]);
 
             if ($request->hasFile('profile_picture')) {
@@ -100,8 +103,8 @@ class UserProfileController extends Controller
                 $user->save();
             }
 
-            // Update other user information
-            $user->update($request->only([
+            // Update user information including signature path
+            $userData = $request->only([
                 'first_name',
                 'second_name',
                 'email',
@@ -111,7 +114,23 @@ class UserProfileController extends Controller
                 'state',
                 'zip_code',
                 'country'
-            ]));
+            ]);
+
+            // Handle signature path separately to ensure it's not overwritten if empty
+            if ($request->filled('signature_path')) {
+                $userData['signature_path'] = $request->signature_path;
+                Log::info('Updating signature path', [
+                    'user_id' => $user->id,
+                    'new_path' => $request->signature_path
+                ]);
+            }
+
+            Log::info('Updating user data', [
+                'user_id' => $user->id,
+                'data' => $userData
+            ]);
+
+            $user->update($userData);
 
             // Handle banking information
             $user->bankingInformation()->updateOrCreate(

@@ -25,8 +25,18 @@ class ClaimExcelExportService
     const SECTION_BG_COLOR = '000000';
     const TOTAL_BG_COLOR = 'EBF5FF';
 
+    // Define claim statuses that allow export
+    const EXPORTABLE_STATUSES = [
+        'Approved Finance',
+        'Done'
+    ];
+
     public function __construct(ClaimTemplateMapper $mapper, Claim $claim)
     {
+        if (!in_array($claim->status, self::EXPORTABLE_STATUSES)) {
+            throw new \Exception('Only claims with status "Approved Finance" or "Done" can be exported.');
+        }
+
         $this->mapper = $mapper;
         $this->claim = $claim;
         $this->data = $mapper->setClaim($claim)->mapClaimData();
@@ -248,6 +258,7 @@ class ClaimExcelExportService
             ['Total Distance', $this->data['total_distance'] . ' KM'],
             ['Petrol Amount', 'RM ' . $this->data['petrol_amount']],
             ['Toll Amount', 'RM ' . $this->data['toll_amount']],
+            ['Accommodation Cost', 'RM ' . ($this->data['accommodation_cost'] ?? '0.00')],
             ['Total Amount', 'RM ' . $this->data['total_amount']]
         ];
 
@@ -256,15 +267,8 @@ class ClaimExcelExportService
             $this->sheet->mergeCells('B' . $this->currentRow . ':D' . $this->currentRow);
             $this->sheet->setCellValue('B' . $this->currentRow, $item[1]);
 
-            $style = [
-                'font' => ['bold' => true],
-                'alignment' => [
-                    'indent' => 1,
-                    'horizontal' => Alignment::HORIZONTAL_RIGHT
-                ]
-            ];
-
             if ($index === count($summary) - 1) {
+                // Total Amount row
                 $totalRowStyle = [
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
@@ -279,29 +283,23 @@ class ClaimExcelExportService
                             'borderStyle' => Border::BORDER_THIN,
                             'color' => ['rgb' => 'D1D5DB']
                         ]
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_RIGHT,
-                        'indent' => 1
                     ]
                 ];
 
-                // Apply styles to the entire row
                 $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                     ->applyFromArray($totalRowStyle);
 
-                // Override alignment for label cell
+                // Align label left and value right
                 $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             } else {
-                // Normal row styling
-                $this->sheet->getStyle('A' . $this->currentRow)->applyFromArray([
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
-                    'font' => ['bold' => true]
-                ]);
-
-                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)
-                    ->applyFromArray($style);
+                // Regular rows
+                $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
             }
 
             $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
@@ -333,7 +331,7 @@ class ClaimExcelExportService
         foreach ($this->data['reviews'] as $index => $review) {
             $this->sheet->setCellValue('A' . $this->currentRow, $review['date']);
             $this->sheet->setCellValue('B' . $this->currentRow, $review['department']);
-            $this->sheet->setCellValue('C' . $this->currentRow, $review['status']);
+            $this->sheet->setCellValue('C' . $this->currentRow, $this->formatApprovalStatus($review['department'], $review['status']));
             $this->sheet->setCellValue('D' . $this->currentRow, $review['remarks']);
 
             $style = [
@@ -359,90 +357,258 @@ class ClaimExcelExportService
     protected function addSignatures()
     {
         $this->currentRow = $this->addSectionHeader('Signatures', $this->currentRow);
-        $this->currentRow++;
 
-        $signatureStartRow = $this->currentRow;
+        // Create a border around the entire signature section
+        $startRow = $this->currentRow;
 
-        // Add signature labels in their own cells
-        $this->sheet->setCellValue('A' . $this->currentRow, 'Signed by Datuk');
-        $this->sheet->setCellValue('C' . $this->currentRow, 'Signed by Financial');
+        // First row: Claim Owner and Admin
+        $this->addSignaturePairWithBorder(
+            $this->claim->user->signature_path ?? null,
+            $this->claim->user->first_name . ' ' . $this->claim->user->second_name,
+            'Claim Owner',
+            $this->getSignatureForRole('Admin'),
+            $this->getReviewerName('Admin'),
+            'Admin',
+            $this->currentRow
+        );
+        $this->currentRow += 3;
 
-        // Merge title cells
-        $this->sheet->mergeCells('A' . $this->currentRow . ':B' . $this->currentRow);
-        $this->sheet->mergeCells('C' . $this->currentRow . ':D' . $this->currentRow);
+        // Second row: Manager and HR
+        $this->addSignaturePairWithBorder(
+            $this->getSignatureForRole('Manager'),
+            $this->getReviewerName('Manager'),
+            'Manager',
+            $this->getSignatureForRole('HR'),
+            $this->getReviewerName('HR'),
+            'HR',
+            $this->currentRow
+        );
+        $this->currentRow += 3;
 
-        // Style the title cells with separate borders
-        $titleStyle = [
+        // Third row: Datuk (centered, spans full width)
+        $this->addDatukSignature($this->currentRow);
+        $this->currentRow += 3;
+
+        // Add border around the entire signature section
+        $endRow = $this->currentRow - 1;
+        $this->sheet->getStyle("A{$startRow}:D{$endRow}")->applyFromArray([
             'borders' => [
-                'allBorders' => [
+                'outline' => [
+                    'borderStyle' => Border::BORDER_MEDIUM,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
+    }
+
+    protected function addSignaturePairWithBorder($path1, $name1, $role1, $path2, $name2, $role2, $row)
+    {
+        // Add signature cells with borders
+        $this->sheet->mergeCells("A{$row}:B{$row}");
+        $this->sheet->mergeCells("C{$row}:D{$row}");
+
+        // Add borders
+        $borderStyle = [
+            'borders' => [
+                'outline' => [
                     'borderStyle' => Border::BORDER_THIN,
                     'color' => ['rgb' => '000000']
                 ]
-            ],
-            'alignment' => [
-                'vertical' => Alignment::VERTICAL_CENTER,
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'indent' => 1
-            ],
-            'font' => ['bold' => true]
+            ]
         ];
+        $this->sheet->getStyle("A{$row}:B{$row}")->applyFromArray($borderStyle);
+        $this->sheet->getStyle("C{$row}:D{$row}")->applyFromArray($borderStyle);
 
-        $this->sheet->getStyle('A' . $this->currentRow . ':B' . $this->currentRow)->applyFromArray($titleStyle);
-        $this->sheet->getStyle('C' . $this->currentRow . ':D' . $this->currentRow)->applyFromArray($titleStyle);
+        // Set row height for signature
+        $this->sheet->getRowDimension($row)->setRowHeight(90);
 
-        // Move to signature space
-        $this->currentRow++;
-        $signatureSpaceStart = $this->currentRow;
+        // Add signatures
+        if ($path1) $this->addSignatureImage('A', $row, $path1, 70);
+        if ($path2) $this->addSignatureImage('C', $row, $path2, 70);
 
-        // Add space for signatures (4 rows)
-        $this->currentRow += 4;
+        // Add names and roles
+        $nameRow = $row + 1;
+        $roleRow = $row + 2;
 
-        // Add date at the bottom
-        $this->sheet->setCellValue('A' . $this->currentRow, 'Date:');
-        $this->sheet->setCellValue('C' . $this->currentRow, 'Date:');
+        // Merge cells for name and role
+        $this->sheet->mergeCells("A{$nameRow}:B{$nameRow}");
+        $this->sheet->mergeCells("C{$nameRow}:D{$nameRow}");
+        $this->sheet->mergeCells("A{$roleRow}:B{$roleRow}");
+        $this->sheet->mergeCells("C{$roleRow}:D{$roleRow}");
 
-        // Style signature spaces
-        $this->sheet->getStyle('A' . $signatureSpaceStart . ':B' . $this->currentRow)->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
-                ]
-            ],
+        // Set text and alignment
+        $this->sheet->setCellValue("A{$nameRow}", "Approved by " . $name1);
+        $this->sheet->setCellValue("C{$nameRow}", "Approved by " . $name2);
+        $this->sheet->setCellValue("A{$roleRow}", $role1);
+        $this->sheet->setCellValue("C{$roleRow}", $role2);
+
+        // Style text
+        $this->sheet->getStyle("A{$nameRow}:D{$nameRow}")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10],
             'alignment' => [
-                'vertical' => Alignment::VERTICAL_TOP,
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'indent' => 1
-            ],
-            'font' => ['bold' => true]
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
         ]);
 
-        $this->sheet->getStyle('C' . $signatureSpaceStart . ':D' . $this->currentRow)->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000']
-                ]
-            ],
+        $this->sheet->getStyle("A{$roleRow}:D{$roleRow}")->applyFromArray([
+            'font' => ['size' => 9],
             'alignment' => [
-                'vertical' => Alignment::VERTICAL_TOP,
-                'horizontal' => Alignment::HORIZONTAL_LEFT,
-                'indent' => 1
-            ],
-            'font' => ['bold' => true]
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
         ]);
-
-        // Merge signature space cells
-        $this->sheet->mergeCells('A' . $signatureSpaceStart . ':B' . $this->currentRow);
-        $this->sheet->mergeCells('C' . $signatureSpaceStart . ':D' . $this->currentRow);
 
         // Set row heights
-        $this->sheet->getRowDimension($signatureStartRow)->setRowHeight(25);
-        for ($row = $signatureSpaceStart; $row <= $this->currentRow; $row++) {
-            $this->sheet->getRowDimension($row)->setRowHeight(25);
-        }
+        $this->sheet->getRowDimension($nameRow)->setRowHeight(20);
+        $this->sheet->getRowDimension($roleRow)->setRowHeight(20);
+    }
 
-        $this->currentRow++;
+    protected function addDatukSignature($row)
+    {
+        // Merge all cells for Datuk's signature
+        $this->sheet->mergeCells("A{$row}:D{$row}");
+        
+        // Add border
+        $this->sheet->getStyle("A{$row}:D{$row}")->applyFromArray([
+            'borders' => [
+                'outline' => [
+                    'borderStyle' => Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000']
+                ]
+            ]
+        ]);
+
+        // Set row height for signature
+        $this->sheet->getRowDimension($row)->setRowHeight(90);
+
+        // Add signature
+        $this->addSignatureImage('B', $row, 'signatures/signature-datuk.png', 70);
+
+        // Add name and role
+        $nameRow = $row + 1;
+        $roleRow = $row + 2;
+
+        // Merge cells for name and role
+        $this->sheet->mergeCells("A{$nameRow}:D{$nameRow}");
+        $this->sheet->mergeCells("A{$roleRow}:D{$roleRow}");
+
+        // Set text
+        $this->sheet->setCellValue("A{$nameRow}", "Approved by Datuk");
+        $this->sheet->setCellValue("A{$roleRow}", "Datuk");
+
+        // Style text
+        $this->sheet->getStyle("A{$nameRow}:D{$nameRow}")->applyFromArray([
+            'font' => ['bold' => true, 'size' => 10],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
+        ]);
+
+        $this->sheet->getStyle("A{$roleRow}:D{$roleRow}")->applyFromArray([
+            'font' => ['size' => 9],
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                'vertical' => Alignment::VERTICAL_CENTER
+            ]
+        ]);
+
+        // Set row heights
+        $this->sheet->getRowDimension($nameRow)->setRowHeight(20);
+        $this->sheet->getRowDimension($roleRow)->setRowHeight(20);
+    }
+
+    protected function addSignatureImage($column, $row, $signaturePath, $height)
+    {
+        try {
+            $drawing = new Drawing();
+            $drawing->setName('Signature');
+            $drawing->setDescription('Signature');
+            
+            // Handle both public and storage paths
+            $fullPath = $signaturePath;
+            if (strpos($signaturePath, 'signatures/') === 0) {
+                $fullPath = storage_path('app/public/' . $signaturePath);
+            } else if (strpos($signaturePath, 'public/') === 0) {
+                $fullPath = storage_path('app/' . $signaturePath);
+            }
+
+            if (file_exists($fullPath)) {
+                // Get original image dimensions
+                list($imgWidth, $imgHeight) = getimagesize($fullPath);
+                $aspectRatio = $imgWidth / $imgHeight;
+                
+                // Set drawing height and calculate width based on aspect ratio
+                $drawing->setPath($fullPath);
+                $drawing->setHeight($height);
+                $signatureWidth = $height * $aspectRatio;
+                
+                // Calculate merged cell width in points (1 Excel width unit ≈ 7.2 points)
+                $cellWidth = 0;
+                if ($column === 'A' || $column === 'B') {
+                    $cellWidth = ($this->sheet->getColumnDimension('A')->getWidth() + 
+                                $this->sheet->getColumnDimension('B')->getWidth()) * 7.2;
+                    $column = 'A'; // Always use A for first pair
+                } else if ($column === 'C' || $column === 'D') {
+                    $cellWidth = ($this->sheet->getColumnDimension('C')->getWidth() + 
+                                $this->sheet->getColumnDimension('D')->getWidth()) * 7.2;
+                    $column = 'C'; // Always use C for second pair
+                } else {
+                    // For Datuk signature (centered across all columns)
+                    $cellWidth = ($this->sheet->getColumnDimension('A')->getWidth() +
+                                $this->sheet->getColumnDimension('B')->getWidth() +
+                                $this->sheet->getColumnDimension('C')->getWidth() +
+                                $this->sheet->getColumnDimension('D')->getWidth()) * 7.2;
+                    $column = 'A'; // Use A for full width
+                }
+                
+                // Calculate center position
+                $xOffset = max(0, ($cellWidth - $signatureWidth) / 2);
+                $rowHeight = $this->sheet->getRowDimension($row)->getRowHeight();
+                $yOffset = max(0, ($rowHeight - $height) / 2);
+                
+                // Set coordinates and offsets
+                $drawing->setCoordinates($column . $row);
+                $drawing->setOffsetX((int)$xOffset);
+                $drawing->setOffsetY((int)$yOffset);
+                
+                $drawing->setWorksheet($this->sheet);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error loading signature image', [
+                'path' => $signaturePath,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    protected function getReviewerName($roleName)
+    {
+        $review = $this->claim->reviews()
+            ->whereHas('reviewer', function ($query) use ($roleName) {
+                $query->whereHas('role', function ($q) use ($roleName) {
+                    $q->where('name', $roleName);
+                });
+            })
+            ->latest()
+            ->first();
+
+        return $review ? $review->reviewer->first_name . ' ' . $review->reviewer->second_name : 'N/A';
+    }
+
+    protected function getSignatureForRole($roleName)
+    {
+        $review = $this->claim->reviews()
+            ->whereHas('reviewer', function ($query) use ($roleName) {
+                $query->whereHas('role', function ($q) use ($roleName) {
+                    $q->where('name', $roleName);
+                });
+            })
+            ->latest()
+            ->first();
+
+        return $review ? $review->reviewer->signature_path : null;
     }
 
     protected function addGeneratedAt()
@@ -469,5 +635,24 @@ class ClaimExcelExportService
     {
         // Approximate conversion: 1 unit = 7 pixels
         return array_sum($columns) * 7;
+    }
+
+    protected function formatApprovalStatus($department, $status)
+    {
+        // Map status to full names
+        $statusMap = [
+            'Submitted' => 'Submitted',
+            'Approved Admin' => 'Approved by Admin',
+            'Approved Manager' => 'Approved by Manager',
+            'Approved HR' => 'Approved by HR',
+            'Pending Datuk' => 'Pending Datuk Approval',
+            'Approved Datuk' => 'Approved by Datuk',
+            'Approved Finance' => 'Approved by Finance',
+            'Rejected' => 'Rejected',
+            'Done' => 'Completed',
+            'Cancelled' => 'Cancelled'
+        ];
+
+        return $statusMap[$status] ?? $status;
     }
 }

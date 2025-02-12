@@ -57,6 +57,7 @@ export default defineConfig({
                 // Config
                 'resources/js/config.js',
                 'resources/js/bulk-email.js',
+                'resources/js/claim-export.js'
             ],
             refresh: true,
         }),

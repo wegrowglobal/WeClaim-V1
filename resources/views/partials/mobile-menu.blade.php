@@ -76,14 +76,16 @@
                         </a>
                     @endif
 
-                    <a class="navbar-item {{ request()->routeIs('claims.new') ? 'bg-green-600 text-wgg-white hover:bg-green-800' : 'navbar-item-active-hover' }}"
-                        href="{{ route('claims.new') }}">
-                        <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        New Claim
-                    </a>
+                    @if(in_array(Auth::user()->role_id, [1, 5]))
+                        <a class="navbar-item {{ request()->routeIs('claims.new') ? 'bg-green-600 text-wgg-white hover:bg-green-800' : 'navbar-item-active-hover' }}"
+                            href="{{ route('claims.new') }}">
+                            <svg class="icon-small mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            New Claim
+                        </a>
+                    @endif
 
                     <!-- Notifications -->
                     <button class="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-300 cursor-not-allowed" disabled>

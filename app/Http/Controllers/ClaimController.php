@@ -23,6 +23,7 @@ use App\Services\ClaimTemplateMapper;
 use App\Services\ClaimExcelExportService;
 use App\Services\ClaimWordExportService;
 use Illuminate\Validation\ValidationException;
+use App\Services\ClaimPdfExportService;
 
 class ClaimController extends Controller
 {
@@ -144,6 +145,16 @@ class ClaimController extends Controller
     public function store(StoreClaimRequest $request): JsonResponse
     {
         try {
+            $user = Auth::user();
+            
+            // Only allow Staff (role_id = 1) and Admin (role_id = 5) to create claims
+            if (!in_array($user->role_id, [1, 5])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to create claims.'
+                ], 403);
+            }
+
             Log::info('Claim submission started', [
                 'user_id' => Auth::id(),
                 'data' => $request->except(['toll_file', 'email_file'])
@@ -164,12 +175,6 @@ class ClaimController extends Controller
                 'map_data',
                 // Add any other claim-related session keys
             ]);
-
-            app(NotificationService::class)->sendNotifications(
-                $claim,
-                'submitted',
-                auth()->user()
-            );
 
             return response()->json([
                 'success' => true,
@@ -303,14 +308,9 @@ class ClaimController extends Controller
                     $this->claimService->approveClaim($user, $claim);
                 } else {
                     $this->claimService->rejectClaim($user, $claim, $request->rejection_details);
-                    return;
                 }
 
-                $this->claimService->storeRemarks($user, $claim, $request->remarks);
                 $claim->refresh();
-
-                $notificationService = app(NotificationService::class);
-                $notificationService->sendNotifications($claim, 'rejected', $user);
             });
 
             return response()->json([
@@ -541,25 +541,30 @@ class ClaimController extends Controller
         }
     }
 
-    public function export(Claim $claim)
+    public function export(Request $request, Claim $claim)
     {
         try {
-            if ($claim->status !== Claim::STATUS_DONE) {
+            if (!in_array($claim->status, [Claim::STATUS_APPROVED_FINANCE, Claim::STATUS_DONE])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only completed claims can be exported'
+                    'message' => 'Only claims with status "Approved Finance" or "Done" can be exported'
                 ], 403);
             }
 
-            $excelService = new ClaimExcelExportService(
-                new ClaimTemplateMapper(),
-                $claim
-            );
+            $format = $request->input('format', 'excel');
+            $mapper = new ClaimTemplateMapper();
 
-            return $excelService->exportToExcel();
+            if ($format === 'pdf') {
+                $pdfService = new ClaimPdfExportService($mapper, $claim);
+                return $pdfService->exportToPdf();
+            } else {
+                $excelService = new ClaimExcelExportService($mapper, $claim);
+                return $excelService->exportToExcel();
+            }
         } catch (\Exception $e) {
-            Log::error('Excel Export failed:', [
+            Log::error('Export failed:', [
                 'claim_id' => $claim->id,
+                'format' => $format,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -615,11 +620,15 @@ class ClaimController extends Controller
 
             $statistics = [
                 'totalClaims' => $claims->count(),
-                'approvedClaims' => $claims->where('status', Claim::STATUS_APPROVED_FINANCE)->count(),
+                'approvedClaims' => $claims->whereIn('status', [
+                    Claim::STATUS_APPROVED_FINANCE,
+                    Claim::STATUS_DONE
+                ])->count(),
                 'pendingClaims' => $claims->whereNotIn('status', [
                     Claim::STATUS_APPROVED_FINANCE,
                     Claim::STATUS_REJECTED,
-                    Claim::STATUS_DONE
+                    Claim::STATUS_DONE,
+                    Claim::STATUS_CANCELLED
                 ])->count(),
                 'rejectedClaims' => $claims->where('status', Claim::STATUS_REJECTED)->count()
             ];
@@ -648,6 +657,13 @@ class ClaimController extends Controller
 
     public function new(Request $request)
     {
+        $user = Auth::user();
+        
+        // Only allow Staff (role_id = 1) and Admin (role_id = 5) to access claim creation
+        if (!in_array($user->role_id, [1, 5])) {
+            return redirect()->route('home')->with('error', 'You do not have permission to create claims.');
+        }
+
         $step = $request->query('step', 1);
         $draftData = Session::get('claim_draft', []);
 
@@ -1105,16 +1121,5 @@ class ClaimController extends Controller
             'latestRejection' => $latestRejection,
             'accommodations' => $claim->accommodations
         ]);
-    }
-
-    public function approveClaim(Claim $claim)
-    {
-        // Approval logic...
-        
-        app(NotificationService::class)->sendNotifications(
-            $claim,
-            'approved_admin',
-            auth()->user()
-        );
     }
 }

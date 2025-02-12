@@ -93,7 +93,7 @@
                             </td>
                             <td class="whitespace-nowrap px-3 py-2">
                                 <div class="flex items-center gap-2">
-                                    <x-profile.profile-picture :user="$claim->user" size="xs" />
+                                    <x-profile.profile-picture :user="$claim->user" size="sm" />
                                     <span class="text-gray-600">{{ $claim->user->first_name }}</span>
                                 </div>
                             </td>

@@ -627,13 +627,15 @@ class ClaimService
 
             // Create review record with remarks
             $userRole = $user->role()->first();
+            $reviewOrder = $claim->reviews()->count() + 1;
+            
             ClaimReview::create([
                 'claim_id' => $claim->getKey(),
                 'reviewer_id' => $user->getKey(),
                 'department' => $userRole ? $userRole->name : 'Unknown',
-                'status' => 'approved',
-                'remarks' => $remarks ?? 'No remarks provided', // Use provided remarks
-                'review_order' => $claim->reviews()->count() + 1,
+                'status' => 'Approved',  // Standardize the status
+                'remarks' => $remarks ?? 'No remarks provided',
+                'review_order' => $reviewOrder,
                 'reviewed_at' => now()
             ]);
 
@@ -670,13 +672,6 @@ class ClaimService
                 'requires_documents' => $rejectionDetails['requires_documents'] ?? false,
                 'rejection_details' => $rejectionDetails
             ]);
-
-            // Send notification
-            app(NotificationService::class)->sendNotifications(
-                $claim, 
-                'rejected',
-                $user // Pass the rejecting user
-            );
         });
     }
 
@@ -684,42 +679,9 @@ class ClaimService
 
     public function storeRemarks(User $user, Claim $claim, string $remarks)
     {
-        Log::info('Storing remarks for claim', [
-            'user_id' => $user->id,
-            'claim_id' => $claim->id,
-            'department' => $user->role->name
-        ]);
-
-        try {
-            $reviewOrder = ClaimReview::where('claim_id', $claim->id)
-                ->where('department', $user->role->name)
-                ->count() + 1;
-
-            $claimReview = new ClaimReview([
-                'claim_id' => $claim->id,
-                'reviewer_id' => $user->id,
-                'remarks' => $remarks,
-                'review_order' => $reviewOrder,
-                'department' => $user->role->name,
-                'reviewed_at' => now(),
-                'status' => $claim->status,
-            ]);
-
-            $claimReview->save();
-
-            Log::info('Remarks stored successfully', [
-                'claim_id' => $claim->id,
-                'review_id' => $claimReview->id,
-                'review_order' => $reviewOrder
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error storing remarks', [
-                'claim_id' => $claim->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
+        // This method is now deprecated as remarks are handled in approveClaim and rejectClaim
+        Log::warning('storeRemarks method is deprecated. Remarks should be handled in approveClaim or rejectClaim');
+        return;
     }
 
     //////////////////////////////////////////////////////////////////
@@ -980,13 +942,6 @@ class ClaimService
             
             DB::commit();
 
-            // Send notifications
-            app(NotificationService::class)->sendNotifications(
-                $claim,
-                $action === 'approve' ? 'approved_datuk' : 'rejected',
-                null
-            );
-
             Log::info('Datuk action processed successfully', [
                 'claim_id' => $claim->id,
                 'action' => $action,
@@ -1095,8 +1050,7 @@ class ClaimService
 
     private function notifyRelevantUsers(Claim $claim, string $action)
     {
-        $notificationService = app(NotificationService::class);
-        $notificationService->sendNotifications($claim, $action, Auth::user());
+        // Implementation of notifyRelevantUsers method
     }
 
     public function calculateClaimAmount($distance)
