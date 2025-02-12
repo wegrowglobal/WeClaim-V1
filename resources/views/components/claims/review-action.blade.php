@@ -188,8 +188,23 @@
             title: 'Reject Claim',
             html: `<div class="rejection-form">@include('components.claims.rejection-form', ['claim' => $claim])</div>`,
             showConfirmButton: false,
-            showCloseButton: true,
+            showCloseButton: false,
+            showCancelButton: false,
             width: '32rem',
+            allowOutsideClick: false,
+            didOpen: () => {
+                // Ensure the window.reviewActions object exists
+                window.reviewActions = window.reviewActions || {};
+                
+                // Add event listener to the cancel button
+                const cancelBtn = document.querySelector('.rejection-form button[onclick*="cancelRejection"]');
+                if (cancelBtn) {
+                    cancelBtn.onclick = () => {
+                        console.log('Cancel rejection clicked'); // Debug log
+                        Swal.close();
+                    };
+                }
+            },
             customClass: {
                 popup: 'rounded-lg shadow-xl border border-gray-200',
                 title: 'text-xl font-medium text-gray-900 border-b border-gray-100 pb-3',
@@ -203,8 +218,23 @@
             title: isDone ? 'Mark Claim as Done' : 'Approve Claim',
             html: `<div class="approval-form">@include('components.claims.approval-form', ['claim' => $claim])</div>`,
             showConfirmButton: false,
-            showCloseButton: true,
+            showCloseButton: false,
+            showCancelButton: false,
             width: '32rem',
+            allowOutsideClick: false,
+            didOpen: () => {
+                // Ensure the window.reviewActions object exists
+                window.reviewActions = window.reviewActions || {};
+                
+                // Add event listener to the cancel button
+                const cancelBtn = document.querySelector('.approval-form button[onclick*="cancelApproval"]');
+                if (cancelBtn) {
+                    cancelBtn.onclick = () => {
+                        console.log('Cancel approval clicked'); // Debug log
+                        Swal.close();
+                    };
+                }
+            },
             customClass: {
                 popup: 'rounded-lg shadow-xl border border-gray-200',
                 title: 'text-xl font-medium text-gray-900 border-b border-gray-100 pb-3',

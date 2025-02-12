@@ -6,6 +6,7 @@ window.reviewActions = window.reviewActions || {};
 // Add the approval-specific actions
 Object.assign(window.reviewActions, {
     cancelApproval() {
+        console.log('Cancel approval clicked'); // Debug log
         Swal.close();
     },
 

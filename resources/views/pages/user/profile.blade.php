@@ -44,8 +44,8 @@
                     </div>
                 </div>
 
-                <div class="p-6">
-                    <div class="flex items-center gap-6">
+                <div class="p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                         <div class="profile-picture relative h-24 w-24 rounded-full ring-1 ring-gray-200/50 bg-gray-50 shadow-sm cursor-pointer hover:ring-indigo-400 transition-all">
                             <x-profile.profile-picture :user="auth()->user()" size="lg" />
                             <label class="absolute -bottom-1 -right-1 p-2 rounded-full bg-white shadow-sm cursor-pointer hover:bg-gray-50 transition-colors ring-1 ring-gray-200/50">
@@ -56,7 +56,7 @@
                                 </svg>
                             </label>
                         </div>
-                        <div>
+                        <div class="text-center sm:text-left">
                             <h2 class="text-base font-medium text-gray-900">Profile Photo</h2>
                             <p class="text-sm text-gray-500 mt-1">JPG, PNG or GIF (max. 2MB)</p>
                         </div>
@@ -81,8 +81,8 @@
                     </div>
                 </div>
 
-                <div class="p-6 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 sm:p-6 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1" for="first_name">First Name</label>
                             <input type="text" 
@@ -110,7 +110,7 @@
                         </div>
 
                         <!-- Address Fields -->
-                        <div class="col-span-2">
+                        <div class="col-span-1 sm:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1" for="address">Address</label>
                             <input type="text" 
                                    id="address" 
@@ -200,8 +200,8 @@
                     </div>
                 </div>
 
-                <div class="p-6 space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 sm:p-6 space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1" for="email">Email Address</label>
                             <input type="email" 
@@ -248,7 +248,7 @@
                     </div>
                 </div>
 
-                <div class="p-6 space-y-4">
+                <div class="p-4 sm:p-6 space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1" for="bank_name">Bank Name</label>
                         <select id="bank_name" 
@@ -312,7 +312,7 @@
                     </div>
                 </div>
 
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     <div class="w-full">
                         <livewire:user-signature />
                     </div>
@@ -323,7 +323,7 @@
             <div class="flex flex-col sm:flex-row sm:justify-between gap-4 mt-6">
                 <button type="button" 
                         onclick="Profile.showChangePasswordModal()"
-                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all">
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
@@ -332,7 +332,7 @@
                 </button>
 
                 <button type="submit" 
-                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
+                        class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
                     <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
