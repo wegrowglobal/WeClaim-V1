@@ -15,7 +15,7 @@ class StoreClaimRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'claim_company' => 'required|string|in:WGG,WGE,WGG & WGE',
+            'claim_company' => 'required|string|in:WGG,WGE,WGS,WGG & WGE',
             'date_from' => 'required|date',
             'date_to' => 'required|date|after_or_equal:date_from',
             'remarks' => 'nullable|string',

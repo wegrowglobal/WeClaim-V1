@@ -65,6 +65,7 @@ class ClaimTemplateMapper
             'company' => match ($this->claim->claim_company) {
                 'WGE' => 'Wegrow Edutainment (M) Sdn. Bhd.',
                 'WGG' => 'Wegrow Global Sdn. Bhd.',
+                'WGS' => 'Wegrow Studios Sdn. Bhd.',
                 'WGG & WGE' => 'Wegrow Global Sdn. Bhd. & Wegrow Edutainment (M) Sdn. Bhd.',
                 default => ''
             },

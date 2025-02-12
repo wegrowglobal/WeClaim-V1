@@ -70,15 +70,14 @@ class ClaimExcelExportService
     public function exportToExcel()
     {
         $this->addTitle();
+        $this->addBankingInformation();
+        $this->currentRow += 1;
         $this->addClaimInformation();
         $this->currentRow += 1;
-
         $this->addTripDetails();
         $this->currentRow += 1;
-
         $this->addFinancialSummary();
         $this->currentRow += 1;
-
         $this->addApprovalHistory();
         $this->addSignatures();
         $this->addGeneratedAt();
@@ -161,6 +160,42 @@ class ClaimExcelExportService
         ]);
         $this->sheet->getRowDimension($row)->setRowHeight(25);
         return $row + 1;
+    }
+
+    protected function addBankingInformation()
+    {
+        $this->currentRow = $this->addSectionHeader('Banking Information', $this->currentRow);
+
+        $user = $this->claim->user;
+        // Get the latest banking information for the user
+        $bankingInfo = \App\Models\BankingInformation::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        $details = [
+            ['Bank Name', $bankingInfo ? $bankingInfo->bank_name : 'No Information'],
+            ['Account Number', $bankingInfo ? $bankingInfo->account_number : 'No Information'],
+            ['Account Holder Name', $bankingInfo ? $bankingInfo->account_holder : ($user->first_name . ' ' . $user->second_name)],
+        ];
+
+        foreach ($details as $detail) {
+            $this->sheet->setCellValue('A' . $this->currentRow, $detail[0]);
+            $this->sheet->mergeCells('B' . $this->currentRow . ':D' . $this->currentRow);
+            $this->sheet->setCellValue('B' . $this->currentRow, $detail[1]);
+
+            $this->sheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
+            
+            // Set left alignment for both label and value
+            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setIndent(1);
+            $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setIndent(1);
+
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(20);
+            $this->currentRow++;
+        }
     }
 
     protected function addClaimInformation()
@@ -361,26 +396,26 @@ class ClaimExcelExportService
         // Create a border around the entire signature section
         $startRow = $this->currentRow;
 
-        // First row: Claim Owner and Admin
+        // First row: Claim Owner and Admin Executive
         $this->addSignaturePairWithBorder(
             $this->claim->user->signature_path ?? null,
             $this->claim->user->first_name . ' ' . $this->claim->user->second_name,
             'Claim Owner',
             $this->getSignatureForRole('Admin'),
             $this->getReviewerName('Admin'),
-            'Admin',
+            'Admin Executive',
             $this->currentRow
         );
         $this->currentRow += 3;
 
-        // Second row: Manager and HR
+        // Second row: Operation Manager and HR
         $this->addSignaturePairWithBorder(
             $this->getSignatureForRole('Manager'),
             $this->getReviewerName('Manager'),
-            'Manager',
+            'Operation Manager',
             $this->getSignatureForRole('HR'),
             $this->getReviewerName('HR'),
-            'HR',
+            'Human Resources Executive',
             $this->currentRow
         );
         $this->currentRow += 3;
@@ -420,11 +455,11 @@ class ClaimExcelExportService
         $this->sheet->getStyle("C{$row}:D{$row}")->applyFromArray($borderStyle);
 
         // Set row height for signature
-        $this->sheet->getRowDimension($row)->setRowHeight(90);
+        $this->sheet->getRowDimension($row)->setRowHeight(120);
 
-        // Add signatures
-        if ($path1) $this->addSignatureImage('A', $row, $path1, 70);
-        if ($path2) $this->addSignatureImage('C', $row, $path2, 70);
+        // Add signatures with increased height
+        if ($path1) $this->addSignatureImage('A', $row, $path1, 100);
+        if ($path2) $this->addSignatureImage('C', $row, $path2, 100);
 
         // Add names and roles
         $nameRow = $row + 1;
@@ -480,10 +515,10 @@ class ClaimExcelExportService
         ]);
 
         // Set row height for signature
-        $this->sheet->getRowDimension($row)->setRowHeight(90);
+        $this->sheet->getRowDimension($row)->setRowHeight(120);
 
-        // Add signature
-        $this->addSignatureImage('B', $row, 'signatures/signature-datuk.png', 70);
+        // Add signature with increased height
+        $this->addSignatureImage('FULL', $row, 'signatures/signature-datuk.png', 100);
 
         // Add name and role
         $nameRow = $row + 1;
@@ -494,8 +529,8 @@ class ClaimExcelExportService
         $this->sheet->mergeCells("A{$roleRow}:D{$roleRow}");
 
         // Set text
-        $this->sheet->setCellValue("A{$nameRow}", "Approved by Datuk");
-        $this->sheet->setCellValue("A{$roleRow}", "Datuk");
+        $this->sheet->setCellValue("A{$nameRow}", "Approved by Datuk Yong Lam Woei");
+        $this->sheet->setCellValue("A{$roleRow}", "Datuk Yong Lam Woei");
 
         // Style text
         $this->sheet->getStyle("A{$nameRow}:D{$nameRow}")->applyFromArray([
@@ -544,34 +579,51 @@ class ClaimExcelExportService
                 $drawing->setHeight($height);
                 $signatureWidth = $height * $aspectRatio;
                 
-                // Calculate merged cell width in points (1 Excel width unit ≈ 7.2 points)
+                // Calculate cell widths using a more precise conversion factor
+                $columnWidths = [
+                    'A' => $this->sheet->getColumnDimension('A')->getWidth() * 9.142857,
+                    'B' => $this->sheet->getColumnDimension('B')->getWidth() * 9.142857,
+                    'C' => $this->sheet->getColumnDimension('C')->getWidth() * 9.142857,
+                    'D' => $this->sheet->getColumnDimension('D')->getWidth() * 9.142857
+                ];
+                
+                // Calculate merged cell width and target column
                 $cellWidth = 0;
-                if ($column === 'A' || $column === 'B') {
-                    $cellWidth = ($this->sheet->getColumnDimension('A')->getWidth() + 
-                                $this->sheet->getColumnDimension('B')->getWidth()) * 7.2;
-                    $column = 'A'; // Always use A for first pair
-                } else if ($column === 'C' || $column === 'D') {
-                    $cellWidth = ($this->sheet->getColumnDimension('C')->getWidth() + 
-                                $this->sheet->getColumnDimension('D')->getWidth()) * 7.2;
-                    $column = 'C'; // Always use C for second pair
-                } else {
-                    // For Datuk signature (centered across all columns)
-                    $cellWidth = ($this->sheet->getColumnDimension('A')->getWidth() +
-                                $this->sheet->getColumnDimension('B')->getWidth() +
-                                $this->sheet->getColumnDimension('C')->getWidth() +
-                                $this->sheet->getColumnDimension('D')->getWidth()) * 7.2;
-                    $column = 'A'; // Use A for full width
+                $targetColumn = 'A';
+                $additionalOffset = 0;
+                
+                if ($column === 'FULL') {
+                    // For Datuk signature (centered across all columns A-D)
+                    $cellWidth = array_sum($columnWidths);
+                    $targetColumn = 'A'; // Start from column A for true centering
+                } elseif ($column === 'A' || $column === 'B') {
+                    // First pair (A-B)
+                    $cellWidth = $columnWidths['A'] + $columnWidths['B'];
+                    $targetColumn = 'A';
+                } elseif ($column === 'C' || $column === 'D') {
+                    // Second pair (C-D)
+                    $cellWidth = $columnWidths['C'] + $columnWidths['D'];
+                    $targetColumn = 'C';
                 }
                 
-                // Calculate center position
-                $xOffset = max(0, ($cellWidth - $signatureWidth) / 2);
-                $rowHeight = $this->sheet->getRowDimension($row)->getRowHeight();
-                $yOffset = max(0, ($rowHeight - $height) / 2);
+                // Calculate horizontal centering
+                $xOffset = ($cellWidth - $signatureWidth) / 2;
+                if ($column === 'FULL') {
+                    // For Datuk signature, ensure it's perfectly centered
+                    $xOffset = ($cellWidth - $signatureWidth) / 2;
+                }
                 
-                // Set coordinates and offsets
-                $drawing->setCoordinates($column . $row);
-                $drawing->setOffsetX((int)$xOffset);
-                $drawing->setOffsetY((int)$yOffset);
+                // Calculate vertical centering with more precision
+                $rowHeight = $this->sheet->getRowDimension($row)->getRowHeight();
+                $yOffset = ($rowHeight - $height) / 2;
+                
+                // Set coordinates and offsets with minimum padding
+                $drawing->setCoordinates($targetColumn . $row);
+                $drawing->setOffsetX(max(15, (int)$xOffset)); // Increased minimum padding
+                $drawing->setOffsetY(max(15, (int)$yOffset)); // Increased minimum padding
+                
+                // Increase signature size for better visibility
+                $drawing->setHeight($height * 1.2); // Make signature 20% larger
                 
                 $drawing->setWorksheet($this->sheet);
             }

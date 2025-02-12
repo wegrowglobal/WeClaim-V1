@@ -21,15 +21,17 @@ const ClaimExport = {
             showCancelButton: true,
             showDenyButton: true,
             confirmButtonColor: '#059669',
-            denyButtonColor: '#DC2626',
+            denyButtonColor: '#9CA3AF',
             cancelButtonColor: '#6B7280',
             confirmButtonText: '<i class="fas fa-file-excel mr-2"></i>Excel',
-            denyButtonText: '<i class="fas fa-file-pdf mr-2"></i>PDF',
-            cancelButtonText: 'Cancel'
+            denyButtonText: '<i class="fas fa-file-pdf mr-2"></i>PDF <span class="text-xs">(Coming Soon)</span>',
+            denyButtonAriaLabel: 'PDF export is not available yet',
+            preDeny: () => {
+                return false;
+            }
         }).then((result) => {
-            if (result.isConfirmed || result.isDenied) {
-                const format = result.isConfirmed ? 'excel' : 'pdf';
-                this.exportClaim(claimId, format);
+            if (result.isConfirmed) {
+                this.exportClaim(claimId, 'excel');
             }
         });
     },

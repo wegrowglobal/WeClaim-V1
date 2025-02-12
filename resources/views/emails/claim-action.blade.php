@@ -220,6 +220,51 @@
                                 </tr>
                             </table>
 
+                            <!-- Accommodation Details Box -->
+                            @if($claim->accommodations && count($claim->accommodations) > 0)
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 24px; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px;">
+                                <tr>
+                                    <td style="padding: 24px;">
+                                        <!-- Accommodation Details Header -->
+                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="padding-bottom: 16px;">
+                                                    <h3 style="margin: 0; color: #111827; font-size: 16px; font-weight: 600;">Accommodation Details</h3>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <!-- Accommodations List -->
+                                        @foreach ($claim->accommodations as $accommodation)
+                                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; margin-bottom: 12px;">
+                                                <tr>
+                                                    <td style="padding: 20px;">
+                                                        <!-- Accommodation Details -->
+                                                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                            <tr>
+                                                                <td width="24" valign="top" style="padding-right: 12px;">
+                                                                    <div style="width: 24px; height: 24px; background-color: #4F46E5; border-radius: 50%; position: relative;">
+                                                                        <svg class="h-4 w-4 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                                        </svg>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <p style="margin: 0 0 4px; color: #111827; font-size: 14px; font-weight: 500;">{{ $accommodation->location }}</p>
+                                                                    <p style="margin: 0 0 4px; color: #6B7280; font-size: 14px;">{{ \Carbon\Carbon::parse($accommodation->check_in)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($accommodation->check_out)->format('d/m/Y') }}</p>
+                                                                    <p style="margin: 0; color: #111827; font-size: 14px; font-weight: 500;">RM {{ number_format($accommodation->price, 2) }}</p>
+                                                                </td>
+                                                            </tr>
+                                                        </table>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                            </table>
+                            @endif
+
                             <p style="margin: 0 0 24px; color: #374151; font-size: 16px; line-height: 24px;">
                                 Please take the necessary action below:
                             </p>
