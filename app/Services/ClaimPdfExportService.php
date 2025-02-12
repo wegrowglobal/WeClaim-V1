@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Claim;
 use Illuminate\Support\Facades\Storage;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClaimPdfExportService
 {
