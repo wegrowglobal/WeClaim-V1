@@ -1,6 +1,7 @@
 @php
     $user = auth()->user();
     $isProfileComplete = 
+        $user && 
         $user->first_name && 
         $user->second_name && 
         $user->phone && 
@@ -14,7 +15,7 @@
         $user->bankingInformation->account_holder && 
         $user->bankingInformation->account_number;
 
-    $shouldShow = $user->role_id === 1 && !$isProfileComplete;
+    $shouldShow = $user && $user->role_id === 1 && !$isProfileComplete;
 @endphp
 
 @if($shouldShow)

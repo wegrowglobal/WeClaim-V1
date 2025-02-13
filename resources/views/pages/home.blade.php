@@ -9,9 +9,6 @@
                         <h2 class="text-2xl font-semibold text-gray-900 sm:text-3xl">Welcome to WeClaims</h2>
                         <p class="mt-1 text-sm text-gray-500 sm:text-base">Please log in to access your claims dashboard and submit new claims.</p>
                     </div>
-                    <x-claims.status-badge status="submitted" class="hidden sm:inline-flex">
-                        Not Logged In
-                    </x-claims.status-badge>
                 </div>
                 <div class="mt-6 flex gap-4">
                     <a class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-indigo-700" href="{{ route('login') }}">
@@ -20,7 +17,7 @@
                         </svg>
                         Sign In
                     </a>
-                    <a class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-all hover:bg-gray-50" href=" ">
+                    <a class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 transition-all hover:bg-gray-50" href="{{ route('register') }}">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
