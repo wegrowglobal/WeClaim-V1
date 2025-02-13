@@ -31,11 +31,25 @@ class ClaimController extends Controller
     use AuthorizesRequests, ChecksProfileCompletion;
     protected $claimService;
 
+    private function getAdminEmail()
+    {
+        return config('mail.addresses.admin');
+    }
 
-    private const ADMIN_EMAIL = 'ammar@wegrow-global.com';
-    private const HR_EMAIL = 'ammar@wegrow-global.com';
-    private const FINANCE_EMAIL = 'ammar@wegrow-global.com';
-    private const TEST_EMAIL = 'ammar@wegrow-global.com';
+    private function getHrEmail()
+    {
+        return config('mail.addresses.hr');
+    }
+
+    private function getFinanceEmail()
+    {
+        return config('mail.addresses.finance');
+    }
+
+    private function getDatukEmail()
+    {
+        return config('mail.datuk_email');
+    }
 
     //////////////////////////////////////////////////////////////////////////////////      
 

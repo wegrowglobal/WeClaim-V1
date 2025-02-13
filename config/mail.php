@@ -126,4 +126,21 @@ return [
     */
     'datuk_email' => env('MAIL_DATUK_EMAIL') ?: 'ammar@wegrow-global.com',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mail Addresses
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure all of the mail addresses used by your application.
+    | These addresses are used for various roles in the system.
+    |
+    */
+
+    'addresses' => [
+        'admin' => env('MAIL_ADMIN_ADDRESS'),
+        'hr' => env('MAIL_HR_ADDRESS'),
+        'finance' => env('MAIL_FINANCE_ADDRESS'),
+        'datuk' => env('MAIL_DATUK_ADDRESS'),
+    ],
+
 ];

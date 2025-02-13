@@ -786,29 +786,18 @@ class ClaimService
 
             // Get Datuk's email from config
             $datukEmail = config('mail.datuk_email');
-            Log::info('Attempting to get Datuk email configuration', [
-                'config_value' => $datukEmail,
-                'env_value' => env('MAIL_DATUK_EMAIL'),
-                'all_mail_config' => config('mail')
-            ]);
-
+            
             if (!$datukEmail) {
-                // Try to get from environment directly as fallback
-                $datukEmail = env('MAIL_DATUK_EMAIL');
-                
-                if (!$datukEmail) {
-                    Log::error('Datuk email not configured', [
-                        'claim_id' => $claim->id,
-                        'config_value' => config('mail.datuk_email'),
-                        'env_value' => env('MAIL_DATUK_EMAIL')
-                    ]);
-                    throw new \Exception('Datuk email address is not configured.');
-                }
-                
-                Log::info('Using Datuk email from environment', [
-                    'email' => $datukEmail
+                Log::error('Datuk email not configured', [
+                    'claim_id' => $claim->id,
+                    'config_value' => config('mail.datuk_email')
                 ]);
+                throw new \Exception('Datuk email address is not configured.');
             }
+            
+            Log::info('Using Datuk email configuration', [
+                'email' => $datukEmail
+            ]);
 
             // Prepare data for email
             $data = [
