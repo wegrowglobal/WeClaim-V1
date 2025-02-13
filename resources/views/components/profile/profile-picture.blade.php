@@ -24,14 +24,12 @@
     <div class="h-full w-full overflow-hidden rounded-full">
         @if ($fileExists)
             <img class="h-full w-full object-cover" src="{{ $imagePath }}" alt="{{ $user->first_name }}'s profile"
-                onerror="this.style.display='none'">
-            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-xl font-bold text-white"
-                style="display: none;">
+                onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="hidden h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-xl font-bold text-white">
                 {{ strtoupper(substr($user->first_name, 0, 1)) }}
             </div>
         @else
-            <div
-                class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-lg font-bold text-white">
+            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-600 to-indigo-800 text-lg font-bold text-white">
                 {{ strtoupper(substr($user->first_name, 0, 1)) }}
             </div>
         @endif

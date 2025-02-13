@@ -1,6 +1,6 @@
 class Profile {
     constructor() {
-        this.profilePictureInput = document.getElementById('profile_picture');
+        this.profilePictureInput = document.querySelector('input[name="profile_picture"]');
         this.profilePictureContainer = document.querySelector('.profile-picture');
         this.form = document.querySelector('form');
         
@@ -95,25 +95,19 @@ class Profile {
         
         reader.onload = (e) => {
             // Find the existing profile picture component
-            const profilePictureComponent = this.profilePictureContainer.querySelector('div');
+            const profilePictureComponent = this.profilePictureContainer.querySelector('.overflow-hidden');
             if (profilePictureComponent) {
-                let img = profilePictureComponent.querySelector('img');
-                if (!img) {
-                    // Remove only the default avatar div if it exists
-                    const defaultAvatar = profilePictureComponent.querySelector('.rounded-full:not(img)');
-                    if (defaultAvatar) {
-                        defaultAvatar.remove();
-                    }
-                    
-                    // Create new image element
-                    img = document.createElement('img');
-                    img.classList.add('w-full', 'h-full', 'object-cover', 'rounded-full');
-                    profilePictureComponent.insertBefore(img, profilePictureComponent.firstChild);
-                }
+                // Remove all existing content
+                profilePictureComponent.innerHTML = '';
                 
-                // Update image attributes
+                // Create new image element
+                const img = document.createElement('img');
+                img.classList.add('h-full', 'w-full', 'object-cover');
                 img.src = e.target.result;
                 img.alt = 'Profile preview';
+                
+                // Add the new image
+                profilePictureComponent.appendChild(img);
             }
         };
         
