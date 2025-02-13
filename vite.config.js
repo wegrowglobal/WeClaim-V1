@@ -29,7 +29,6 @@ export default defineConfig({
                 'resources/js/maps/claim-map.js',
                 'resources/js/maps/profile-map.js',
                 'resources/js/maps/review-map.js',
-                'resources/js/maps/resubmit-map.js',
                 
                 // Claim Related
                 'resources/js/claim-form.js',
