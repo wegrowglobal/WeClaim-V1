@@ -17,12 +17,12 @@
         </div>
 
         <!-- Company Selection Guide -->
-        <div class="overflow-hidden rounded-lg border border-blue-100 bg-blue-50/50 shadow-sm mb-6">
-            <div class="border-b border-blue-100 bg-blue-50 px-4 py-3">
+        <div class="overflow-hidden rounded-lg border border-blue-100 bg-blue-50/50 shadow-sm mb-4 sm:mb-6">
+            <div class="border-b border-blue-100 bg-blue-50 px-3 py-2 sm:px-4 sm:py-3">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
@@ -39,9 +39,9 @@
                 </div>
             </div>
 
-            <div class="bg-white p-4">
-                <div class="grid grid-cols-3 gap-3">
-                    <div class="rounded-lg bg-gray-50 p-3">
+            <div class="bg-white p-3 sm:p-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+                    <div class="rounded-lg bg-gray-50 p-2 sm:p-3">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-medium text-blue-600">WGG</span>
                             <span class="text-sm text-gray-900">Wegrow Global</span>
@@ -49,7 +49,7 @@
                         <p class="mt-1 text-xs text-gray-500">For Zoo Teruntum, Zoo Melaka & Silverlake Outlet</p>
                     </div>
 
-                    <div class="rounded-lg bg-gray-50 p-3">
+                    <div class="rounded-lg bg-gray-50 p-2 sm:p-3">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-medium text-blue-600">WGE</span>
                             <span class="text-sm text-gray-900">Wegrow Edutainment</span>
@@ -57,7 +57,7 @@
                         <p class="mt-1 text-xs text-gray-500">For Malaysia Heritage Studios, PSKT</p>
                     </div>
 
-                    <div class="rounded-lg bg-gray-50 p-3">
+                    <div class="rounded-lg bg-gray-50 p-2 sm:p-3">
                         <div class="flex items-center gap-2">
                             <span class="text-xs font-medium text-blue-600">WGS</span>
                             <span class="text-sm text-gray-900">Wegrow Studios</span>
@@ -71,10 +71,10 @@
         <div class="space-y-6">
             <!-- Main Form Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                         </div>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
 
-                <div class="p-4 space-y-4">
+                <div class="p-3 sm:p-4 space-y-3 sm:space-y-4">
                     <!-- Company Selection -->
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-gray-700" for="claim_company">Company</label>
@@ -106,7 +106,7 @@
                     </div>
 
                     <!-- Date Range -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <!-- Date From -->
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700" for="date_from">Date From</label>

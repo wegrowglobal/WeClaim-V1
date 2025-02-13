@@ -54,25 +54,25 @@
         </div>
 
         <!-- Claims Grid -->
-        <div class="grid grid-cols-1 gap-4 p-6 md:grid-cols-2 lg:grid-cols-3" id="claimsGrid">
+        <div class="grid grid-cols-1 gap-3 p-3 sm:gap-4 sm:p-4 md:grid-cols-2 lg:grid-cols-3" id="claimsGrid">
             @foreach ($claims as $claim)
                 <div class="overflow-hidden rounded-lg border border-gray-200 bg-white transition-all duration-300 hover:border-gray-300 hover:shadow-sm">
-                    <div class="space-y-4 p-4">
+                    <div class="space-y-3 sm:space-y-4 p-3 sm:p-4">
                         <!-- Header -->
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 sm:gap-3">
                                 <x-profile.profile-picture :user="$claim->user" size="sm" />
                                 <div>
                                     <div class="text-sm font-medium text-gray-900">{{ $claim->user->first_name }}</div>
                                     <div class="text-xs text-gray-500">{{ $claim->submitted_at->format('d M Y') }}</div>
                                 </div>
                             </div>
-                            <x-claims.status-badge :status="$claim->status" />
+                            <x-claims.status-badge :status="$claim->status" class="text-xs sm:text-sm" />
                         </div>
 
                         <!-- Content -->
                         <div>
-                            <div class="line-clamp-2 text-sm text-gray-600">{{ $claim->description }}</div>
+                            <div class="line-clamp-2 text-xs sm:text-sm text-gray-600">{{ $claim->description }}</div>
                             <div class="mt-2 text-xs text-gray-500">
                                 {{ $claim->date_from->format('d M Y') }} - {{ $claim->date_to->format('d M Y') }}
                             </div>

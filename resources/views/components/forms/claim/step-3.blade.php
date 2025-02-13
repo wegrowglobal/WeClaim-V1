@@ -62,10 +62,10 @@
 
             <!-- Accommodation Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
                         </div>
@@ -76,24 +76,24 @@
                     </div>
                 </div>
 
-                <div class="p-4">
+                <div class="p-3 sm:p-4">
                     <!-- Accommodations Container -->
-                    <div id="accommodations-container" class="space-y-4">
+                    <div id="accommodations-container" class="space-y-3 sm:space-y-4">
                         @foreach($accommodations as $index => $accommodation)
-                            <div class="mb-4 accommodation-entry overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" data-index="{{ $index }}">
-                                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
+                            <div class="mb-3 sm:mb-4 accommodation-entry overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" data-index="{{ $index }}">
+                                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
                                     <div class="flex items-center justify-between">
                                         <p class="text-sm font-medium text-gray-900">Accommodation Entry #{{ $index + 1 }}</p>
                                         <button type="button" onclick="removeAccommodation({{ $index }})" class="text-red-600 hover:text-red-700">
-                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                                             </svg>
                                         </button>
                     </div>
                 </div>
 
-                                <div class="p-4">
-                                    <div class="grid gap-4 sm:grid-cols-2">
+                                <div class="p-3 sm:p-4">
+                                    <div class="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
                                         <!-- Location -->
                                         <div class="space-y-2">
                                             <label class="block text-sm font-medium text-gray-700" for="accommodation_location_{{ $index }}">
@@ -110,7 +110,7 @@
                                                     required>
                                                 <div class="absolute inset-y-0 right-0 flex items-center">
                                                     <button type="button" class="h-full px-2 text-gray-400 hover:text-gray-600">
-                                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                                                 d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -174,12 +174,12 @@
                                                     onchange="window.accommodationManager.updateFileName({{ $index }}, this)"
                                                     accept=".pdf,.jpg,.jpeg,.png">
                                                 <label for="accommodation_receipt_{{ $index }}"
-                                                    class="document-upload-label block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-indigo-400"
+                                                    class="document-upload-label block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-3 sm:p-4 transition-colors hover:border-indigo-400"
                                                     ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('border-indigo-400');"
                                                     ondragleave="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400');"
                                                     ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400'); const input = document.getElementById('accommodation_receipt_{{ $index }}'); input.files = event.dataTransfer.files; window.accommodationManager.updateFileName({{ $index }}, input);">
                                                     <div class="space-y-2 text-center">
-                                                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <svg class="mx-auto h-7 w-7 sm:h-8 sm:w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                                         </svg>
                                                         <div class="flex flex-col items-center text-sm">
@@ -216,10 +216,10 @@
 
             <!-- Toll & Documents Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
@@ -230,9 +230,9 @@
                     </div>
                 </div>
 
-                <div class="p-4 space-y-6">
+                <div class="p-3 sm:p-4 space-y-4 sm:space-y-6">
                     <!-- Toll Amount -->
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         <div class="relative">
                             <label class="block text-sm font-medium text-gray-700 mb-2" for="toll_amount">
                                 Toll Amount
@@ -247,7 +247,7 @@
                     required>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                     <div class="text-gray-400 cursor-help group">
-                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
                                         <div class="hidden group-hover:block absolute bottom-full right-0 w-64 p-2 mb-2 bg-gray-800 text-white text-xs rounded shadow-lg z-50">
@@ -260,13 +260,13 @@
         </div>
 
         <!-- Document Upload Grid -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <!-- Toll Receipt Upload -->
                         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
-                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                                <div class="flex items-center space-x-2 sm:space-x-3">
+                                    <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
+                                        <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
@@ -277,14 +277,14 @@
                     </div>
                 </div>
 
-                            <div class="p-4">
+                            <div class="p-3 sm:p-4">
                 <div class="document-upload-area" id="toll-upload-area">
                     <input class="hidden" id="toll_report" name="toll_report" type="file" accept=".pdf,.jpg,.jpeg,.png">
                                     <label for="toll_report"
-                                        class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center transition-all hover:border-indigo-400">
+                                        class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 sm:px-6 sm:py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
                                             <div class="flex items-center justify-center">
-                                                <svg class="h-8 w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                                             </div>
@@ -296,9 +296,9 @@
                         </div>
                     </label>
                                     <div class="mt-2 hidden" id="toll-preview">
-                                        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
                                             <div class="flex items-center space-x-2">
-                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                                                 <span class="text-sm text-gray-600 truncate" id="toll-filename">No file selected</span>
@@ -315,10 +315,10 @@
 
             <!-- Email Approval Upload -->
                         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-center space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600">
-                                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                                <div class="flex items-center space-x-2 sm:space-x-3">
+                                    <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
+                                        <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
@@ -329,14 +329,14 @@
                     </div>
                 </div>
 
-                            <div class="p-4">
+                            <div class="p-3 sm:p-4">
                 <div class="document-upload-area" id="email-upload-area">
                                     <input class="hidden" id="email_report" name="email_report" type="file" accept=".pdf">
                                     <label for="email_report"
-                                        class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-center transition-all hover:border-indigo-400">
+                                        class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 sm:px-6 sm:py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
                                             <div class="flex items-center justify-center">
-                                                <svg class="h-8 w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
                                             </div>
@@ -348,9 +348,9 @@
                         </div>
                     </label>
                                     <div class="mt-2 hidden" id="email-preview">
-                                        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
                                             <div class="flex items-center space-x-2">
-                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                                                 <span class="text-sm text-gray-600 truncate" id="email-filename">No file selected</span>

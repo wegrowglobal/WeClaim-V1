@@ -60,8 +60,10 @@
     <!-- Footer -->
     @include('partials.footer')
 
+    <!-- Incomplete Profile Alert -->
+    <x-alerts.incomplete-profile />
 
-    <!-- Scripts -->
+    @stack('modals')
     @stack('scripts')
 
     <!-- SweetAlert2 -->

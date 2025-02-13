@@ -139,6 +139,20 @@ Route::group([], function () {
         return app(ClaimController::class)->adminIndex();
     })->name('claims.admin');
 
+    Route::get('/claims/{claim}/edit', function (App\Models\Claim $claim) {
+        if (Auth::user()->role_id !== 5) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        return app(ClaimController::class)->edit($claim);
+    })->name('claims.edit');
+
+    Route::put('/claims/{claim}', function (App\Models\Claim $claim, Request $request) {
+        if (Auth::user()->role_id !== 5) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        return app(ClaimController::class)->update($claim, $request);
+    })->name('claims.update');
+
     Route::delete('/claims/{claim}', function (App\Models\Claim $claim) {
         if (Auth::user()->role_id !== 5) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);

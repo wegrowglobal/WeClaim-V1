@@ -24,10 +24,11 @@ use App\Services\ClaimExcelExportService;
 use App\Services\ClaimWordExportService;
 use Illuminate\Validation\ValidationException;
 use App\Services\ClaimPdfExportService;
+use App\Traits\ChecksProfileCompletion;
 
 class ClaimController extends Controller
 {
-    use AuthorizesRequests;
+    use AuthorizesRequests, ChecksProfileCompletion;
     protected $claimService;
 
 
@@ -657,6 +658,11 @@ class ClaimController extends Controller
 
     public function new(Request $request)
     {
+        // Check profile completion first
+        if ($redirect = $this->checkProfileCompletion()) {
+            return $redirect;
+        }
+
         $user = Auth::user();
         
         // Only allow Staff (role_id = 1) and Admin (role_id = 5) to access claim creation
@@ -1041,18 +1047,85 @@ class ClaimController extends Controller
 
     public function adminIndex()
     {
-        if (Auth::user()->role_id !== 5) {
-            abort(403);
-        }
-
-        $claims = Claim::with(['user', 'reviews'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
+        $claims = Claim::with('user')->orderBy('created_at', 'desc')->get();
         return view('pages.claims.admin', [
             'claims' => $claims,
             'claimService' => $this->claimService
         ]);
+    }
+
+    public function edit(Claim $claim)
+    {
+        try {
+            $claimData = [
+                'id' => $claim->id,
+                'claim_company' => $claim->claim_company,
+                'date_from' => $claim->date_from->format('Y-m-d'),
+                'date_to' => $claim->date_to->format('Y-m-d'),
+                'total_distance' => $claim->total_distance,
+                'total_amount' => $claim->total_amount,
+                'remarks' => $claim->remarks,
+                'status' => $claim->status,
+                'description' => $claim->description
+            ];
+
+            return response()->json($claimData);
+        } catch (\Exception $e) {
+            Log::error('Error fetching claim for edit:', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading claim details'
+            ], 500);
+        }
+    }
+
+    public function update(Claim $claim, Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'claim_company' => 'required|string|in:WGG,WGE,WGS',
+                'date_from' => 'required|date',
+                'date_to' => 'required|date|after_or_equal:date_from',
+                'total_distance' => 'required|numeric|min:0',
+                'total_amount' => 'required|numeric|min:0',
+                'remarks' => 'nullable|string',
+                'status' => 'required|string|in:submitted,approved_admin,approved_datuk,approved_hr,approved_finance,rejected,done'
+            ]);
+
+            $claim->update($validatedData);
+
+            // Log the update
+            Log::info('Claim updated successfully', [
+                'claim_id' => $claim->id,
+                'updated_by' => Auth::id(),
+                'changes' => $validatedData
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Claim updated successfully'
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error updating claim:', [
+                'claim_id' => $claim->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating claim'
+            ], 500);
+        }
     }
 
     public function destroy(Claim $claim)

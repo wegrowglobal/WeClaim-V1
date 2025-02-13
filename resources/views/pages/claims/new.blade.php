@@ -6,13 +6,13 @@
     <!-- Main Container -->
     <div class="min-h-screen">
         <!-- Content Area -->
-        <div class="py-6 sm:py-8">
+        <div class="py-4 sm:py-6 lg:py-8">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <!-- Header -->
-                <div class="mb-6 sm:mb-8">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="mb-4 sm:mb-6 lg:mb-8">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">
+                            <h1 class="text-lg font-semibold text-gray-900 sm:text-xl lg:text-2xl">
                                 {{ isset($resubmitClaim) ? 'Resubmit Claim' : 'Submit New Claim' }}
                             </h1>
                             <p class="mt-1 text-sm text-gray-500">
@@ -21,18 +21,18 @@
                         </div>
                         <div class="flex flex-col gap-2 sm:flex-row">
                             <button onclick="window.claimForm.resetForm()" type="button" 
-                                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                    class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
-                                Reset Form
+                                <span class="hidden sm:inline">Reset Form</span>
                             </button>
                             <a href="{{ route('claims.dashboard') }}" 
-                               class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                               class="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 sm:px-4 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
                                 <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                                 </svg>
-                                Back to Dashboard
+                                <span class="hidden sm:inline">Back to Dashboard</span>
                             </a>
                         </div>
                     </div>

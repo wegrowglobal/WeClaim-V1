@@ -68,10 +68,10 @@
         <div class="space-y-6">
             <!-- Location Controls Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
@@ -83,18 +83,18 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
+                <div class="space-y-3 sm:space-y-4">
                     <!-- Location Inputs -->
                     <div class="" id="location-inputs">
                         <!-- Locations will be added dynamically via JavaScript -->
                     </div>
 
                     <!-- Location Controls -->
-                    <div class="pl-4 pb-4 flex gap-3">
+                    <div class="pl-3 pb-3 sm:pl-4 sm:pb-4 flex gap-2 sm:gap-3">
                         <button
-                            class="inline-flex items-center rounded-lg bg-indigo-50 px-3 py-2 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            class="inline-flex items-center rounded-lg bg-indigo-50 px-2 py-2 sm:px-3 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             id="add-location-btn" type="button">
-                            <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="mr-1 sm:mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
                             Add Stop
@@ -105,10 +105,10 @@
 
             <!-- Map Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                             </svg>
                         </div>
@@ -119,20 +119,20 @@
                     </div>
                 </div>
 
-                <div class="p-4 space-y-4">
+                <div class="p-3 sm:p-4 space-y-3 sm:space-y-4">
                     <!-- Map Container -->
                     <div class="relative">
-                        <div class="h-[400px] w-full rounded-lg border border-gray-100 shadow-sm" id="map">
+                        <div class="h-[250px] sm:h-[400px] w-full rounded-lg border border-gray-100 shadow-sm" id="map">
                         </div>
                     </div>
 
                     <!-- Stats Grid -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                         <!-- Total Distance -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-3">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
+                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
+                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
+                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                                     </svg>
@@ -140,17 +140,17 @@
                                 <p class="text-sm font-medium text-gray-700">Total Distance</p>
                             </div>
                             <div class="flex items-baseline">
-                                <span class="text-xl font-semibold text-gray-900"
+                                <span class="text-lg sm:text-xl font-semibold text-gray-900"
                                     id="total-distance">{{ sprintf('%.2f', (float) $totalDistance) }}</span>
-                                <span class="ml-1 text-base text-gray-500">km</span>
+                                <span class="ml-1 text-sm sm:text-base text-gray-500">km</span>
                             </div>
                         </div>
 
                         <!-- Total Duration -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-3">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
+                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
+                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
+                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
@@ -158,15 +158,15 @@
                                 <p class="text-sm font-medium text-gray-700">Total Duration</p>
                             </div>
                             <div class="flex items-baseline">
-                                <span class="text-xl font-semibold text-gray-900" id="total-duration">{{ $totalDuration }}</span>
+                                <span class="text-lg sm:text-xl font-semibold text-gray-900" id="total-duration">{{ $totalDuration }}</span>
                             </div>
                         </div>
 
                         <!-- Total Cost -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-3">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
+                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
+                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
+                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
@@ -174,8 +174,8 @@
                                 <p class="text-sm font-medium text-gray-700">Total Estimated Cost</p>
                             </div>
                             <div class="flex items-baseline">
-                                <span class="text-xl font-semibold text-gray-900">RM</span>
-                                <span class="ml-1 text-xl font-semibold text-gray-900" id="total-cost"
+                                <span class="text-lg sm:text-xl font-semibold text-gray-900">RM</span>
+                                <span class="ml-1 text-lg sm:text-xl font-semibold text-gray-900" id="total-cost"
                                     data-cost-display>{{ sprintf('%.2f', (float) $totalCost) }}</span>
                             </div>
                         </div>
@@ -188,10 +188,10 @@
 
             <!-- Segment Info Section -->
             <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" id="location-pairs-info" style="display: none;">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
@@ -202,8 +202,8 @@
                     </div>
                 </div>
 
-                <div class="p-4">
-                    <div class="space-y-4" id="segment-details">
+                <div class="p-3 sm:p-4">
+                    <div class="space-y-3 sm:space-y-4" id="segment-details">
                         <!-- Segments will be added here dynamically -->
                     </div>
                 </div>

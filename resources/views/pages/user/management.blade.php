@@ -1,158 +1,61 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         <!-- Header -->
-        <div class="mb-8 animate-slide-in">
-            <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
-            <p class="mt-2 text-sm text-gray-500">Manage system users and their access</p>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8 animate-slide-in delay-100">
-            <!-- Total Users -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Total Users</p>
-                            <p class="text-lg font-semibold text-indigo-600">{{ $users->count() }}</p>
-                        </div>
-                    </div>
+        <div class="mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">User Management</h1>
+                    <p class="mt-1 text-sm text-gray-500">Manage system users and their access</p>
                 </div>
-            </div>
-
-            <!-- Active Users -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                    d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Active Users</p>
-                            <p class="text-lg font-semibold text-green-600">{{ $users->where('status', 'active')->count() }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending Requests -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500">
-                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Pending Requests</p>
-                            <p class="text-lg font-semibold text-yellow-600">{{ $pendingRequests->where('status', 'pending')->count() }}</p>
-                        </div>
-                    </div>
-                </div>
+                <button onclick="openCreateUserModal()" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add User
+                </button>
             </div>
         </div>
 
-        <!-- View Toggle Card -->
-        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm mb-6 animate-slide-in delay-150">
-            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                <div class="flex items-center space-x-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">View Options</p>
-                        <p class="text-xs text-gray-500">Switch between different user views</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-4">
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="switchView('registered')"
-                        class="user-management-toggle-btn active flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all relative flex-1 sm:flex-initial
-                        bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <span>Registered Users</span>
+        <!-- Main Content -->
+        <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex" aria-label="Tabs">
+                    <button onclick="switchTab('users')" 
+                        class="tab-btn active w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">
+                        Registered Users
+                        <span class="ml-2 bg-indigo-100 text-indigo-600 py-0.5 px-2.5 rounded-full text-xs">
+                            {{ $users->total() }}
+                        </span>
                     </button>
-
-                    <button onclick="switchView('pending')"
-                        class="user-management-toggle-btn flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all relative flex-1 sm:flex-initial
-                        border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                        </svg>
-                        <span>Pending Requests</span>
-                        @if ($pendingRequests->where('status', 'pending')->count() > 0)
-                            <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-semibold text-white ring-2 ring-white">
+                    <button onclick="switchTab('pending')" 
+                        class="tab-btn w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        Pending Requests
+                        @if($pendingRequests->where('status', 'pending')->count() > 0)
+                            <span class="ml-2 bg-red-100 text-red-600 py-0.5 px-2.5 rounded-full text-xs">
                                 {{ $pendingRequests->where('status', 'pending')->count() }}
                             </span>
                         @endif
                     </button>
-                </div>
+                </nav>
             </div>
-        </div>
 
-        <!-- Users Table Section -->
-        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm animate-slide-in delay-200" id="registeredUsersView">
-            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                <div class="flex items-center space-x-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600">
-                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M4 6h16M4 12h8m-8 6h16" />
-                        </svg>
-                    </div>
+            <!-- Content -->
+            <div class="relative">
+                <div id="usersTab" class="tab-content">
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Registered Users</p>
-                        <p class="text-xs text-gray-500">Manage existing user accounts</p>
+                        <x-users.admin-users-table :users="$users" :roles="$roles" :departments="$departments" :filters="$filters" />
                     </div>
                 </div>
-            </div>
 
-            <div class="p-4 sm:p-6">
-                <x-users.admin-users-table :users="$users" :roles="$roles" :departments="$departments" :filters="$filters" />
-            </div>
-        </div>
-
-        <!-- Pending Requests Section -->
-        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm animate-slide-in delay-200 hidden" id="pendingRequestsView">
-            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                <div class="flex items-center space-x-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500">
-                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
+                <div id="pendingTab" class="tab-content hidden">
                     <div>
-                        <p class="text-sm font-medium text-gray-900">Pending Requests</p>
-                        <p class="text-xs text-gray-500">Review and manage account requests</p>
+                        <x-users.pending-requests-table :requests="$pendingRequests" />
                     </div>
                 </div>
-            </div>
-
-            <div class="p-4 sm:p-6">
-                <x-users.pending-requests-table :requests="$pendingRequests" />
             </div>
         </div>
     </div>
@@ -162,6 +65,6 @@
             window.roles = @json($roles);
             window.departments = @json($departments);
         </script>
-        @vite(['resources/js/filter.js', 'resources/js/users.js'])
+        @vite(['resources/js/users.js'])
     @endpush
 @endsection
