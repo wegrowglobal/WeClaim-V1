@@ -66,6 +66,9 @@
                                         Status
                                     </div>
                                 </th>
+                                <th class="w-[5%] px-3 py-3 text-center" scope="col">
+                                    <span class="sr-only">View</span>
+                                </th>
                                 <th class="w-[10%] px-3 py-3 text-right" scope="col">
                                     <span class="sr-only">Actions</span>
                                 </th>
@@ -97,17 +100,50 @@
                                     <td class="whitespace-nowrap px-3 py-4">
                                         <x-claims.status-badge :status="$claim->status" class="text-xs" />
                                     </td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-right">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <a href="{{ route('claims.view', $claim->id) }}" 
-                                               class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-500 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                <span class="sr-only">View</span>
-                                            </a>
-                                        </div>
+                                    <td class="whitespace-nowrap px-3 py-4 text-center">
+                                        <a href="{{ route('claims.view', $claim->id) }}" 
+                                            class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-500 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            <span class="sr-only">View</span>
+                                        </a>
+                                    </td>
+                                    <td class="whitespace-nowrap px-4 py-3 text-right">
+                                        @if ($actions === 'approval')
+                                            <div class="flex items-center justify-end space-x-2">
+                                                @if ($claimService->canReviewClaim(Auth::user(), $claim))
+                                                    <a class="inline-flex items-center justify-center rounded-lg bg-indigo-50 p-2 text-indigo-600 hover:bg-indigo-100"
+                                                        href="{{ route('claims.review', $claim->id) }}">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                                        </svg>
+                                                        <span class="sr-only">Review</span>
+                                                    </a>
+                                                @endif
+                                                @if (in_array($claim->status, [Claim::STATUS_APPROVED_FINANCE, Claim::STATUS_DONE]))
+                                                    <button type="button"
+                                                            data-export-claim="{{ $claim->id }}"
+                                                            class="inline-flex items-center justify-center rounded-lg bg-green-50 p-2 text-green-600 hover:bg-green-100">
+                                                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        <span class="sr-only">Export</span>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        @elseif ($actions === 'dashboard')
+                                            @if ($claim->status === Claim::STATUS_REJECTED)
+                                                <a href="{{ route('claims.resubmit', ['claim' => $claim]) }}"
+                                                    class="inline-flex items-center justify-center rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100">
+                                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                    </svg>
+                                                    <span class="sr-only">Resubmit</span>
+                                                </a>
+                                            @endif
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach

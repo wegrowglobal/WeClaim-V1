@@ -55,6 +55,7 @@
                     </div>
                 </a>
 
+                @if(auth()->user()->role->id === '1')
                 <a class="group overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-black/5 transition-all hover:shadow-md" href="{{ route('claims.dashboard') }}">
                     <div class="flex items-center gap-3 p-4 sm:gap-4 sm:p-6">
                         <div class="rounded-lg bg-emerald-50 p-2 sm:p-3 text-emerald-600 ring-1 ring-emerald-500/10 transition-all group-hover:bg-emerald-500 group-hover:text-white">
@@ -68,6 +69,7 @@
                         </div>
                     </div>
                 </a>
+                @endif
             </div>
 
             <!-- Stats Grid -->

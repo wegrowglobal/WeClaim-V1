@@ -58,6 +58,8 @@ class Claim extends Model
     protected $dates = [
         'date_from',
         'date_to',
+        'submitted_at',
+        'approval_token_expires_at',
         'created_at',
         'updated_at'
     ];
