@@ -22,6 +22,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 
                 // Core JS
+                'resources/js/app.js',
                 'resources/js/mobile-menu.js',
                 
                 // Map Related
@@ -36,6 +37,11 @@ export default defineConfig({
                 'resources/js/claim-review.js',
                 'resources/js/claim-resubmit.js',
                 'resources/js/claim-accommodation.js',
+                'resources/js/claim-export.js',
+                'resources/js/accommodation-manager.js',
+                'resources/js/accommodation-resubmit.js',
+                'resources/js/approval-form.js',
+                'resources/js/rejection-form.js',
                 
                 // Utils
                 'resources/js/utils/error-handler.js',
@@ -44,6 +50,10 @@ export default defineConfig({
                 'resources/js/utils/location-manager.js',
                 'resources/js/utils/route-calculator.js',
                 'resources/js/utils/swal-utils.js',
+                'resources/js/utils/map-utils.js',
+                'resources/js/utils/marker-view.js',
+                'resources/js/utils/rate-limiter.js',
+                'resources/js/utils/constants.js',
                 
                 // Features
                 'resources/js/filter.js',
@@ -55,8 +65,8 @@ export default defineConfig({
                 
                 // Config
                 'resources/js/config.js',
-                'resources/js/bulk-email.js',
-                'resources/js/claim-export.js'
+                'resources/js/system-config.js',
+                'resources/js/bulk-email.js'
             ],
             refresh: true,
         }),
