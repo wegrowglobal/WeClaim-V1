@@ -32,6 +32,8 @@
     <!-- Favicon -->
     <link type="image/x-icon" href="/resources/favicon.ico" rel="icon">
 
+    <!-- Livewire Styles -->
+    @livewireStyles
 </head>
 
 <body>
@@ -72,6 +74,8 @@
         window.userId = {{ Auth::id() }};
     </script>
 
+    <!-- Livewire Scripts -->
+    @livewireScripts
 </body>
 
 </html>
