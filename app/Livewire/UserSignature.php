@@ -2,11 +2,13 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class UserSignature extends Component
 {
@@ -14,82 +16,76 @@ class UserSignature extends Component
 
     public $signature;
     public $signatureImage;
-    public $drawingData;
     public $user;
-    public $showDrawingPad = false;
+
+    protected $listeners = ['refreshComponent' => '$refresh'];
 
     public function mount()
     {
-        $this->user = auth()->user();
+        $this->user = Auth::user();
         $this->signatureImage = $this->user->signature_path;
-    }
-
-    public function getSignatureUrlProperty()
-    {
-        if (!$this->signatureImage) {
-            return null;
-        }
-
-        // Check if file exists using Storage facade
-        $fileExists = Storage::disk('public')->exists($this->signatureImage);
-        
-        // Get the full URL using APP_URL
-        $imagePath = $fileExists ? config('app.url') . '/storage/' . $this->signatureImage : null;
-
-        Log::info('Signature URL generated', [
-            'user_id' => $this->user->id,
-            'signature_path' => $this->signatureImage,
-            'file_exists' => $fileExists,
-            'image_path' => $imagePath,
-            'app_url' => config('app.url'),
-            'storage_path' => Storage::disk('public')->path($this->signatureImage)
-        ]);
-
-        return $imagePath;
-    }
-
-    public function toggleDrawingPad()
-    {
-        $this->showDrawingPad = !$this->showDrawingPad;
     }
 
     public function updatedSignature()
     {
         $this->validate([
-            'signature' => 'image|max:1024', // 1MB Max
+            'signature' => 'required|image', // 1MB Max
         ]);
 
         try {
-            $path = $this->signature->store('signatures', 'public');
-            
+            // First, delete the old signature file if it exists
             if ($this->user->signature_path) {
-                Storage::disk('public')->delete($this->user->signature_path);
+                $oldPath = $this->user->signature_path;
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
             }
 
-            $this->user->update([
-                'signature_path' => $path
+            // Generate a unique filename with timestamp
+            $extension = $this->signature->getClientOriginalExtension();
+            $filename = 'signatures/' . time() . '_' . Str::random(20) . '.' . $extension;
+            
+            // Store the new signature
+            $path = $this->signature->storeAs('public', $filename);
+            
+            if (!$path) {
+                throw new \Exception('Failed to store the signature file.');
+            }
+
+            // Update user record with fresh instance
+            $user = User::find($this->user->id);
+            $updated = $user->update([
+                'signature_path' => $filename
             ]);
 
-            $this->signatureImage = $path;
+            if (!$updated) {
+                throw new \Exception('Failed to update user record.');
+            }
+
+            // Refresh the component data
+            $this->user = $user->fresh();
+            $this->signatureImage = $filename;
             $this->signature = null;
 
-            $this->dispatch('signature-updated', [
-                'signature_path' => $path
-            ]);
-
-            Log::info('Signature updated', [
+            Log::info('Signature updated successfully', [
                 'user_id' => $this->user->id,
-                'path' => $path
+                'old_path' => $oldPath ?? null,
+                'new_path' => $filename,
+                'storage_path' => $path
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Signature uploaded successfully!'
             ]);
+
+            // Force a component refresh
+            $this->dispatch('refreshComponent');
         } catch (\Exception $e) {
             Log::error('Failed to upload signature', [
                 'user_id' => $this->user->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             $this->dispatch('notify', [
@@ -99,88 +95,45 @@ class UserSignature extends Component
         }
     }
 
-    public function saveDrawnSignature()
-    {
-        $this->validate([
-            'drawingData' => 'required|string|min:10',
-        ]);
-
-        // Remove the data URL prefix to get the base64 string
-        $base64Image = preg_replace('#^data:image/\w+;base64,#i', '', $this->drawingData);
-        
-        // Decode base64 to binary
-        $imageData = base64_decode($base64Image);
-        
-        // Generate a unique filename
-        $filename = 'signatures/' . Str::random(40) . '.png';
-        
-        try {
-            // Store the image
-            Storage::disk('public')->put($filename, $imageData);
-
-            // Delete old signature if exists
-            if ($this->user->signature_path) {
-                Storage::disk('public')->delete($this->user->signature_path);
-            }
-
-            // Update user's signature path
-            $this->user->update([
-                'signature_path' => $filename
-            ]);
-
-            $this->signatureImage = $filename;
-            $this->showDrawingPad = false;
-            $this->drawingData = null;
-
-            $this->dispatch('signature-updated', [
-                'signature_path' => $filename
-            ]);
-
-            Log::info('Drawn signature updated', [
-                'user_id' => $this->user->id,
-                'path' => $filename
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to save drawn signature', [
-                'user_id' => $this->user->id,
-                'error' => $e->getMessage()
-            ]);
-
-            $this->dispatch('notify', [
-                'type' => 'error',
-                'message' => 'Failed to save signature. Please try again.'
-            ]);
-        }
-    }
-
     public function deleteSignature()
     {
         if ($this->user->signature_path) {
-            Storage::disk('public')->delete($this->user->signature_path);
+            $path = $this->user->signature_path;
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
             
-            $this->user->update([
+            // Update user with fresh instance
+            $user = User::find($this->user->id);
+            $user->update([
                 'signature_path' => null
             ]);
 
+            // Refresh the component data
+            $this->user = $user->fresh();
             $this->signatureImage = null;
             
-            $this->dispatch('signature-updated', [
-                'signature_path' => null
-            ]);
-
-            Log::info('Signature deleted', [
-                'user_id' => $this->user->id
+            Log::info('Signature deleted successfully', [
+                'user_id' => $this->user->id,
+                'path' => $path
             ]);
 
             $this->dispatch('notify', [
                 'type' => 'success',
                 'message' => 'Signature deleted successfully!'
             ]);
+
+            // Force a component refresh
+            $this->dispatch('refreshComponent');
         }
     }
 
     public function render()
     {
+        // Ensure we have the latest user data
+        $this->user = User::find($this->user->id);
+        $this->signatureImage = $this->user->signature_path;
+        
         return view('livewire.user-signature');
     }
 }

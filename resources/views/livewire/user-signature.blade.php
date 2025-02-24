@@ -1,80 +1,87 @@
 <div class="w-full">
     <div class="space-y-4">
-        <!-- Current Signature Display -->
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Current Signature</label>
-            @if($signatureImage)
-                <div class="relative inline-block">
-                    <div class="bg-white rounded-lg border border-gray-200 p-4 w-48 h-32 flex items-center justify-center">
-                        @if($this->signatureUrl)
-                            <img src="{{ $this->signatureUrl }}" 
-                                 alt="Current Signature" 
-                                 class="max-h-full max-w-full object-contain"
-                                 onerror="console.log('Failed to load signature:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div class="hidden text-sm text-gray-500 italic">
-                                Unable to load signature
+        <!-- Current Signature Status -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        @if($signatureImage)
+                            <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                                <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
                             </div>
                         @else
-                            <div class="text-sm text-gray-500 italic">
-                                Unable to load signature
+                            <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                                <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
                             </div>
                         @endif
-                        <button wire:click="deleteSignature" 
-                                class="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1.5 shadow-sm border border-gray-200 
-                                       opacity-0 hover:opacity-100 transition-opacity duration-200 hover:bg-red-50">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-900">Digital Signature</h3>
+                        @if($signatureImage)
+                            <div class="mt-1 text-xs text-gray-500">
+                                <span class="font-medium">File:</span> {{ basename($signatureImage) }}
+                                @php
+                                    $filePath = storage_path('app/public/' . $signatureImage);
+                                    $uploadDate = file_exists($filePath) ? \Carbon\Carbon::createFromTimestamp(filemtime($filePath))->format('M d, Y h:ia') : null;
+                                @endphp
+                                @if($uploadDate)
+                                    <br>
+                                    <span class="font-medium">Uploaded:</span> {{ $uploadDate }}
+                                @endif
+                            </div>
+                        @else
+                            <p class="mt-1 text-xs text-gray-500">No signature uploaded yet</p>
+                        @endif
                     </div>
                 </div>
-            @else
-                <div class="text-sm text-gray-500 italic">
-                    No signature uploaded yet
+                <div class="flex items-center space-x-2">
+                    @if($signatureImage)
+                        <!-- Delete Button -->
+                        <button wire:click="deleteSignature" 
+                                class="inline-flex items-center px-2.5 py-1.5 border border-red-100 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-150">
+                            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                        </button>
+                    @endif
                 </div>
-            @endif
+            </div>
         </div>
 
         <!-- Upload Section -->
-        <div class="mt-6">
-            <div class="relative">
-                <label class="block w-full rounded-lg border-2 border-dashed border-gray-200 hover:border-indigo-500 transition-colors duration-200 bg-white">
-                    <input type="file" 
-                           wire:model="signature" 
-                           accept="image/*" 
-                           class="sr-only"
-                           wire:loading.attr="disabled">
-                    <div class="p-6 text-center">
-                        <div wire:loading.remove wire:target="signature">
-                            <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
-                                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
-                                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                </svg>
-                            </div>
-                            <div class="text-sm text-gray-600">
+        <div class="mt-4">
+            <label class="block w-full rounded-lg border-2 border-dashed {{ $signatureImage ? 'border-gray-200 bg-gray-50 cursor-not-allowed' : 'border-gray-200 hover:border-indigo-500 transition-colors duration-200 bg-white cursor-pointer' }}">
+                <input type="file" 
+                       wire:model="signature" 
+                       accept="image/*" 
+                       class="sr-only"
+                       {{ $signatureImage ? 'disabled' : '' }}
+                       wire:loading.attr="disabled">
+                <div class="p-4 text-center">
+                    <div wire:loading.remove wire:target="signature">
+                        <div class="text-sm {{ $signatureImage ? 'text-gray-400' : 'text-gray-600' }}">
+                            @if($signatureImage)
+                                Please delete current signature before uploading a new one
+                            @else
                                 Click to upload or drag and drop
-                            </div>
-                            <div class="mt-1 text-xs text-gray-500">
-                                PNG, JPG up to 1MB
-                            </div>
+                            @endif
                         </div>
-                        <div wire:loading wire:target="signature" class="text-center">
-                            <div class="mx-auto h-12 w-12 text-indigo-500 mb-4">
-                                <svg class="animate-spin h-12 w-12" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </div>
-                            <div class="text-sm text-indigo-600">
-                                Uploading signature...
-                            </div>
+                        <div class="mt-1 text-xs {{ $signatureImage ? 'text-gray-400' : 'text-gray-500' }}">
+                            PNG, JPG up to 1MB
                         </div>
                     </div>
-                </label>
-            </div>
+                    <div wire:loading wire:target="signature" class="text-sm text-indigo-600">
+                        Uploading signature...
+                    </div>
+                </div>
+            </label>
             @error('signature') 
-                <div class="mt-2 text-sm text-red-600">
+                <div class="mt-2 text-xs text-red-600">
                     {{ $message }}
                 </div>
             @enderror
