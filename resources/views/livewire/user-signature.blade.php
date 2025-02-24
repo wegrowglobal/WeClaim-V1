@@ -10,7 +10,7 @@
                             <img src="{{ $this->signatureUrl }}" 
                                  alt="Current Signature" 
                                  class="max-h-full max-w-full object-contain"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                 onerror="console.log('Failed to load signature:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div class="hidden text-sm text-gray-500 italic">
                                 Unable to load signature
                             </div>

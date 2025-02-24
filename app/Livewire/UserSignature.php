@@ -30,14 +30,19 @@ class UserSignature extends Component
             return null;
         }
 
-        $fileExists = file_exists(public_path('storage/' . $this->signatureImage));
-        $imagePath = $fileExists ? asset('storage/' . $this->signatureImage) : null;
+        // Check if file exists using Storage facade
+        $fileExists = Storage::disk('public')->exists($this->signatureImage);
+        
+        // Get the full URL using APP_URL
+        $imagePath = $fileExists ? config('app.url') . '/storage/' . $this->signatureImage : null;
 
         Log::info('Signature URL generated', [
             'user_id' => $this->user->id,
             'signature_path' => $this->signatureImage,
             'file_exists' => $fileExists,
             'image_path' => $imagePath,
+            'app_url' => config('app.url'),
+            'storage_path' => Storage::disk('public')->path($this->signatureImage)
         ]);
 
         return $imagePath;
