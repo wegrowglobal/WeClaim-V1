@@ -6,9 +6,19 @@
             @if($signatureImage)
                 <div class="relative inline-block">
                     <div class="bg-white rounded-lg border border-gray-200 p-4 w-48 h-32 flex items-center justify-center">
-                        <img src="{{ asset('storage/' . $signatureImage) }}" 
-                             alt="Current Signature" 
-                             class="max-h-full max-w-full object-contain">
+                        @if($this->signatureUrl)
+                            <img src="{{ $this->signatureUrl }}" 
+                                 alt="Current Signature" 
+                                 class="max-h-full max-w-full object-contain"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="hidden text-sm text-gray-500 italic">
+                                Unable to load signature
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500 italic">
+                                Unable to load signature
+                            </div>
+                        @endif
                         <button wire:click="deleteSignature" 
                                 class="absolute -top-2 -right-2 bg-white text-red-500 rounded-full p-1.5 shadow-sm border border-gray-200 
                                        opacity-0 hover:opacity-100 transition-opacity duration-200 hover:bg-red-50">
