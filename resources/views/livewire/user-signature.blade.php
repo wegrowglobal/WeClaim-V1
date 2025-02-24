@@ -6,7 +6,7 @@
             @if($signatureImage)
                 <div class="relative inline-block">
                     <div class="bg-white rounded-lg border border-gray-200 p-4 w-48 h-32 flex items-center justify-center">
-                        <img src="{{ Storage::url($signatureImage) }}" 
+                        <img src="{{ asset('storage/' . $signatureImage) }}" 
                              alt="Current Signature" 
                              class="max-h-full max-w-full object-contain">
                         <button wire:click="deleteSignature" 
