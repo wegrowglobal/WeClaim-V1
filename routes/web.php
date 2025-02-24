@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\SystemConfigController;
 use App\Http\Controllers\BulkEmailController;
+use App\Http\Controllers\SignatureController;
 
 
 // Guest Routes
@@ -72,6 +73,12 @@ Route::group([], function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [UserProfileController::class, 'show'])->name('profile');
         Route::put('/', [UserProfileController::class, 'update'])->name('profile.update');
+    });
+
+    // Signature Routes
+    Route::prefix('signature')->group(function () {
+        Route::post('/', [SignatureController::class, 'store'])->name('signature.store');
+        Route::delete('/', [SignatureController::class, 'destroy'])->name('signature.destroy');
     });
 
     // Claims Routes
