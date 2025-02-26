@@ -214,8 +214,18 @@
                 </div>
             </div>
 
-            <!-- Toll & Documents Section -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+            <!-- Documents & Toll Section -->
+            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" x-data="{ 
+                hasToll: @json(old('has_toll', $draftData['has_toll'] ?? false)),
+                init() {
+                    this.$watch('hasToll', value => {
+                        if (!value) {
+                            document.getElementById('toll_amount').value = '';
+                            document.getElementById('toll_report').value = '';
+                        }
+                    });
+                }
+            }">
                 <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
                     <div class="flex items-center space-x-2 sm:space-x-3">
                         <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
@@ -224,83 +234,147 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-gray-900">Documents & Toll</p>
-                            <p class="text-xs text-gray-500">Upload required documents and enter toll expenses</p>
+                            <p class="text-sm font-medium text-gray-900">Required Documents</p>
+                            <p class="text-xs text-gray-500">Upload required approval documents</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="p-3 sm:p-4 space-y-4 sm:space-y-6">
-                    <!-- Toll Amount -->
-                    <div class="space-y-3 sm:space-y-4">
-                        <div class="relative">
-                            <label class="block text-sm font-medium text-gray-700 mb-2" for="toll_amount">
-                                Toll Amount
-                            </label>
-                            <div class="relative rounded-lg shadow-sm">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span class="text-gray-500 sm:text-sm">RM</span>
-                </div>
-                <input
-                                    class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 pl-12 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
-                    id="toll_amount" name="toll_amount" type="number" step="0.01" min="0" placeholder="0.00"
-                    required>
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <div class="text-gray-400 cursor-help group">
-                                        <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <div class="hidden group-hover:block absolute bottom-full right-0 w-64 p-2 mb-2 bg-gray-800 text-white text-xs rounded shadow-lg z-50">
-                                            Please ensure your toll amount matches the receipts you'll be uploading for verification
+                    <!-- Email Approval (Mandatory) -->
+                    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                            <div class="flex items-center space-x-2 sm:space-x-3">
+                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
+                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm font-medium text-gray-900">Email Approval</p>
+                                        <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Required</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Upload your email approval (PDF or Image)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 sm:p-4">
+                            <div class="document-upload-area" id="email-upload-area">
+                                <input class="hidden" id="email_report" name="email_report" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <label for="email_report"
+                                    class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 sm:px-6 sm:py-4 text-center transition-all hover:border-indigo-400">
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-center">
+                                            <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
                                         </div>
+                                        <div class="text-sm">
+                                            <span class="font-medium text-indigo-600">Click to upload</span>
+                                            <span class="text-gray-500"> or drag and drop</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">PDF, JPG, JPEG or PNG</p>
+                                    </div>
+                                </label>
+                                <div class="mt-2 hidden" id="email-preview">
+                                    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                                        <div class="flex items-center space-x-2">
+                                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                            <span class="text-sm text-gray-600 truncate" id="email-filename">No file selected</span>
+                                        </div>
+                                        <button type="button" onclick="removeFile('email')"
+                                            class="ml-4 text-sm font-medium text-red-600 hover:text-red-700">
+                                            Remove
+                                        </button>
                                     </div>
                                 </div>
-            </div>
-            </div>
-        </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <!-- Document Upload Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <!-- Toll Receipt Upload -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                    <!-- Toll Expenses (Optional) -->
+                    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                        <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
+                            <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2 sm:space-x-3">
-                                    <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
+                                    <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-gray-600">
                                         <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <div>
-                                        <p class="text-sm font-medium text-gray-900">Toll Receipt</p>
-                                        <p class="text-xs text-gray-500">Upload your toll receipt (PDF or image)</p>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
                                     </div>
-                    </div>
-                </div>
+                                    <div>
+                                        <div class="flex items-center space-x-2">
+                                            <p class="text-sm font-medium text-gray-900">Toll Expenses</p>
+                                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Optional</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">Include if you had any toll expenses</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="has_toll" name="has_toll" value="1" 
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        x-model="hasToll">
+                                    <label for="has_toll" class="ml-2 text-sm font-medium text-gray-700">
+                                        Include Toll
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
 
-                            <div class="p-3 sm:p-4">
-                <div class="document-upload-area" id="toll-upload-area">
-                    <input class="hidden" id="toll_report" name="toll_report" type="file" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="p-3 sm:p-4 space-y-4" x-show="hasToll" x-cloak>
+                            <!-- Toll Amount -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700" for="toll_amount">
+                                    Toll Amount
+                                </label>
+                                <div class="relative rounded-lg shadow-sm">
+                                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <span class="text-gray-500 sm:text-sm">RM</span>
+                                    </div>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        id="toll_amount"
+                                        name="toll_amount"
+                                        class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 pl-12 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                                        x-bind:required="hasToll"
+                                        value="{{ old('toll_amount', $draftData['toll_amount'] ?? '') }}">
+                                </div>
+                            </div>
+
+                            <!-- Toll Receipt -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    Toll Receipt
+                                </label>
+                                <div class="document-upload-area" id="toll-upload-area">
+                                    <input class="hidden" id="toll_report" name="toll_report" type="file" accept=".pdf,.jpg,.jpeg,.png" x-bind:required="hasToll">
                                     <label for="toll_report"
                                         class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 sm:px-6 sm:py-4 text-center transition-all hover:border-indigo-400">
                                         <div class="space-y-1">
                                             <div class="flex items-center justify-center">
                                                 <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
+                                                </svg>
                                             </div>
-                            <div class="text-sm">
-                                <span class="font-medium text-indigo-600">Click to upload</span>
+                                            <div class="text-sm">
+                                                <span class="font-medium text-indigo-600">Click to upload</span>
                                                 <span class="text-gray-500"> or drag and drop</span>
-                            </div>
+                                            </div>
                                             <p class="text-xs text-gray-500">PDF, JPG, JPEG or PNG</p>
-                        </div>
-                    </label>
+                                        </div>
+                                    </label>
                                     <div class="mt-2 hidden" id="toll-preview">
                                         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
                                             <div class="flex items-center space-x-2">
                                                 <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                                                </svg>
                                                 <span class="text-sm text-gray-600 truncate" id="toll-filename">No file selected</span>
                                             </div>
                                             <button type="button" onclick="removeFile('toll')"
@@ -308,60 +382,9 @@
                                                 Remove
                                             </button>
                                         </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Email Approval Upload -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
-                                <div class="flex items-center space-x-2 sm:space-x-3">
-                                    <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-blue-600">
-                                        <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <div>
-                                        <p class="text-sm font-medium text-gray-900">Email Approval</p>
-                                        <p class="text-xs text-gray-500">Upload your email approval (PDF or Image)</p>
-                                    </div>
-                    </div>
-                </div>
-
-                            <div class="p-3 sm:p-4">
-                <div class="document-upload-area" id="email-upload-area">
-                                    <input class="hidden" id="email_report" name="email_report" type="file" accept=".pdf">
-                                    <label for="email_report"
-                                        class="document-upload-label group flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 px-4 py-3 sm:px-6 sm:py-4 text-center transition-all hover:border-indigo-400">
-                                        <div class="space-y-1">
-                                            <div class="flex items-center justify-center">
-                                                <svg class="h-7 w-7 sm:h-8 sm:w-8 text-gray-400 group-hover:text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                            </svg>
-                                            </div>
-                            <div class="text-sm">
-                                <span class="font-medium text-indigo-600">Click to upload</span>
-                                                <span class="text-gray-500"> or drag and drop</span>
-                            </div>
-                                            <p class="text-xs text-gray-500">PDF, JPG, JPEG or PNG</p>
-                        </div>
-                    </label>
-                                    <div class="mt-2 hidden" id="email-preview">
-                                        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
-                                            <div class="flex items-center space-x-2">
-                                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                                                <span class="text-sm text-gray-600 truncate" id="email-filename">No file selected</span>
-                                            </div>
-                                            <button type="button" onclick="removeFile('email')"
-                                                class="ml-4 text-sm font-medium text-red-600 hover:text-red-700">
-                                                Remove
-                                            </button>
-                                        </div>
                                     </div>
                                 </div>
+                            </div>
                         </div>
                     </div>
                 </div>

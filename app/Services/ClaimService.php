@@ -244,29 +244,29 @@ class ClaimService
 
     private function hasDocuments(array $data): bool
     {
-        return isset($data['toll_file']) || isset($data['email_file']);
+        return isset($data['toll_report']) || isset($data['email_report']);
     }
 
     private function createDocuments(Claim $claim, array $data): void
     {
         $documents = [];
 
-        if (isset($data['toll_file'])) {
+        if (isset($data['toll_report'])) {
             $tollPath = Storage::disk('public')->put(
-                'toll_reports',
-                $data['toll_file']
+                'uploads/claims/toll',
+                $data['toll_report']
             );
             $documents['toll_file_path'] = $tollPath;
-            $documents['toll_file_name'] = $data['toll_file']->getClientOriginalName();
+            $documents['toll_file_name'] = $data['toll_report']->getClientOriginalName();
         }
 
-        if (isset($data['email_file'])) {
+        if (isset($data['email_report'])) {
             $emailPath = Storage::disk('public')->put(
-                'email_reports',
-                $data['email_file']
+                'uploads/claims/email',
+                $data['email_report']
             );
             $documents['email_file_path'] = $emailPath;
-            $documents['email_file_name'] = $data['email_file']->getClientOriginalName();
+            $documents['email_file_name'] = $data['email_report']->getClientOriginalName();
         }
 
         if (!empty($documents)) {

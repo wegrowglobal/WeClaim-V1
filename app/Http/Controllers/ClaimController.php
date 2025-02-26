@@ -884,14 +884,15 @@ class ClaimController extends Controller
 
             if ($latestRejection->requires_documents) {
                 $validationRules = array_merge($validationRules, [
-                    'toll_amount' => 'required|numeric|min:0',
-                    'toll_receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
-                    'email_approval' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048'
+                    'has_toll' => 'required|boolean',
+                    'toll_amount' => 'required_if:has_toll,true|nullable|numeric|min:0',
+                    'toll_receipt' => 'required_if:has_toll,true|nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+                    'email_approval' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048'
                 ]);
                 
                 // Add conditional required if no existing documents
                 if (!$claim->documents()->exists()) {
-                    $validationRules['toll_receipt'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+                    $validationRules['toll_receipt'] = 'required_if:has_toll,true|nullable|file|mimes:pdf,jpg,jpeg,png|max:2048';
                     $validationRules['email_approval'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
                 }
             }

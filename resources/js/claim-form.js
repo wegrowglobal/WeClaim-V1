@@ -653,6 +653,7 @@ class ClaimForm {
             // Validate mandatory fields
             const form = document.getElementById('claimForm');
             const draftData = JSON.parse(document.getElementById('draftData').value);
+            const hasToll = form.querySelector('#has_toll')?.checked;
             const tollAmount = form.querySelector('#toll_amount');
             const tollReceipt = form.querySelector('#toll_report');
             const emailApproval = form.querySelector('#email_report');
@@ -663,9 +664,13 @@ class ClaimForm {
             if (!draftData.claim_company) missingFields.push('Company');
             if (!draftData.date_from) missingFields.push('Start Date');
             if (!draftData.date_to) missingFields.push('End Date');
-            if (!tollAmount || !tollAmount.value) missingFields.push('Toll Amount');
-            if (!tollReceipt || !tollReceipt.files[0]) missingFields.push('Toll Receipt');
             if (!emailApproval || !emailApproval.files[0]) missingFields.push('Email Approval');
+            
+            // Only validate toll fields if toll is included
+            if (hasToll) {
+                if (!tollAmount || !tollAmount.value) missingFields.push('Toll Amount');
+                if (!tollReceipt || !tollReceipt.files[0]) missingFields.push('Toll Receipt');
+            }
 
             if (missingFields.length > 0) {
                 Swal.fire({
@@ -709,12 +714,29 @@ class ClaimForm {
             formData.append('date_to', draftData.date_to);
             formData.append('total_distance', draftData.total_distance || '0');
             formData.append('petrol_amount', draftData.total_cost || '0');
-            formData.append('toll_amount', tollAmount.value || '0');
             formData.append('status', 'Submitted');
             formData.append('title', `Petrol Claim - ${draftData.claim_company}`);
             formData.append('claim_type', 'Petrol');
             formData.append('remarks', draftData.remarks || '');
             
+            // Ensure has_toll is always included
+            formData.append('has_toll', hasToll ? '1' : '0');
+            
+            // Add files
+            if (emailApproval && emailApproval.files[0]) {
+                formData.append('email_report', emailApproval.files[0]);
+            }
+
+            // Add toll data only if has_toll is true
+            if (hasToll) {
+                formData.append('toll_amount', tollAmount.value || '0');
+                if (tollReceipt && tollReceipt.files[0]) {
+                    formData.append('toll_report', tollReceipt.files[0]);
+                }
+            } else {
+                formData.append('toll_amount', '0');
+            }
+
             // Add locations
             if (Array.isArray(locations)) {
                 const validLocations = locations.filter(loc => 
@@ -727,14 +749,6 @@ class ClaimForm {
             // Add accommodations if they exist
             if (accommodations && accommodations.length > 0) {
                 formData.append('accommodations', JSON.stringify(accommodations));
-            }
-
-            // Add files
-            if (tollReceipt && tollReceipt.files[0]) {
-                formData.append('toll_file', tollReceipt.files[0]);
-            }
-            if (emailApproval && emailApproval.files[0]) {
-                formData.append('email_file', emailApproval.files[0]);
             }
 
             // Show confirmation dialog

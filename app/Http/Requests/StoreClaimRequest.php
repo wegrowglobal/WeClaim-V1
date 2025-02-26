@@ -21,10 +21,12 @@ class StoreClaimRequest extends FormRequest
             'remarks' => 'nullable|string',
             'total_distance' => 'required|numeric|min:0',
             'petrol_amount' => 'required|numeric|min:0',
-            'toll_amount' => 'required|numeric|min:0',
             'status' => 'required|string|in:Submitted',
             'title' => 'required|string|max:255',
             'claim_type' => 'required|string|in:Petrol',
+            
+            // Validate has_toll checkbox
+            'has_toll' => 'boolean',
             
             // Validate locations array
             'locations' => 'required|json',
@@ -37,9 +39,10 @@ class StoreClaimRequest extends FormRequest
             'accommodations.*.price' => 'required_if:accommodations.*.location,!=,null|numeric|min:0',
             'accommodations.*.receipt' => 'sometimes|file|mimes:pdf,jpg,jpeg,png|max:2048',
             
-            // File validations
-            'toll_file' => 'required|file|mimes:pdf|max:10240', // 10MB max
-            'email_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            // File validations - toll is conditional, email is required
+            'toll_amount' => 'required_if:has_toll,1|nullable|numeric|min:0',
+            'toll_report' => 'required_if:has_toll,1|nullable|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
+            'email_report' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240', // 10MB max
         ];
     }
 
@@ -48,10 +51,11 @@ class StoreClaimRequest extends FormRequest
         return [
             'claim_company.in' => 'The selected company is invalid.',
             'date_to.after_or_equal' => 'The end date must be after or equal to the start date.',
-            'toll_file.required' => 'The toll receipt file is required.',
-            'toll_file.mimes' => 'The toll receipt must be a PDF file.',
-            'email_file.required' => 'The email approval file is required.',
-            'email_file.mimes' => 'The email approval must be a PDF file.',
+            'toll_report.required_if' => 'The toll receipt is required when toll expenses are included.',
+            'toll_amount.required_if' => 'The toll amount is required when toll expenses are included.',
+            'toll_report.mimes' => 'The toll receipt must be a PDF, JPG, JPEG, or PNG file.',
+            'email_report.required' => 'The email approval file is required.',
+            'email_report.mimes' => 'The email approval must be a PDF, JPG, JPEG, or PNG file.',
             'locations.required' => 'At least one location must be specified.',
             'locations.json' => 'The locations data is invalid.',
             'accommodations.*.check_in.after_or_equal' => 'Check-in date must be within the claim period.',
@@ -63,6 +67,11 @@ class StoreClaimRequest extends FormRequest
 
     protected function prepareForValidation()
     {
+        // Ensure has_toll is a boolean
+        $this->merge([
+            'has_toll' => $this->has_toll === '1' || $this->has_toll === true || $this->has_toll === 'true',
+        ]);
+
         $accommodations = $this->input('accommodations');
         $draftData = $this->input('draft_data');
         
