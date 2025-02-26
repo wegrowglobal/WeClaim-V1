@@ -130,7 +130,7 @@
                 </div>
 
                 <div id="originalDetails" class="hidden divide-y divide-gray-200">
-                    <!-- Original claim details content - same as before but with more compact spacing -->
+                    <!-- Original claim details content -->
                     @include('components.claims.original-details', ['claim' => $claim])
                 </div>
             </div>
@@ -456,21 +456,36 @@
                         </div>
                         <div class="p-4">
                             <div class="space-y-4">
+                                <!-- Toll Checkbox -->
                                 <div class="space-y-2">
-                                    <label class="block text-sm font-medium text-gray-700">Toll Amount (RM)</label>
-                                    <input type="number" name="toll_amount" step="0.01" value="{{ old('toll_amount', $claim->toll_amount) }}"
-                                        class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500">
-                                </div>
-                                <!-- File upload fields -->
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <label class="block text-sm font-medium text-gray-700">Toll Receipt</label>
-                                        <span class="text-xs text-gray-500">Current file will be kept if no new file is uploaded</span>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="has_toll" name="has_toll" value="1" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            {{ old('has_toll', $claim->toll_amount > 0) ? 'checked' : '' }}>
+                                        <label for="has_toll" class="ml-2 block text-sm font-medium text-gray-700">Include Toll Charges</label>
                                     </div>
-                                    <input type="file" name="toll_receipt" accept=".pdf,.jpg,.jpeg,.png"
-                                        class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                                 </div>
-                                
+
+                                <!-- Toll Amount and Receipt (conditionally shown) -->
+                                <div id="toll_fields" class="space-y-4 {{ old('has_toll', $claim->toll_amount > 0) ? '' : 'hidden' }}">
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-700">Toll Amount (RM)</label>
+                                        <input type="number" name="toll_amount" step="0.01" min="0" value="{{ old('toll_amount', $claim->toll_amount) }}"
+                                            class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500"
+                                            {{ old('has_toll', $claim->toll_amount > 0) ? 'required' : '' }}>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-sm font-medium text-gray-700">Toll Receipt</label>
+                                            <span class="text-xs text-gray-500">Current file will be kept if no new file is uploaded</span>
+                                        </div>
+                                        <input type="file" name="toll_receipt" accept=".pdf,.jpg,.jpeg,.png"
+                                            class="form-input block w-full rounded-lg border border-gray-200 bg-gray-50/50 text-sm transition-all focus:border-gray-400 focus:bg-white focus:ring-1 focus:ring-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                            {{ old('has_toll', $claim->toll_amount > 0) ? 'required' : '' }}>
+                                    </div>
+                                </div>
+
+                                <!-- Email Approval -->
                                 <div class="space-y-2">
                                     <div class="flex items-center justify-between">
                                         <label class="block text-sm font-medium text-gray-700">Email Approval</label>

@@ -370,6 +370,55 @@ function initializeResubmitForm() {
     const form = document.getElementById('resubmit-form');
     if (!form) return;
 
+    // Initialize toll checkbox functionality
+    const hasTollCheckbox = document.getElementById('has_toll');
+    const tollFields = document.getElementById('toll_fields');
+    
+    if (hasTollCheckbox && tollFields) {
+        hasTollCheckbox.addEventListener('change', function() {
+            tollFields.classList.toggle('hidden', !this.checked);
+            if (!this.checked) {
+                // Clear toll amount and set has_toll to false when unchecked
+                const tollAmountInput = tollFields.querySelector('input[name="toll_amount"]');
+                if (tollAmountInput) {
+                    tollAmountInput.value = '';
+                }
+                // Add a hidden input for has_toll when unchecked
+                let hiddenHasToll = document.getElementById('hidden_has_toll');
+                if (!hiddenHasToll) {
+                    hiddenHasToll = document.createElement('input');
+                    hiddenHasToll.type = 'hidden';
+                    hiddenHasToll.id = 'hidden_has_toll';
+                    hiddenHasToll.name = 'has_toll';
+                    form.appendChild(hiddenHasToll);
+                }
+                hiddenHasToll.value = '0';
+            } else {
+                // Remove the hidden input when checked
+                const hiddenHasToll = document.getElementById('hidden_has_toll');
+                if (hiddenHasToll) {
+                    hiddenHasToll.remove();
+                }
+            }
+        });
+
+        // Initialize the hidden input on page load if checkbox is unchecked
+        if (!hasTollCheckbox.checked) {
+            let hiddenHasToll = document.getElementById('hidden_has_toll');
+            if (!hiddenHasToll) {
+                hiddenHasToll = document.createElement('input');
+                hiddenHasToll.type = 'hidden';
+                hiddenHasToll.id = 'hidden_has_toll';
+                hiddenHasToll.name = 'has_toll';
+                hiddenHasToll.value = '0';
+                form.appendChild(hiddenHasToll);
+            }
+        }
+    }
+
+    // Initialize toggle details functionality
+    initializeToggleDetails();
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
