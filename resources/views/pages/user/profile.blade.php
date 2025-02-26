@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Add CSRF Token meta tag -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
 <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="mb-8 animate-slide-in">
@@ -405,6 +408,20 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
 
     // Submit the form
     this.submit();
+});
+
+// Add error handling function
+async function handleResponse(response) {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+    }
+    throw new Error('Response was not JSON');
+}
+
+// Update the Profile class initialization
+document.addEventListener('DOMContentLoaded', function() {
+    window.profileInstance = new Profile();
 });
 </script>
 @endsection

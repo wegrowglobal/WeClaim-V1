@@ -14,6 +14,8 @@ use Illuminate\View\View;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 final class UserController extends Controller
 {
@@ -105,7 +107,7 @@ final class UserController extends Controller
         return view('pages.user.change-password');
     }
 
-    public function changePassword(Request $request): RedirectResponse
+    public function changePassword(Request $request)
     {
         try {
             $request->validate([
@@ -116,36 +118,66 @@ final class UserController extends Controller
 
             $user = Auth::user();
             if (!$user) {
-                throw new \RuntimeException('User not found');
+                Log::error('User not found during password change');
+                return response()->json([
+                    'message' => 'User not found'
+                ], 404);
             }
+
+            // Add debugging for password check
+            Log::info('Password change attempt', [
+                'user_id' => $user->id,
+                'current_password_length' => strlen($request->current_password),
+                'new_password_length' => strlen($request->password)
+            ]);
 
             // Verify current password
             if (!Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors([
-                    'current_password' => 'The provided password does not match your current password.'
+                Log::warning('Current password mismatch', [
+                    'user_id' => $user->id
                 ]);
+                
+                return response()->json([
+                    'message' => 'The provided password does not match your current password.'
+                ], 422);
             }
 
-            // Update password
-            $user->password = Hash::make($request->password);
-            $user->save();
+            // Update password using direct database update
+            $updated = DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'password' => Hash::make($request->password)
+                ]);
+
+            if (!$updated) {
+                throw new \RuntimeException('Failed to update password in database');
+            }
 
             Log::info('Password changed successfully', [
                 'user_id' => $user->id
             ]);
 
-            return redirect()
-                ->route('profile')
-                ->with('success', 'Password has been updated successfully!');
+            return response()->json([
+                'message' => 'Password has been updated successfully!'
+            ]);
+        } catch (ValidationException $e) {
+            Log::error('Password change validation error', [
+                'errors' => $e->errors()
+            ]);
+            
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Password change error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return back()
-                ->withErrors(['error' => 'Failed to update password.'])
-                ->withInput();
+            return response()->json([
+                'message' => 'Failed to update password.'
+            ], 500);
         }
     }
 }

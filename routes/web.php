@@ -135,7 +135,9 @@ Route::group([], function () {
     // Password Change Routes
     Route::group([], function () {
         Route::get('/change-password', [UserController::class, 'showChangePassword'])->name('password.change');
-        Route::post('/change-password', [UserController::class, 'changePassword']);
+        Route::post('/change-password', [UserController::class, 'changePassword'])
+            ->name('password.change')
+            ->middleware(['auth', 'verified']);
     });
 
     // Admin only routes

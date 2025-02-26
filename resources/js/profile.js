@@ -195,21 +195,14 @@ class Profile {
                                class="block w-full px-3 py-2 text-sm sm:text-base rounded-lg border bg-gray-50 focus:bg-white focus:ring-2 focus:ring-gray-500 transition-all" 
                                placeholder="New Password"
                                oninput="window.profileInstance.updatePasswordStrength()">
-                        <div class="absolute inset-y-0 right-0 flex items-center">
-                            <button type="button"
-                                    class="px-2 py-1 mr-6 sm:mr-8 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all"
-                                    onclick="const profile = new Profile(); profile.fillPasswordFields(profile.generatePassword())">
-                                Generate
-                            </button>
-                            <button type="button" 
-                                    class="pr-2 sm:pr-3 flex items-center"
-                                    onclick="Profile.togglePasswordVisibility('new_password')">
-                                <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </div>
+                        <button type="button" 
+                                class="absolute inset-y-0 right-0 pr-2 sm:pr-3 flex items-center"
+                                onclick="Profile.togglePasswordVisibility('new_password')">
+                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
                     </div>
                     <div class="relative">
                         <input type="password" 
@@ -225,36 +218,12 @@ class Profile {
                             </svg>
                         </button>
                     </div>
-                    <div class="mt-2">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-xs text-gray-500">Password Strength:</span>
-                            <span id="password-strength-text" class="text-xs text-gray-500">No Password</span>
-                        </div>
-                        <div class="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                            <div id="password-strength-bar" class="h-full bg-gray-300 transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div class="mt-4 p-3 sm:p-4 bg-blue-50 text-left rounded-lg text-xs sm:text-sm text-blue-600">
-                        <h4 class="font-semibold mb-2">Password Requirements:</h4>
-                        <ul class="list-disc list-inside">
-                            <li>At least 8 characters long</li>
-                            <li>Include at least one uppercase letter</li>
-                            <li>Include at least one lowercase letter</li>
-                            <li>Include at least one number</li>
-                            <li>Include at least one special character (!@#$%^&*)</li>
-                        </ul>
-                        <p class="mt-2">For a stronger password, consider using a passphrase or a combination of unrelated words.</p>
-                    </div>
                 </div>
             `,
             showCancelButton: true,
             confirmButtonText: 'Change Password',
             confirmButtonColor: '#4F46E5',
             cancelButtonText: 'Cancel',
-            customClass: {
-                input: 'form-input-base peer'
-            },
-            focusConfirm: false,
             preConfirm: () => {
                 const current_password = document.getElementById('current_password').value;
                 const password = document.getElementById('new_password').value;
@@ -281,35 +250,64 @@ class Profile {
 
         if (formValues) {
             try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+
+                // Add debugging for request payload
+                console.log('Password change request payload:', {
+                    ...formValues,
+                    current_password: formValues.current_password.length + ' characters',
+                    password: formValues.password.length + ' characters'
+                });
+
                 const response = await fetch('/change-password', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify(formValues)
                 });
 
-                const data = await response.json();
+                // Add debugging for response
+                console.log('Password change response status:', response.status);
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
 
-                if (response.ok) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Password has been updated successfully',
-                        icon: 'success',
-                        timer: 3000,
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timerProgressBar: true
-                    });
-                } else {
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('Response parsing error:', parseError);
+                    throw new Error('Invalid server response');
+                }
+
+                if (!response.ok) {
                     throw new Error(data.message || 'Failed to update password');
                 }
+
+                // Show success message
+                await Swal.fire({
+                    title: 'Success!',
+                    text: 'Password has been updated successfully',
+                    icon: 'success',
+                    timer: 3000,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timerProgressBar: true
+                });
+
+                // Reload the page after success
+                window.location.reload();
             } catch (error) {
-                Swal.fire({
+                console.error('Password change error:', error);
+                await Swal.fire({
                     title: 'Error!',
-                    text: error.message,
+                    text: error.message || 'An error occurred while updating the password',
                     icon: 'error',
                     timer: 3000,
                     toast: true,
