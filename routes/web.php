@@ -18,6 +18,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\SystemConfigController;
 use App\Http\Controllers\BulkEmailController;
 use App\Http\Controllers\SignatureController;
+use App\Http\Controllers\ChangelogController;
 
 
 // Guest Routes
@@ -28,6 +29,10 @@ Route::group([], function () {
         }
         return view('pages.auth.login');
     })->name('login.form');
+
+    // Get published changelogs for login page
+    Route::get('/changelogs/published', [ChangelogController::class, 'getPublishedChangelogs'])
+        ->name('changelogs.published');
 
     Route::post('/login', [UserController::class, 'login'])->name('login');
 
@@ -200,6 +205,11 @@ Route::group([], function () {
         }
         return app(UserManagementController::class)->destroy($id);
     })->name('users.destroy');
+
+    // Changelog Management Routes
+    Route::get('/admin/changelogs', [ChangelogController::class, 'index'])
+        ->middleware('auth')
+        ->name('admin.changelogs');
 });
 
 // Logout Route

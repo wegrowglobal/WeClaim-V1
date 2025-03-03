@@ -15,11 +15,12 @@
     <!-- Vite -->
     @vite(['resources/css/app.css'])
     
-
 </head>
-<body>
+<body class="bg-gray-100 antialiased">
     <div class="flex">
         @yield('content')
     </div>
+    
+    @stack('scripts')
 </body>
 </html>
