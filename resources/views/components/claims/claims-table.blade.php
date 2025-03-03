@@ -30,6 +30,45 @@
             </div>
         </div>
 
+        <!-- Status Filter Buttons -->
+        <div class="border-b border-gray-200 px-4 py-3 sm:px-6">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Filter by Status:</h3>
+            <div class="flex flex-wrap gap-2">
+                <button type="button" data-filter-status="all"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 ring-1 ring-gray-500/10">
+                    All
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_SUBMITTED }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-amber-50 text-amber-600 hover:bg-amber-100 ring-1 ring-amber-500/10">
+                    Submitted
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_APPROVED_ADMIN }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-600 hover:bg-indigo-100 ring-1 ring-indigo-500/10">
+                    Approved by Admin
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_APPROVED_DATUK }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 ring-1 ring-blue-500/10">
+                    Approved by Datuk
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_APPROVED_HR }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-purple-50 text-purple-600 hover:bg-purple-100 ring-1 ring-purple-500/10">
+                    Approved by HR
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_APPROVED_FINANCE }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 ring-1 ring-emerald-500/10">
+                    Approved by Finance
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_REJECTED }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 ring-1 ring-red-500/10">
+                    Rejected
+                </button>
+                <button type="button" data-filter-status="{{ Claim::STATUS_DONE }}"
+                    class="status-filter-btn inline-flex items-center rounded-full px-3 py-1 text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 ring-1 ring-green-500/10">
+                    Done
+                </button>
+            </div>
+        </div>
+
         <div class="relative">
             <div class="">
                 <div class="min-w-full overflow-x-auto">

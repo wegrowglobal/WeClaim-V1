@@ -60,7 +60,7 @@
     }
 @endphp
 
-<span class="status-badge inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium {{ $colors[$status]['class'] ?? '' }} {{ $attributes->get('class') }}">
+<span data-status="{{ $status }}" class="status-badge inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium {{ $colors[$status]['class'] ?? '' }} {{ $attributes->get('class') }}">
     {!! $colors[$status]['icon'] ?? '' !!}
     <span>{{ $statusText }}</span>
 </span>

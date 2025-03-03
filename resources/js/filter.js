@@ -1,3 +1,9 @@
+/**
+ * Claims Table Filter
+ * 
+ * This script handles filtering functionality for the claims table.
+ */
+
 export default class TableSorter {
     constructor() {
         this.table = document.getElementById("claimsTable");
@@ -96,4 +102,87 @@ window.initializeTableSorting = function() {
 // Initialize when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.initializeTableSorting();
+    initializeTableFilters();
+    initializeSearchFilter();
 });
+
+/**
+ * Initialize table filters
+ */
+function initializeTableFilters() {
+    const statusFilterButtons = document.querySelectorAll('.status-filter-btn');
+    if (!statusFilterButtons.length) return;
+    
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    // Add active class to "All" button by default
+    const allButton = document.querySelector('[data-filter-status="all"]');
+    if (allButton) {
+        allButton.classList.add('ring-2', 'ring-offset-1', 'ring-gray-500');
+    }
+    
+    statusFilterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const status = this.getAttribute('data-filter-status');
+            
+            // Remove active class from all buttons
+            statusFilterButtons.forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-1', 'ring-gray-500');
+            });
+            
+            // Add active class to clicked button
+            this.classList.add('ring-2', 'ring-offset-1', 'ring-gray-500');
+            
+            // Filter table rows
+            tableRows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (!statusCell) return;
+                
+                if (status === 'all') {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = statusCell.querySelector('.status-badge');
+                    const rowStatus = statusBadge ? statusBadge.getAttribute('data-status') : '';
+                    
+                    if (rowStatus === status) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        });
+    });
+}
+
+/**
+ * Initialize search filter
+ */
+function initializeSearchFilter() {
+    const searchInput = document.getElementById('searchInput');
+    if (!searchInput) return;
+    
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        
+        tableRows.forEach(row => {
+            if (searchTerm === '') {
+                row.style.display = '';
+                return;
+            }
+            
+            const cells = row.querySelectorAll('td');
+            let found = false;
+            
+            cells.forEach(cell => {
+                if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                    found = true;
+                }
+            });
+            
+            row.style.display = found ? '' : 'none';
+        });
+    });
+}
