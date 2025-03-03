@@ -69,22 +69,26 @@ class ChangelogManager extends Component
             $data['published_at'] = now();
         }
 
-        if ($this->isEditing) {
-            $changelog = Changelog::findOrFail($this->editingChangelogId);
-            
-            // If we're publishing for the first time
-            if ($this->is_published && !$changelog->is_published) {
-                $data['published_at'] = now();
+        try {
+            if ($this->isEditing) {
+                $changelog = Changelog::findOrFail($this->editingChangelogId);
+                
+                // If we're publishing for the first time
+                if ($this->is_published && !$changelog->is_published) {
+                    $data['published_at'] = now();
+                }
+                
+                $changelog->update($data);
+                $this->dispatch('notify', message: 'Changelog updated successfully!', type: 'success');
+            } else {
+                Changelog::create($data);
+                $this->dispatch('notify', message: 'Changelog created successfully!', type: 'success');
             }
-            
-            $changelog->update($data);
-            $this->dispatch('notify', ['message' => 'Changelog updated successfully!', 'type' => 'success']);
-        } else {
-            Changelog::create($data);
-            $this->dispatch('notify', ['message' => 'Changelog created successfully!', 'type' => 'success']);
-        }
 
-        $this->resetForm();
+            $this->resetForm();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: 'Error: ' . $e->getMessage(), type: 'error');
+        }
     }
 
     public function edit($id)
@@ -101,7 +105,7 @@ class ChangelogManager extends Component
         $this->is_published = $changelog->is_published;
         
         // Dispatch event to update TinyMCE with content
-        $this->dispatch('contentUpdated', $this->content);
+        $this->dispatch('contentUpdated', content: $this->content);
     }
 
     public function confirmDelete($id)
@@ -112,12 +116,17 @@ class ChangelogManager extends Component
 
     public function delete()
     {
-        Changelog::findOrFail($this->deleteId)->delete();
-        
-        $this->confirmingDeletion = false;
-        $this->deleteId = null;
-        
-        $this->dispatch('notify', ['message' => 'Changelog deleted successfully!', 'type' => 'success']);
+        try {
+            $changelog = Changelog::findOrFail($this->deleteId);
+            $changelog->delete();
+            
+            $this->confirmingDeletion = false;
+            $this->deleteId = null;
+            
+            $this->dispatch('notify', message: 'Changelog deleted successfully!', type: 'success');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: 'Error deleting changelog: ' . $e->getMessage(), type: 'error');
+        }
     }
 
     public function cancelDelete()
@@ -135,19 +144,23 @@ class ChangelogManager extends Component
 
     public function togglePublish($id)
     {
-        $changelog = Changelog::findOrFail($id);
-        $wasPublished = $changelog->is_published;
-        
-        $changelog->is_published = !$wasPublished;
-        
-        // If we're publishing for the first time
-        if (!$wasPublished && $changelog->is_published) {
-            $changelog->published_at = now();
+        try {
+            $changelog = Changelog::findOrFail($id);
+            $wasPublished = $changelog->is_published;
+            
+            $changelog->is_published = !$wasPublished;
+            
+            // If we're publishing for the first time
+            if (!$wasPublished && $changelog->is_published) {
+                $changelog->published_at = now();
+            }
+            
+            $changelog->save();
+            
+            $status = $changelog->is_published ? 'published' : 'unpublished';
+            $this->dispatch('notify', message: "Changelog {$status} successfully!", type: 'success');
+        } catch (\Exception $e) {
+            $this->dispatch('notify', message: 'Error: ' . $e->getMessage(), type: 'error');
         }
-        
-        $changelog->save();
-        
-        $status = $changelog->is_published ? 'published' : 'unpublished';
-        $this->dispatch('notify', ['message' => "Changelog {$status} successfully!", 'type' => 'success']);
     }
 }

@@ -1,5 +1,60 @@
 <div class="container mx-auto">
 
+    <!-- Notification -->
+    <div 
+        x-data="{ 
+            show: false, 
+            message: '', 
+            type: 'success',
+            init() {
+                window.addEventListener('notify', (event) => {
+                    this.message = event.detail.message;
+                    this.type = event.detail.type || 'success';
+                    this.show = true;
+                    setTimeout(() => { this.show = false }, 3000);
+                });
+            }
+        }" 
+        x-show="show" 
+        x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform translate-y-2"
+        x-transition:enter-end="opacity-100 transform translate-y-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform translate-y-0"
+        x-transition:leave-end="opacity-0 transform translate-y-2"
+        class="fixed right-4 top-4 z-50 max-w-sm rounded-md p-4 shadow-lg"
+        :class="{
+            'bg-green-50 text-green-800 border border-green-200': type === 'success',
+            'bg-red-50 text-red-800 border border-red-200': type === 'error',
+            'bg-blue-50 text-blue-800 border border-blue-200': type === 'info',
+            'bg-amber-50 text-amber-800 border border-amber-200': type === 'warning'
+        }"
+    >
+        <div class="flex items-center">
+            <template x-if="type === 'success'">
+                <svg class="mr-2 h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                </svg>
+            </template>
+            <template x-if="type === 'error'">
+                <svg class="mr-2 h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                </svg>
+            </template>
+            <template x-if="type === 'info'">
+                <svg class="mr-2 h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                </svg>
+            </template>
+            <template x-if="type === 'warning'">
+                <svg class="mr-2 h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+            </template>
+            <span x-text="message"></span>
+        </div>
+    </div>
+
     <!-- Form -->
     <div class="mb-8 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <h2 class="mb-6 text-xl font-bold text-black">{{ $isEditing ? 'Edit' : 'Create' }} Changelog Entry</h2>
@@ -64,7 +119,7 @@
                 @error('content') <span class="mt-1 text-xs text-red-600">{{ $message }}</span> @enderror
             </div>
 
-            <!-- Live Preview -->
+            <!-- Live Prev iew -->
             <div class="mt-6 rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-2 text-sm font-medium text-gray-700">Live Preview</h3>
                 <div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
@@ -246,7 +301,16 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                        <button wire:click="delete" type="button" class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">Delete</button>
+                        <button wire:click="delete" type="button" class="inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-3 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm">
+                            <span wire:loading.remove wire:target="delete">Delete</span>
+                            <span wire:loading wire:target="delete" class="inline-flex items-center">
+                                <svg class="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Deleting...
+                            </span>
+                        </button>
                         <button wire:click="cancelDelete" type="button" class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-3 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 sm:ml-3 sm:mt-0 sm:w-auto sm:text-sm">Cancel</button>
                     </div>
                 </div>
@@ -262,7 +326,10 @@
             const preview = document.getElementById('preview-content');
             
             // Initialize editor with content from textarea
-            editor.innerHTML = textarea.value;
+            if (textarea.value) {
+                editor.innerHTML = textarea.value;
+                preview.innerHTML = textarea.value;
+            }
             
             // Update textarea and preview when editor content changes
             editor.addEventListener('input', function() {
@@ -270,25 +337,24 @@
                 preview.innerHTML = editor.innerHTML;
                 
                 // Trigger Livewire update
-                textarea.dispatchEvent(new Event('input'));
+                @this.set('content', editor.innerHTML);
             });
             
             // Listen for Livewire events
-            document.addEventListener('livewire:initialized', function() {
-                const component = window.Livewire.find(
-                    document.querySelector('[wire\\:id]').getAttribute('wire:id')
-                );
-                
+            window.addEventListener('livewire:initialized', function() {
                 // When form is reset
-                component.on('formReset', function() {
+                @this.on('formReset', function() {
                     editor.innerHTML = '';
-                    preview.innerHTML = '';
+                    preview.innerHTML = 'Your content will appear here...';
                 });
                 
                 // When content is updated from the component
-                component.on('contentUpdated', function(content) {
-                    editor.innerHTML = content;
-                    preview.innerHTML = content;
+                @this.on('contentUpdated', function(content) {
+                    if (content) {
+                        editor.innerHTML = content;
+                        preview.innerHTML = content;
+                        console.log('Content updated:', content);
+                    }
                 });
             });
         });
@@ -307,7 +373,7 @@
             preview.innerHTML = editor.innerHTML;
             
             // Trigger Livewire update
-            textarea.dispatchEvent(new Event('input'));
+            @this.set('content', editor.innerHTML);
         }
     </script>
 
