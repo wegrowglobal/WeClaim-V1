@@ -55,16 +55,29 @@ class ClaimExcelExportService
             ->setName('Calibri')
             ->setSize(10);
 
-        // Set column widths
-        $this->sheet->getColumnDimension('A')->setWidth(25);
-        $this->sheet->getColumnDimension('B')->setWidth(45);
-        $this->sheet->getColumnDimension('C')->setWidth(45);
+        // Set column widths - adjust to prevent text wrapping
+        $this->sheet->getColumnDimension('A')->setWidth(25); // Increased from 15 to 25
+        $this->sheet->getColumnDimension('B')->setWidth(40);
+        $this->sheet->getColumnDimension('C')->setWidth(40); // Increased from 25 to 40 to match B
         $this->sheet->getColumnDimension('D')->setWidth(25);
 
-        // Default alignment
+        // Default alignment and text wrapping
         $this->spreadsheet->getDefaultStyle()->getAlignment()
             ->setVertical(Alignment::VERTICAL_CENTER)
             ->setWrapText(true);
+            
+        // Set print layout
+        $this->sheet->getPageSetup()
+            ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT)
+            ->setPaperSize(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::PAPERSIZE_A4)
+            ->setFitToWidth(1)
+            ->setFitToHeight(0);
+            
+        // Set auto-size for all columns to ensure text fits
+        $this->sheet->getColumnDimension('A')->setAutoSize(false);
+        $this->sheet->getColumnDimension('B')->setAutoSize(false);
+        $this->sheet->getColumnDimension('C')->setAutoSize(false);
+        $this->sheet->getColumnDimension('D')->setAutoSize(false);
     }
 
     public function exportToExcel()
@@ -103,7 +116,7 @@ class ClaimExcelExportService
         $richText = new \PhpOffice\PhpSpreadsheet\RichText\RichText();
 
         // Add the title part
-        $titlePart = $richText->createTextRun("Travel Claim Report\n");
+        $titlePart = $richText->createTextRun("TRAVEL CLAIM REPORT\n");
         $titlePart->getFont()
             ->setBold(true)
             ->setSize(16);
@@ -160,7 +173,11 @@ class ClaimExcelExportService
         $this->sheet->getStyle("A{$row}")->applyFromArray([
             'font' => ['bold' => true, 'size' => 11, 'color' => ['rgb' => 'FFFFFF']],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::SECTION_BG_COLOR]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 1]
+            'alignment' => [
+                'horizontal' => Alignment::HORIZONTAL_LEFT, 
+                'vertical' => Alignment::VERTICAL_CENTER,
+                'indent' => 1
+            ]
         ]);
         $this->sheet->getRowDimension($row)->setRowHeight(25);
         return $row + 1;
@@ -189,15 +206,21 @@ class ClaimExcelExportService
 
             $this->sheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
             
-            // Set left alignment for both label and value
+            // Set left alignment for both label and value with proper text wrapping
             $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setVertical(Alignment::VERTICAL_CENTER)
+                ->setWrapText(false)
                 ->setIndent(1);
+                
             $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
                 ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setVertical(Alignment::VERTICAL_CENTER)
+                ->setWrapText(false)
                 ->setIndent(1);
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(20);
+            // Increase row height if needed for longer text
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
             $this->currentRow++;
         }
     }
@@ -206,13 +229,18 @@ class ClaimExcelExportService
     {
         $this->currentRow = $this->addSectionHeader('Claim Information', $this->currentRow);
 
+        // Format the description/remarks
+        $description = $this->data['description'] ?? '';
+        $formattedDescription = !empty($description) ? $description : '-';
+
         $details = [
             ['Claim ID', '#' . $this->claim->id],
             ['Employee Name', $this->data['employee_name']],
             ['Department', $this->data['department']],
             ['Claim Period', $this->data['date_from'] . ' to ' . $this->data['date_to']],
             ['Status', $this->data['status']],
-            ['Submitted Date', $this->data['submitted_at']]
+            ['Submitted Date', $this->data['submitted_at']],
+            ['Remarks', $formattedDescription]
         ];
 
         foreach ($details as $detail) {
@@ -221,10 +249,36 @@ class ClaimExcelExportService
             $this->sheet->setCellValue('B' . $this->currentRow, $detail[1]);
 
             $this->sheet->getStyle('A' . $this->currentRow)->getFont()->setBold(true);
-            $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
-                ->getAlignment()->setIndent(1);
+            
+            // Set left alignment for both label and value with proper text wrapping
+            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setVertical(Alignment::VERTICAL_CENTER)
+                ->setWrapText(false) // Disable text wrapping for column A
+                ->setIndent(1);
+                
+            // For remarks, enable text wrapping
+            if ($detail[0] === 'Remarks') {
+                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                    ->setVertical(Alignment::VERTICAL_TOP)
+                    ->setWrapText(true) // Enable text wrapping for remarks
+                    ->setIndent(1);
+                
+                // Increase row height for remarks to accommodate multiple lines
+                $rowHeight = min(max(strlen($formattedDescription) / 3, 50), 100); // Dynamic height based on content length
+                $this->sheet->getRowDimension($this->currentRow)->setRowHeight($rowHeight);
+            } else {
+                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                    ->setVertical(Alignment::VERTICAL_CENTER)
+                    ->setWrapText(false) // Disable text wrapping for other fields
+                    ->setIndent(1);
+                
+                // Standard row height for other fields
+                $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+            }
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(20);
             $this->currentRow++;
         }
     }
@@ -245,30 +299,22 @@ class ClaimExcelExportService
             'font' => ['bold' => true],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::HEADER_BG_COLOR]],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 1]
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
         ]);
-        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(30);
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
         $this->currentRow++;
 
-        // Content
-        $locations = collect($this->data['locations']);
-        if ($locations->count() % 2 !== 0) {
-            $locations = $locations->slice(0, -1);
-        }
-
-        foreach ($locations as $index => $location) {
+        // Trip details
+        foreach ($this->data['locations'] as $index => $location) {
             $this->sheet->setCellValue('A' . $this->currentRow, $index + 1);
             $this->sheet->setCellValue('B' . $this->currentRow, $location['from']);
             $this->sheet->setCellValue('C' . $this->currentRow, $location['to']);
             $this->sheet->setCellValue('D' . $this->currentRow, $location['distance']);
 
-            // Base style with consistent padding
+            // Apply styling
             $style = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-                'alignment' => [
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'indent' => 1
-                ]
+                'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => true]
             ];
 
             if ($index % 2 === 1) {
@@ -278,26 +324,52 @@ class ClaimExcelExportService
                 ];
             }
 
-            // Apply base style to all cells
             $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                 ->applyFromArray($style);
 
-            // Set specific alignments while maintaining the indent
+            // Set specific alignments
             $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
             
-            $this->sheet->getStyle('B' . $this->currentRow)->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
+            $this->sheet->getStyle('B' . $this->currentRow . ':C' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setIndent(1);
                 
-            $this->sheet->getStyle('C' . $this->currentRow)->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_LEFT);
-
             $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
-                ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
+                ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+                ->setIndent(1);
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(35);
+            // Adjust row height based on content
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(40);
             $this->currentRow++;
         }
+
+        // Total row
+        $this->sheet->setCellValue('A' . $this->currentRow, '');
+        $this->sheet->setCellValue('B' . $this->currentRow, '');
+        $this->sheet->setCellValue('C' . $this->currentRow, 'Total Distance');
+        $this->sheet->setCellValue('D' . $this->currentRow, $this->data['total_distance']);
+
+        $totalStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::TOTAL_BG_COLOR]],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ];
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($totalStyle);
+
+        $this->sheet->getStyle('C' . $this->currentRow)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+            ->setIndent(1);
+            
+        $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+            ->setIndent(1);
+
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+        $this->currentRow++;
     }
 
     protected function addAccommodationDetails()
@@ -405,64 +477,107 @@ class ClaimExcelExportService
     {
         $this->currentRow = $this->addSectionHeader('Financial Summary', $this->currentRow);
 
-        $summary = [
-            ['Total Distance', $this->data['total_distance'] . ' KM'],
-            ['Petrol Amount', 'RM ' . $this->data['petrol_amount']],
-            ['Toll Amount', 'RM ' . $this->data['toll_amount']],
-            ['Accommodation Cost', 'RM ' . ($this->data['accommodation_cost'] ?? '0.00')],
-            ['Total Amount', 'RM ' . $this->data['total_amount']]
+        // Headers
+        $headers = ['Item', 'Description', 'Amount (RM)', 'Total (RM)'];
+        $columns = ['A', 'B', 'C', 'D'];
+
+        foreach (array_combine($columns, $headers) as $col => $header) {
+            $this->sheet->setCellValue($col . $this->currentRow, $header);
+        }
+
+        // Header styling
+        $headerStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::HEADER_BG_COLOR]],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
         ];
 
-        foreach ($summary as $index => $item) {
-            $this->sheet->setCellValue('A' . $this->currentRow, $item[0]);
-            $this->sheet->mergeCells('B' . $this->currentRow . ':D' . $this->currentRow);
-            $this->sheet->setCellValue('B' . $this->currentRow, $item[1]);
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($headerStyle);
 
-            if ($index === count($summary) - 1) {
-                // Total Amount row
-                $totalRowStyle = [
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'color' => ['rgb' => 'EBF5FF']
-                    ],
-                    'font' => [
-                        'bold' => true,
-                        'color' => ['rgb' => '1E40AF']
-                    ],
-                    'borders' => [
-                        'outline' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['rgb' => 'D1D5DB']
-                        ]
-                    ],
-                    'alignment' => [
-                        'indent' => 1
-                    ]
-                ];
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+        $this->currentRow++;
 
-                $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
-                    ->applyFromArray($totalRowStyle);
+        // Mileage row
+        $this->sheet->setCellValue('A' . $this->currentRow, '1');
+        $this->sheet->setCellValue('B' . $this->currentRow, 'Mileage (' . $this->data['total_distance'] . ' KM)');
+        $this->sheet->setCellValue('C' . $this->currentRow, $this->data['petrol_amount']);
+        $this->sheet->setCellValue('D' . $this->currentRow, $this->data['petrol_amount']);
 
-                // Align label left and value right with indent
-                $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
-                    ->setIndent(1);
-                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
-                    ->setIndent(1);
-            } else {
-                // Regular rows with consistent padding
-                $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_LEFT)
-                    ->setIndent(1);
-                $this->sheet->getStyle('B' . $this->currentRow . ':D' . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
-                    ->setIndent(1);
-            }
+        $this->applyRowStyle($this->currentRow);
+        $this->currentRow++;
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+        // Toll row
+        $this->sheet->setCellValue('A' . $this->currentRow, '2');
+        $this->sheet->setCellValue('B' . $this->currentRow, 'Toll');
+        $this->sheet->setCellValue('C' . $this->currentRow, $this->data['toll_amount']);
+        $this->sheet->setCellValue('D' . $this->currentRow, $this->data['toll_amount']);
+
+        $this->applyRowStyle($this->currentRow);
+        $this->currentRow++;
+
+        // Accommodation row (if applicable)
+        if (isset($this->data['accommodation_cost']) && $this->data['accommodation_cost'] > 0) {
+            $this->sheet->setCellValue('A' . $this->currentRow, '3');
+            $this->sheet->setCellValue('B' . $this->currentRow, 'Accommodation');
+            $this->sheet->setCellValue('C' . $this->currentRow, $this->data['accommodation_cost']);
+            $this->sheet->setCellValue('D' . $this->currentRow, $this->data['accommodation_cost']);
+
+            $this->applyRowStyle($this->currentRow);
             $this->currentRow++;
         }
+
+        // Total row
+        $this->sheet->setCellValue('A' . $this->currentRow, '');
+        $this->sheet->setCellValue('B' . $this->currentRow, 'Total');
+        $this->sheet->setCellValue('C' . $this->currentRow, '');
+        $this->sheet->setCellValue('D' . $this->currentRow, $this->data['total_amount']);
+
+        // Total row styling
+        $totalRowStyle = [
+            'font' => ['bold' => true],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::TOTAL_BG_COLOR]],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
+        ];
+
+        $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
+            ->applyFromArray($totalRowStyle);
+
+        // Right-align the amount
+        $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+            ->setIndent(1);
+
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+        $this->currentRow++;
+    }
+
+    protected function applyRowStyle($row)
+    {
+        $style = [
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER]
+        ];
+
+        $this->sheet->getStyle('A' . $row . ':D' . $row)->applyFromArray($style);
+
+        // Center the item number
+        $this->sheet->getStyle('A' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+        // Left-align the description
+        $this->sheet->getStyle('B' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+            ->setIndent(1);
+
+        // Right-align the amounts
+        $this->sheet->getStyle('C' . $row . ':D' . $row)->getAlignment()
+            ->setHorizontal(Alignment::HORIZONTAL_RIGHT)
+            ->setIndent(1);
+
+        $this->sheet->getRowDimension($row)->setRowHeight(25);
     }
 
     protected function addApprovalHistory()
@@ -470,7 +585,7 @@ class ClaimExcelExportService
         $this->currentRow = $this->addSectionHeader('Approval History', $this->currentRow);
 
         // Headers
-        $headers = ['Date & Time', 'Department', 'Status', 'Remarks'];
+        $headers = ['Date', 'Department', 'Status', 'Remarks'];
         $columns = ['A', 'B', 'C', 'D'];
 
         foreach (array_combine($columns, $headers) as $col => $header) {
@@ -482,17 +597,20 @@ class ClaimExcelExportService
             'font' => ['bold' => true],
             'fill' => ['fillType' => Fill::FILL_SOLID, 'color' => ['rgb' => self::HEADER_BG_COLOR]],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'indent' => 1]
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER]
         ];
 
         $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
             ->applyFromArray($headerStyle);
 
-        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+        $this->sheet->getRowDimension($this->currentRow)->setRowHeight(20);
         $this->currentRow++;
 
         foreach ($this->data['reviews'] as $index => $review) {
-            $this->sheet->setCellValue('A' . $this->currentRow, $review['date']);
+            // Format date to be more compact (remove time)
+            $date = explode(' ', $review['date'])[0];
+            
+            $this->sheet->setCellValue('A' . $this->currentRow, $date);
             $this->sheet->setCellValue('B' . $this->currentRow, $review['department']);
             $this->sheet->setCellValue('C' . $this->currentRow, $this->formatApprovalStatus($review['department'], $review['status']));
             $this->sheet->setCellValue('D' . $this->currentRow, $review['remarks']);
@@ -501,8 +619,7 @@ class ClaimExcelExportService
             $style = [
                 'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
                 'alignment' => [
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'indent' => 1
+                    'vertical' => Alignment::VERTICAL_CENTER
                 ]
             ];
 
@@ -517,13 +634,22 @@ class ClaimExcelExportService
             $this->sheet->getStyle('A' . $this->currentRow . ':D' . $this->currentRow)
                 ->applyFromArray($style);
 
-            // Set specific alignments while maintaining the indent
-            foreach ($columns as $col) {
-                $this->sheet->getStyle($col . $this->currentRow)->getAlignment()
-                    ->setHorizontal(Alignment::HORIZONTAL_LEFT);
-            }
+            // Set specific alignments
+            $this->sheet->getStyle('A' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            
+            $this->sheet->getStyle('B' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+            $this->sheet->getStyle('C' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                
+            $this->sheet->getStyle('D' . $this->currentRow)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_LEFT)
+                ->setIndent(1);
 
-            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(25);
+            // Reduce row height for more compact display
+            $this->sheet->getRowDimension($this->currentRow)->setRowHeight(20);
             $this->currentRow++;
         }
     }
@@ -535,9 +661,40 @@ class ClaimExcelExportService
         // Create a border around the entire signature section
         $startRow = $this->currentRow;
 
+        // Get the claim owner's signature path
+        $claimOwnerSignature = $this->claim->user->signature_path;
+        
+        // Log the claim owner signature path for debugging
+        \Illuminate\Support\Facades\Log::info("Claim owner signature", [
+            'user_id' => $this->claim->user->id,
+            'name' => $this->claim->user->first_name . ' ' . $this->claim->user->second_name,
+            'signature_path' => $claimOwnerSignature ?? 'null'
+        ]);
+
+        // Directly check if the signature file exists in various locations
+        if (!empty($claimOwnerSignature)) {
+            $possiblePaths = [
+                storage_path('app/public/' . $claimOwnerSignature),
+                public_path('storage/' . $claimOwnerSignature),
+                public_path($claimOwnerSignature),
+                storage_path('app/' . $claimOwnerSignature),
+                public_path('storage/signatures/' . basename($claimOwnerSignature)),
+                storage_path('app/public/signatures/' . basename($claimOwnerSignature))
+            ];
+            
+            foreach ($possiblePaths as $path) {
+                if (file_exists($path)) {
+                    \Illuminate\Support\Facades\Log::info("Found claim owner signature at path", [
+                        'path' => $path
+                    ]);
+                    break;
+                }
+            }
+        }
+
         // First row: Claim Owner and Admin Executive
         $this->addSignaturePairWithBorder(
-            $this->claim->user->signature_path ?? null,
+            $claimOwnerSignature,
             $this->claim->user->first_name . ' ' . $this->claim->user->second_name,
             'Claim Owner',
             $this->getSignatureForRole('Admin'),
@@ -594,11 +751,11 @@ class ClaimExcelExportService
         $this->sheet->getStyle("C{$row}:D{$row}")->applyFromArray($borderStyle);
 
         // Set row height for signature
-        $this->sheet->getRowDimension($row)->setRowHeight(120);
+        $this->sheet->getRowDimension($row)->setRowHeight(100);
 
         // Add signatures with increased height
-        if ($path1) $this->addSignatureImage('A', $row, $path1, 100);
-        if ($path2) $this->addSignatureImage('C', $row, $path2, 100);
+        if ($path1) $this->addSignatureImage('A', $row, $path1, 80);
+        if ($path2) $this->addSignatureImage('C', $row, $path2, 80);
 
         // Add names and roles
         $nameRow = $row + 1;
@@ -611,8 +768,8 @@ class ClaimExcelExportService
         $this->sheet->mergeCells("C{$roleRow}:D{$roleRow}");
 
         // Set text and alignment
-        $this->sheet->setCellValue("A{$nameRow}", "Approved by " . $name1);
-        $this->sheet->setCellValue("C{$nameRow}", "Approved by " . $name2);
+        $this->sheet->setCellValue("A{$nameRow}", $name1 !== 'N/A' ? "Approved by " . $name1 : "Not Approved");
+        $this->sheet->setCellValue("C{$nameRow}", $name2 !== 'N/A' ? "Approved by " . $name2 : "Not Approved");
         $this->sheet->setCellValue("A{$roleRow}", $role1);
         $this->sheet->setCellValue("C{$roleRow}", $role2);
 
@@ -654,10 +811,18 @@ class ClaimExcelExportService
         ]);
 
         // Set row height for signature
-        $this->sheet->getRowDimension($row)->setRowHeight(120);
+        $this->sheet->getRowDimension($row)->setRowHeight(100);
 
+        // Get Datuk's signature from Management role
+        $datukSignature = $this->getSignatureForRole('Management');
+        
         // Add signature with increased height
-        $this->addSignatureImage('FULL', $row, 'signatures/signature-datuk.png', 100);
+        if ($datukSignature) {
+            $this->addSignatureImage('FULL', $row, $datukSignature, 80);
+        } else {
+            // Fallback to static signature if no dynamic one is found
+            $this->addSignatureImage('FULL', $row, 'signatures/signature-datuk.png', 80);
+        }
 
         // Add name and role
         $nameRow = $row + 1;
@@ -667,9 +832,13 @@ class ClaimExcelExportService
         $this->sheet->mergeCells("A{$nameRow}:D{$nameRow}");
         $this->sheet->mergeCells("A{$roleRow}:D{$roleRow}");
 
+        // Get Datuk's name from Management role
+        $datukName = $this->getReviewerName('Management');
+        $displayName = ($datukName !== 'N/A') ? $datukName : 'Datuk Yong Lam Woei';
+        
         // Set text
-        $this->sheet->setCellValue("A{$nameRow}", "Approved by Datuk Yong Lam Woei");
-        $this->sheet->setCellValue("A{$roleRow}", "Datuk Yong Lam Woei");
+        $this->sheet->setCellValue("A{$nameRow}", "Approved by " . $displayName);
+        $this->sheet->setCellValue("A{$roleRow}", "Management");
 
         // Style text
         $this->sheet->getStyle("A{$nameRow}:D{$nameRow}")->applyFromArray([
@@ -696,17 +865,84 @@ class ClaimExcelExportService
     protected function addSignatureImage($column, $row, $signaturePath, $height)
     {
         try {
+            // Log the signature path for debugging
+            \Illuminate\Support\Facades\Log::info("Adding signature image", [
+                'column' => $column,
+                'row' => $row,
+                'path' => $signaturePath
+            ]);
+            
+            if (empty($signaturePath)) {
+                // If no signature path, add placeholder text
+                $targetColumn = ($column === 'FULL') ? 'A' : $column;
+                $this->sheet->setCellValue($targetColumn . $row, "No Signature Available");
+                $this->sheet->getStyle($targetColumn . $row)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER);
+                return;
+            }
+            
             $drawing = new Drawing();
             $drawing->setName('Signature');
             $drawing->setDescription('Signature');
             
             // Handle both public and storage paths
             $fullPath = $signaturePath;
+            
+            // Check for different path formats
             if (strpos($signaturePath, 'signatures/') === 0) {
+                // This is the most common format based on UserSignature.php
                 $fullPath = storage_path('app/public/' . $signaturePath);
+                
+                // If file doesn't exist in storage, try public path
+                if (!file_exists($fullPath)) {
+                    $fullPath = public_path('storage/' . $signaturePath);
+                }
             } else if (strpos($signaturePath, 'public/') === 0) {
                 $fullPath = storage_path('app/' . $signaturePath);
+            } else if (strpos($signaturePath, 'storage/') === 0) {
+                // Handle storage URLs
+                $path = str_replace('storage/', '', $signaturePath);
+                $fullPath = storage_path('app/public/' . $path);
+            } else if (strpos($signaturePath, '/storage/') !== false) {
+                // Handle full storage URLs
+                $parts = explode('/storage/', $signaturePath);
+                if (count($parts) > 1) {
+                    $fullPath = storage_path('app/public/' . $parts[1]);
+                }
             }
+            
+            // Try alternative paths if the file doesn't exist
+            if (!file_exists($fullPath)) {
+                $alternativePaths = [
+                    storage_path('app/public/' . $signaturePath),
+                    public_path($signaturePath),
+                    public_path('storage/' . $signaturePath),
+                    storage_path('app/' . $signaturePath),
+                    // Add direct path for the format in the image
+                    public_path('storage/signatures/' . basename($signaturePath)),
+                    storage_path('app/public/signatures/' . basename($signaturePath))
+                ];
+                
+                foreach ($alternativePaths as $path) {
+                    if (file_exists($path)) {
+                        $fullPath = $path;
+                        \Illuminate\Support\Facades\Log::info("Found signature at alternative path", [
+                            'original_path' => $signaturePath,
+                            'working_path' => $path
+                        ]);
+                        break;
+                    }
+                }
+            }
+            
+            // Log the full path for debugging
+            \Illuminate\Support\Facades\Log::info("Signature full path", [
+                'path' => $signaturePath,
+                'fullPath' => $fullPath,
+                'exists' => file_exists($fullPath) ? 'yes' : 'no',
+                'basename' => basename($signaturePath)
+            ]);
 
             if (file_exists($fullPath)) {
                 // Get original image dimensions
@@ -729,7 +965,6 @@ class ClaimExcelExportService
                 // Calculate merged cell width and target column
                 $cellWidth = 0;
                 $targetColumn = 'A';
-                $additionalOffset = 0;
                 
                 if ($column === 'FULL') {
                     // For Datuk signature (centered across all columns A-D)
@@ -747,10 +982,6 @@ class ClaimExcelExportService
                 
                 // Calculate horizontal centering
                 $xOffset = ($cellWidth - $signatureWidth) / 2;
-                if ($column === 'FULL') {
-                    // For Datuk signature, ensure it's perfectly centered
-                    $xOffset = ($cellWidth - $signatureWidth) / 2;
-                }
                 
                 // Calculate vertical centering with more precision
                 $rowHeight = $this->sheet->getRowDimension($row)->getRowHeight();
@@ -765,12 +996,27 @@ class ClaimExcelExportService
                 $drawing->setHeight($height * 1.2); // Make signature 20% larger
                 
                 $drawing->setWorksheet($this->sheet);
+            } else {
+                // If signature file doesn't exist, add a placeholder text
+                $targetColumn = ($column === 'FULL') ? 'A' : $column;
+                $this->sheet->setCellValue($targetColumn . $row, "Signature File Not Found");
+                $this->sheet->getStyle($targetColumn . $row)->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                    ->setVertical(Alignment::VERTICAL_CENTER);
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Error loading signature image', [
                 'path' => $signaturePath,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
+            
+            // Add placeholder text in case of error
+            $targetColumn = ($column === 'FULL') ? 'A' : $column;
+            $this->sheet->setCellValue($targetColumn . $row, "Signature Error");
+            $this->sheet->getStyle($targetColumn . $row)->getAlignment()
+                ->setHorizontal(Alignment::HORIZONTAL_CENTER)
+                ->setVertical(Alignment::VERTICAL_CENTER);
         }
     }
 
@@ -779,7 +1025,7 @@ class ClaimExcelExportService
         $review = $this->claim->reviews()
             ->whereHas('reviewer', function ($query) use ($roleName) {
                 $query->whereHas('role', function ($q) use ($roleName) {
-                    $q->where('name', $roleName);
+                    $q->where('name', 'like', "%{$roleName}%");
                 });
             })
             ->latest()
@@ -790,16 +1036,31 @@ class ClaimExcelExportService
 
     protected function getSignatureForRole($roleName)
     {
-        $review = $this->claim->reviews()
-            ->whereHas('reviewer', function ($query) use ($roleName) {
-                $query->whereHas('role', function ($q) use ($roleName) {
-                    $q->where('name', $roleName);
-                });
-            })
-            ->latest()
-            ->first();
+        try {
+            $review = $this->claim->reviews()
+                ->whereHas('reviewer', function ($query) use ($roleName) {
+                    $query->whereHas('role', function ($q) use ($roleName) {
+                        $q->where('name', 'like', "%{$roleName}%");
+                    });
+                })
+                ->latest()
+                ->first();
 
-        return $review ? $review->reviewer->signature_path : null;
+            // Log the signature path for debugging
+            \Illuminate\Support\Facades\Log::info("Signature for role {$roleName}", [
+                'review_found' => $review ? 'yes' : 'no',
+                'reviewer_name' => $review ? $review->reviewer->first_name . ' ' . $review->reviewer->second_name : 'N/A',
+                'signature_path' => $review ? $review->reviewer->signature_path : 'null'
+            ]);
+
+            return $review ? $review->reviewer->signature_path : null;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Error getting signature for role {$roleName}", [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
     }
 
     protected function addGeneratedAt()
