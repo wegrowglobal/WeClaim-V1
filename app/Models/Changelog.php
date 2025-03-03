@@ -19,10 +19,21 @@ class Changelog extends Model
         'created_by'
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
     protected $casts = [
         'is_published' => 'boolean',
         'published_at' => 'datetime',
     ];
+
+    /**
+     * The content attribute should not be automatically escaped
+     * as it may contain HTML that we want to render.
+     */
+    protected $htmlFields = ['content'];
 
     /**
      * Get the user who created the changelog entry.

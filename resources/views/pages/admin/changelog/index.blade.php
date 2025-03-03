@@ -15,7 +15,7 @@
         </div>
 
         <!-- Changelog Manager Component -->
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-white overflow-hidden">
             <livewire:admin.changelog-manager />
         </div>
     </div>

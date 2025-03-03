@@ -49,7 +49,12 @@ class ChangelogManager extends Component
 
     public function save()
     {
-        $this->validate();
+        $this->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'version' => 'nullable|string|max:20',
+            'type' => 'required|in:feature,improvement,bugfix,other',
+        ]);
 
         $data = [
             'title' => $this->title,
@@ -94,6 +99,9 @@ class ChangelogManager extends Component
         $this->version = $changelog->version;
         $this->type = $changelog->type;
         $this->is_published = $changelog->is_published;
+        
+        // Dispatch event to update TinyMCE with content
+        $this->dispatch('contentUpdated', $this->content);
     }
 
     public function confirmDelete($id)
@@ -122,6 +130,7 @@ class ChangelogManager extends Component
     {
         $this->reset(['title', 'content', 'version', 'type', 'is_published', 'isEditing', 'editingChangelogId']);
         $this->resetValidation();
+        $this->dispatch('formReset');
     }
 
     public function togglePublish($id)

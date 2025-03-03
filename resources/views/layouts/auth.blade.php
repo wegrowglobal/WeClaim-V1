@@ -15,6 +15,7 @@
     <!-- Vite -->
     @vite(['resources/css/app.css'])
     
+    @stack('styles')
 </head>
 <body class="bg-gray-100 antialiased">
     <div class="flex">

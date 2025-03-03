@@ -30,7 +30,12 @@ class ChangelogController extends Controller
             ->latest()
             ->take(5)
             ->get();
-
-        return response()->json($changelogs);
+        
+        // No need to sanitize HTML here as we want to preserve it
+        // The HTML will be rendered safely in the view using {!! !!}
+        
+        return response()->json([
+            'changelogs' => $changelogs
+        ]);
     }
 }

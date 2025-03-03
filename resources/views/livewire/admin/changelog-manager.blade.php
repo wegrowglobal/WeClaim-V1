@@ -39,8 +39,41 @@
             
             <div class="relative">
                 <label for="content" class="mb-1 block text-sm font-medium text-gray-700">Content</label>
-                <textarea id="content" wire:model="content" rows="4" class="block w-full rounded-md border border-gray-200 bg-white px-4 py-3 text-sm transition-all focus:border-black focus:outline-none focus:ring-1 focus:ring-black" placeholder="Describe the changes..."></textarea>
+                <div wire:ignore>
+                    <div class="mb-2 flex flex-wrap gap-2 rounded-t-md border border-gray-200 bg-gray-50 p-2">
+                        <button type="button" onclick="formatDoc('bold')" class="rounded px-2 py-1 hover:bg-gray-200">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button type="button" onclick="formatDoc('italic')" class="rounded px-2 py-1 hover:bg-gray-200">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button type="button" onclick="formatDoc('insertunorderedlist')" class="rounded px-2 py-1 hover:bg-gray-200">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button type="button" onclick="formatDoc('insertorderedlist')" class="rounded px-2 py-1 hover:bg-gray-200">
+                            <i class="fas fa-list-ol"></i>
+                        </button>
+                        <button type="button" onclick="formatDoc('createlink', prompt('Enter the link URL'))" class="rounded px-2 py-1 hover:bg-gray-200">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                    <div id="editor" contenteditable="true" class="min-h-[200px] rounded-b-md border border-gray-200 bg-white p-4 focus:border-black focus:outline-none focus:ring-1 focus:ring-black" style="min-height: 200px;"></div>
+                    <textarea id="content" wire:model.defer="content" style="display: none;"></textarea>
+                </div>
+                <p class="mt-1 text-xs text-gray-500">HTML formatting is supported (e.g., &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;li&gt;)</p>
                 @error('content') <span class="mt-1 text-xs text-red-600">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Live Preview -->
+            <div class="mt-6 rounded-lg border border-gray-200 bg-white p-4">
+                <h3 class="mb-2 text-sm font-medium text-gray-700">Live Preview</h3>
+                <div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                    <h4 class="text-lg font-semibold text-black">{{ $title ?: 'Your Changelog Title' }}</h4>
+                    <p class="text-xs text-gray-500">{{ now()->format('M d, Y') }}</p>
+                    <div id="preview-content" class="mt-2 text-sm text-gray-700 changelog-content">
+                        {!! $content ?: 'Your content will appear here...' !!}
+                    </div>
+                </div>
             </div>
             
             <div class="flex justify-end space-x-3 pt-4">
@@ -64,56 +97,128 @@
         
         <div class="divide-y divide-gray-200">
             @forelse($changelogs as $changelog)
-                <div class="flex items-center justify-between p-6">
-                    <div class="flex-1">
-                        <div class="mb-1 flex items-center space-x-2">
-                            <h3 class="text-base font-medium text-black">{{ $changelog->title }}</h3>
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
-                                @if($changelog->type === 'feature') bg-green-100 text-green-800
-                                @elseif($changelog->type === 'improvement') bg-blue-100 text-blue-800
-                                @elseif($changelog->type === 'bugfix') bg-red-100 text-red-800
-                                @else bg-gray-100 text-gray-800
+                <div class="group relative p-6 transition-all hover:bg-gray-50">
+                    <div class="flex flex-col space-y-4 sm:flex-row sm:items-start sm:space-y-0">
+                        <!-- Left side: Content -->
+                        <div class="flex-1 pr-4">
+                            <!-- Title and badges -->
+                            <div class="mb-2 flex flex-wrap items-center gap-2">
+                                <h3 class="text-lg font-semibold text-black">{{ $changelog->title }}</h3>
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+                                    @if($changelog->type === 'feature') bg-green-100 text-green-800
+                                    @elseif($changelog->type === 'improvement') bg-blue-100 text-blue-800
+                                    @elseif($changelog->type === 'bugfix') bg-red-100 text-red-800
+                                    @else bg-gray-100 text-gray-800
+                                    @endif">
+                                    {{ ucfirst($changelog->type) }}
+                                </span>
+                                @if($changelog->version)
+                                    <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">v{{ $changelog->version }}</span>
+                                @endif
+                                
+                                <!-- Published status badge -->
+                                @if($changelog->is_published)
+                                    <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                                        <svg class="mr-1 h-3 w-3 text-green-500" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Published
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600">
+                                        <svg class="mr-1 h-3 w-3 text-gray-400" fill="currentColor" viewBox="0 0 8 8">
+                                            <circle cx="4" cy="4" r="3" />
+                                        </svg>
+                                        Draft
+                                    </span>
+                                @endif
+                            </div>
+                            
+                            <!-- Content preview -->
+                            <div class="mb-3 rounded-md bg-gray-50 p-3 text-sm text-gray-600">
+                                {!! Str::limit(strip_tags($changelog->content), 150) !!}
+                            </div>
+                            
+                            <!-- Meta information -->
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500">
+                                <span class="inline-flex items-center">
+                                    <svg class="mr-1 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clip-rule="evenodd" />
+                                    </svg>
+                                    Created: {{ $changelog->created_at->format('M d, Y') }}
+                                </span>
+                                @if($changelog->is_published)
+                                    <span class="inline-flex items-center">
+                                        <svg class="mr-1 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
+                                        </svg>
+                                        Published: {{ $changelog->published_at->format('M d, Y') }}
+                                    </span>
+                                @endif
+                                <span class="inline-flex items-center">
+                                    <svg class="mr-1 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
+                                    </svg>
+                                    By: {{ $changelog->creator->first_name }} {{ $changelog->creator->second_name }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Right side: Actions -->
+                        <div class="flex flex-row items-center gap-2 sm:flex-col sm:items-end">
+                            <button wire:click="togglePublish({{ $changelog->id }})" 
+                                class="inline-flex items-center rounded-md border px-3 py-2 text-sm font-medium shadow-sm transition-colors
+                                @if($changelog->is_published) 
+                                    border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100
+                                @else 
+                                    border-green-200 bg-green-50 text-green-700 hover:bg-green-100
                                 @endif">
-                                {{ ucfirst($changelog->type) }}
-                            </span>
-                            @if($changelog->version)
-                                <span class="text-xs text-gray-500">v{{ $changelog->version }}</span>
-                            @endif
+                                @if($changelog->is_published)
+                                    <svg class="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M4 10a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1v-4a1 1 0 00-1-1H4z" />
+                                        <path fill-rule="evenodd" d="M12 4a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V5a1 1 0 00-1-1h-4zm0 10a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1v-4a1 1 0 00-1-1h-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    Unpublish
+                                @else
+                                    <svg class="mr-1.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.5.06l-4 5.5a.75.75 0 00-.23.46z" clip-rule="evenodd" />
+                                    </svg>
+                                    Publish
+                                @endif
+                            </button>
+                            
+                            <div class="flex items-center gap-2 sm:mt-3">
+                                <button wire:click="edit({{ $changelog->id }})" 
+                                    class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
+                                    <svg class="mr-1.5 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                                        <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
+                                    </svg>
+                                    Edit
+                                </button>
+                                <button wire:click="confirmDelete({{ $changelog->id }})" 
+                                    class="inline-flex items-center rounded-md border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-sm transition-colors hover:bg-red-50">
+                                    <svg class="mr-1.5 h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+                                    </svg>
+                                    Delete
+                                </button>
+                            </div>
                         </div>
-                        <p class="text-sm text-gray-500">{{ Str::limit($changelog->content, 100) }}</p>
-                        <div class="mt-1 flex items-center space-x-4 text-xs text-gray-500">
-                            <span>Created: {{ $changelog->created_at->format('M d, Y') }}</span>
-                            @if($changelog->is_published)
-                                <span>Published: {{ $changelog->published_at->format('M d, Y') }}</span>
-                            @endif
-                            <span>By: {{ $changelog->creator->first_name }} {{ $changelog->creator->second_name }}</span>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex items-center space-x-2">
-                        <button wire:click="togglePublish({{ $changelog->id }})" class="rounded-md px-3 py-2 text-sm font-medium
-                            @if($changelog->is_published) 
-                                text-amber-700 hover:bg-amber-100
-                            @else 
-                                text-green-700 hover:bg-green-100
-                            @endif">
-                            {{ $changelog->is_published ? 'Unpublish' : 'Publish' }}
-                        </button>
-                        <button wire:click="edit({{ $changelog->id }})" class="rounded-md px-3 py-2 text-sm font-medium text-black hover:bg-gray-100">
-                            Edit
-                        </button>
-                        <button wire:click="confirmDelete({{ $changelog->id }})" class="rounded-md px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
-                            Delete
-                        </button>
                     </div>
                 </div>
             @empty
-                <div class="p-6 text-center text-gray-500">
-                    No changelog entries found. Create your first one!
+                <div class="flex flex-col items-center justify-center py-12">
+                    <svg class="h-12 w-12 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No changelog entries</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating your first changelog entry.</p>
                 </div>
             @endforelse
         </div>
         
-        <div class="border-t border-gray-200 px-6 py-4">
+        <div class="border-t border-gray-200 bg-gray-50 px-6 py-4">
             {{ $changelogs->links() }}
         </div>
     </div>
@@ -148,14 +253,141 @@
             </div>
         </div>
     @endif
-</div>
 
-<script>
-    document.addEventListener('livewire:initialized', () => {
-        @this.on('notify', ({ message, type }) => {
-            // You can implement a notification system here
-            // For example, using a toast library or custom implementation
-            alert(message);
+    <!-- Add direct script for editor -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editor = document.getElementById('editor');
+            const textarea = document.getElementById('content');
+            const preview = document.getElementById('preview-content');
+            
+            // Initialize editor with content from textarea
+            editor.innerHTML = textarea.value;
+            
+            // Update textarea and preview when editor content changes
+            editor.addEventListener('input', function() {
+                textarea.value = editor.innerHTML;
+                preview.innerHTML = editor.innerHTML;
+                
+                // Trigger Livewire update
+                textarea.dispatchEvent(new Event('input'));
+            });
+            
+            // Listen for Livewire events
+            document.addEventListener('livewire:initialized', function() {
+                const component = window.Livewire.find(
+                    document.querySelector('[wire\\:id]').getAttribute('wire:id')
+                );
+                
+                // When form is reset
+                component.on('formReset', function() {
+                    editor.innerHTML = '';
+                    preview.innerHTML = '';
+                });
+                
+                // When content is updated from the component
+                component.on('contentUpdated', function(content) {
+                    editor.innerHTML = content;
+                    preview.innerHTML = content;
+                });
+            });
         });
-    });
-</script>
+        
+        // Simple formatting function
+        function formatDoc(command, value = null) {
+            document.execCommand(command, false, value);
+            document.getElementById('editor').focus();
+            
+            // Update textarea and preview
+            const editor = document.getElementById('editor');
+            const textarea = document.getElementById('content');
+            const preview = document.getElementById('preview-content');
+            
+            textarea.value = editor.innerHTML;
+            preview.innerHTML = editor.innerHTML;
+            
+            // Trigger Livewire update
+            textarea.dispatchEvent(new Event('input'));
+        }
+    </script>
+
+    <style>
+        /* Styling for HTML content in changelogs */
+        .changelog-content ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .changelog-content ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .changelog-content li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .changelog-content strong {
+            font-weight: 600;
+        }
+        
+        .changelog-content em {
+            font-style: italic;
+        }
+        
+        .changelog-content a {
+            color: #4b5563;
+            text-decoration: underline;
+        }
+        
+        .changelog-content a:hover {
+            color: #000000;
+        }
+        
+        .changelog-content p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .changelog-content blockquote {
+            border-left: 3px solid #e5e7eb;
+            padding-left: 1rem;
+            margin: 0.5rem 0;
+            color: #6b7280;
+        }
+        
+        .changelog-content pre {
+            background-color: #f3f4f6;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+        }
+        
+        .changelog-content code {
+            font-family: monospace;
+            background-color: #f3f4f6;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        
+        .changelog-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+        
+        .changelog-content th, .changelog-content td {
+            border: 1px solid #e5e7eb;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .changelog-content th {
+            background-color: #f9fafb;
+        }
+        
+        #editor {
+            min-height: 200px;
+        }
+    </style>
+</div>
