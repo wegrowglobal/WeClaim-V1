@@ -124,7 +124,7 @@ return [
     | This is the email address used for sending claim approval requests to Datuk.
     |
     */
-    'datuk_email' => env('MAIL_DATUK_EMAIL') ?: 'ammar@wegrow-global.com',
+    'datuk_email' => env('MAIL_DATUK_EMAIL') ?: 'yong@wegrow-global.com',
 
     /*
     |--------------------------------------------------------------------------
