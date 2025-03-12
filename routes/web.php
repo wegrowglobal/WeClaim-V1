@@ -51,6 +51,10 @@ Route::group([], function () {
         ->name('password.reset.success');
 });
 
+// Email Action Route - No authentication required for Datuk approval/rejection via email
+Route::get('/claims/email-action/{id}/{action}', [ClaimController::class, 'handleEmailAction'])
+    ->name('claims.email.action');
+
 // Authenticated Routes
 Route::group([], function () {
     // Add these inside the authenticated routes group
@@ -117,8 +121,6 @@ Route::group([], function () {
         // Email Actions
         Route::post('/send-to-datuk/{id}', [ClaimController::class, 'sendToDatuk'])
             ->name('mail.to.datuk');
-        Route::get('/email-action/{id}/{action}', [ClaimController::class, 'handleEmailAction'])
-            ->name('email.action');
 
         // Resubmit Routes
         Route::get('/resubmit/{claim}', [ClaimController::class, 'showResubmitForm'])->name('resubmit');
