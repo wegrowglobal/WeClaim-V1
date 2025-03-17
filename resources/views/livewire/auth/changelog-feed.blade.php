@@ -49,7 +49,7 @@
 @endpush
 
 <div class="w-full">
-    <div class="changelog-container h-[500px] md:h-[650px] overflow-hidden bg-white rounded-xl md:rounded-3xl shadow-md md:shadow-xl">
+    <div class="changelog-container h-[650px] overflow-hidden bg-white rounded-xl md:rounded-3xl shadow-md md:shadow-xl">
         <div class="flex h-full flex-col bg-white p-4 md:p-8 text-black">
             <div class="flex items-center justify-between mb-4 md:mb-8">
                 <div>

@@ -1,4 +1,4 @@
-<div class="h-[650px] w-full overflow-hidden bg-white md:max-w-md md:rounded-3xl md:shadow-xl">
+<div class="h-[650px] w-full overflow-hidden bg-white rounded-xl md:rounded-3xl md:shadow-xl">
     <div class="flex h-full flex-col justify-center px-8 py-8 overflow-y-auto">
         <div class="mb-8 text-center">
             <svg class="mx-auto mb-6" width="48" height="48" viewBox="0 0 557 438" fill="none"
