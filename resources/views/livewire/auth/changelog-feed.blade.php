@@ -41,7 +41,7 @@
     /* Mobile optimizations */
     @media (max-width: 768px) {
         .changelog-container {
-            max-height: 80vh;
+        max-height: 80vh;
             margin-bottom: 2rem;
         }
     }
@@ -50,7 +50,7 @@
 
 <div class="w-full">
     <div class="changelog-container h-[650px] overflow-hidden bg-white rounded-xl md:rounded-3xl shadow-md md:shadow-xl">
-        <div class="flex h-full flex-col bg-white p-4 md:p-8 text-black">
+        <div class="flex h-full flex-col bg-white p-3 md:p-6 text-black">
             <div class="flex items-center justify-between mb-4 md:mb-8">
                 <div>
                     <h2 class="text-xl md:text-2xl font-bold">What's New</h2>

@@ -3,10 +3,9 @@
 @section('title', 'Login - WeClaim')
 
 @section('content')
-    <div
-        class="flex min-h-[100dvh] w-full items-center justify-center bg-gray-100 px-4 py-8 md:py-0">
-        <div class="flex w-full flex-col items-center justify-center gap-8 md:flex-row md:gap-8 md:px-8 max-w-6xl">
-            <div class="w-full max-w-md">
+    <div class="flex min-h-[100dvh] w-full items-center justify-center bg-gray-100 px-4 py-8 md:py-0">
+        <div class="flex w-full flex-col items-center justify-center gap-8 md:flex-row md:gap-8 md:px-8 max-w-5xl">
+            <div class="w-full max-w-sm">
                 <x-auth.login-form />
                 
                 <!-- Mobile Changelog Button -->
@@ -25,14 +24,14 @@
             </div>
             
             <!-- Desktop Changelog -->
-            <div class="w-full max-w-md hidden md:block">
+            <div class="w-full max-w-sm hidden md:block">
                 <livewire:auth.changelog-feed />
             </div>
             
             <!-- Mobile Changelog Modal -->
             <div id="mobileChangelogModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:hidden hidden">
                 <div class="absolute inset-0 bg-black bg-opacity-50" onclick="toggleChangelog()"></div>
-                <div class="relative w-full max-w-md z-10">
+                <div class="relative w-full max-w-sm z-10">
                     <livewire:auth.changelog-feed />
                 </div>
             </div>
