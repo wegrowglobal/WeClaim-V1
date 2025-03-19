@@ -14,7 +14,7 @@ class Claim extends Model
 {
     use HasFactory;
 
-    protected $table = 'claim';
+    protected $table = 'claims';
 
     const STATUS_SUBMITTED = 'Submitted';
     const STATUS_APPROVED_ADMIN = 'Approved Admin';
