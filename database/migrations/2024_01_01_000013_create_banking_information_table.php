@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::create('banking_information', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('bank_name');
-            $table->string('account_holder');
             $table->string('account_number');
+            $table->string('account_holder_name');
             $table->timestamps();
         });
     }
@@ -22,4 +22,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('banking_information');
     }
-};
+}; 

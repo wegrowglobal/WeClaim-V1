@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('claim_locations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('claim_id')->constrained('claim')->onDelete('cascade');
+            $table->foreignId('claim_id')->constrained('claims')->onDelete('cascade');
             $table->text('from_location');
             $table->text('to_location');
             $table->decimal('distance', 10, 2);

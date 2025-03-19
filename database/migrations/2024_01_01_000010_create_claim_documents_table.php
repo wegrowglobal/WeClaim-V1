@@ -8,12 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // First, drop the table if it exists
-        Schema::dropIfExists('claim_documents');
-
         Schema::create('claim_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('claim_id')->constrained('claim')->onDelete('cascade');
+            $table->foreignId('claim_id')->constrained('claims')->onDelete('cascade');
             $table->string('toll_file_name')->nullable();
             $table->string('toll_file_path')->nullable();
             $table->string('email_file_name')->nullable();

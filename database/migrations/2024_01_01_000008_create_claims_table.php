@@ -8,10 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('claim', function (Blueprint $table) {
+        Schema::create('claims', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('reviewer_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('pending_reviewer_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null')
+                ->comment('Next user who needs to review this claim');
             $table->string('title');
             $table->text('description')->nullable();
             $table->string('claim_company');
@@ -23,12 +28,17 @@ return new class extends Migration
             $table->enum('status', [
                 'Submitted',
                 'Approved Admin',
-                'Approved Datuk', 
+                'Approved Manager',
                 'Approved HR',
+                'Pending Datuk',
+                'Approved Datuk', 
                 'Approved Finance',
                 'Rejected',
-                'Done'
+                'Done',
+                'Cancelled'
             ])->default('Submitted');
+            $table->string('approval_token')->nullable();
+            $table->timestamp('approval_token_expires_at')->nullable();
             $table->string('claim_type')->default('Petrol');
             $table->timestamp('submitted_at')->nullable();
             $table->timestamp('reviewed_at')->nullable();
@@ -39,6 +49,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('claim');
+        Schema::dropIfExists('claims');
     }
-};
+}; 
