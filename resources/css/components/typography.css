@@ -1,0 +1,9 @@
+@layer components {
+    .heading-1 {
+        @apply text-3xl font-bold text-gray-900 tracking-tight;
+    }
+
+    .heading-2 {
+        @apply text-xl font-semibold text-gray-800 tracking-tight;
+    }
+}

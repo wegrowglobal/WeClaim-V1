@@ -1,0 +1,26 @@
+@layer components {
+    .btn {
+        @apply inline-flex w-full items-center px-6 py-3 border border-transparent text-sm font-medium rounded-md text-wgg-white focus:outline-none focus:ring-1 transition ease-in-out duration-150;
+    }
+
+    .btn-success {
+        @apply px-6 py-2 bg-green-500 hover:bg-green-700 text-wgg-white rounded-md flex items-center justify-center gap-2;
+    }
+
+    .btn-danger {
+        @apply px-6 py-2 bg-red-500 hover:bg-red-700 text-wgg-white rounded-md flex items-center justify-center gap-2;
+    }
+
+    .btn-modern {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 
+        focus:outline-none focus:ring-2 focus:ring-offset-2;
+    }
+
+    .btn-primary {
+        @apply btn-modern bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500;
+    }
+
+    .btn-secondary {
+        @apply btn-modern bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500;
+    }
+}

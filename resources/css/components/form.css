@@ -1,0 +1,21 @@
+@layer components {
+    .form-input-base {
+        @apply w-full px-4 py-2 border border-wgg-border rounded-md text-sm text-wgg-black-400 focus:outline-none focus:ring-1 focus:ring-wgg-black-950 focus:border-wgg-border focus:text-wgg-black-800 transition duration-150 ease-in-out;
+    }
+
+    .form-label {
+        @apply absolute left-2 top-2 text-xs text-wgg-black-400 font-medium;
+    }
+
+    .form-input {
+        @apply py-2 px-4 border border-gray-300 rounded-lg text-xs;
+    }
+    
+    .peer:invalid:not(:placeholder-shown) ~ .peer-invalid\:flex {
+        display: flex;
+    }
+    
+    .peer:placeholder-shown ~ .peer-invalid\:flex {
+        display: none;
+    }
+}

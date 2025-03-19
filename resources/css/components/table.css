@@ -1,0 +1,20 @@
+@layer components {
+
+    .table-header {
+        @apply bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                px-6 py-3;
+    }
+
+    .claims-table {
+        @apply min-w-full divide-y divide-gray-200;
+    }
+
+    .table-cell {
+        @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+    }
+
+    .table-item {
+        @apply px-6 py-4 whitespace-nowrap text-sm text-wgg-black-400;
+    }
+
+}

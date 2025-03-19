@@ -1,0 +1,50 @@
+@import 'layouts/navigation.css';
+@import 'others/animations.css';
+@import 'others/form.css';
+@import 'components/buttons.css';
+@import 'components/breadcrumbs.css';
+@import 'components/status-action.css';
+@import 'components/icons.css';
+@import 'components/card.css';
+@import 'components/table.css';
+@import 'components/typography.css';
+@import 'components/form.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+   /* Miscellaneous */
+   input[type="number"]::-webkit-inner-spin-button,
+   input[type="number"]::-webkit-outer-spin-button {
+   -webkit-appearance: none;
+   margin: 0;
+   }
+
+   /* Default Font Family Across All Pages */
+   html {
+       font-family: "Inter", system-ui, -apple-system, sans-serif;
+       -webkit-font-smoothing: antialiased;
+       -moz-osx-font-smoothing: grayscale;
+   }
+}
+
+@keyframes progress {
+    0% { width: 0% }
+    100% { width: 100% }
+}
+
+.animate-progress {
+    animation: progress 3s linear;
+}
+
+.custom-marker {
+    cursor: pointer;
+    padding: 2px;
+}
+
+.custom-marker:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+}
