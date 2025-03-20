@@ -63,7 +63,7 @@
                                         <table cellpadding="0" cellspacing="0" border="0" style="min-width: 160px;">
                                             <tr>
                                                 <td style="background-color: #4F46E5; border-radius: 6px; padding: 4px;">
-                                                    <a href="{{ route('register') }}" 
+                                                    <a href="{{ route('register.form') }}" 
                                                         style="display: block; padding: 12px 24px; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; text-align: center;">
                                                         Submit New Request
                                                     </a>

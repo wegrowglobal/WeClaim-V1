@@ -14,12 +14,21 @@ use Illuminate\Support\Str;
 
 class UserManagementController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        // Users must be authenticated, verified admins to access any method in this controller
+        $this->middleware('auth');
+        $this->middleware('verified');
+        $this->middleware('admin');
+    }
+
     public function index()
     {
-        if (Auth::user()->role_id !== 5) {
-            abort(403);
-        }
-
         $users = User::query()
             ->with(['role', 'department'])
             ->when(request('search'), function ($query, $search) {

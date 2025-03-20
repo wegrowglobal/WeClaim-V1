@@ -161,6 +161,71 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     ];
                 }
                 break;
+
+            // For claim review pages
+            if (url()->current() === route('claims.review', ['id' => $parameters['id'] ?? ''])) {
+                // Check where we're coming from
+                if (url()->previous() === route('admin.claims')) {
+                    $breadcrumbs[] = [
+                        'name' => 'Manage Claims',
+                        'url' => route('admin.claims')
+                    ];
+                } else {
+                    $breadcrumbs[] = [
+                        'name' => 'Approval',
+                        'url' => route('claims.approval')
+                    ];
+                }
+                $breadcrumbs[] = [
+                    'name' => 'Review Claim',
+                    'url' => '#'
+                ];
+            }
+
+            // For claim view pages
+            if (url()->current() === route('claims.view', ['id' => $parameters['id'] ?? ''])) {
+                // Check where we're coming from
+                if (str_contains(url()->previous(), 'admin')) {
+                    $breadcrumbs[] = [
+                        'name' => 'Manage Claims',
+                        'url' => route('admin.claims')
+                    ];
+                } else {
+                    $breadcrumbs[] = [
+                        'name' => 'Dashboard',
+                        'url' => route('claims.dashboard')
+                    ];
+                }
+
+                if (isset($parameters['id'])) {
+                    $breadcrumbs[] = [
+                        'name' => 'Claim #' . $parameters['id'],
+                        'url' => '#'
+                    ];
+                }
+            }
+
+            // For user management pages
+            if (url()->current() === route('admin.users')) {
+                $breadcrumbs[] = [
+                    'name' => 'Manage Users',
+                    'url' => route('admin.users')
+                ];
+            }
+
+            case 'admin.claims':
+                $breadcrumbs[] = [
+                    'name' => 'Claims Management',
+                    'url' => route('admin.claims')
+                ];
+                break;
+
+            case 'admin.users':
+                $breadcrumbs[] = [
+                    'name' => 'User Management',
+                    'url' => route('admin.users')
+                ];
+                break;
         }
 
         return array_values(array_filter($breadcrumbs));

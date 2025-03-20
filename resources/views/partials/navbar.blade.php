@@ -57,16 +57,16 @@
                             @endif
 
                             @if (Auth::check() && Auth::user()->role_id === 5)
-                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('claims.admin') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
-                                   href="{{ route('claims.admin') }}">
-                                    <svg class="h-4 w-4 {{ request()->routeIs('claims.admin') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.claims') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
+                                   href="{{ route('admin.claims') }}">
+                                    <svg class="h-4 w-4 {{ request()->routeIs('admin.claims') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                                     </svg>
                                     Manage Claims
                                 </a>
-                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('users.management') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
-                                   href="{{ route('users.management') }}">
-                                    <svg class="h-4 w-4 {{ request()->routeIs('users.management') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.users') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
+                                   href="{{ route('admin.users') }}">
+                                    <svg class="h-4 w-4 {{ request()->routeIs('admin.users') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                                     </svg>
                                     Manage Users
@@ -133,10 +133,10 @@
                             </button>
                         </form>
                     @else
-                        <a class="rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100" href="{{ route('login') }}">
+                        <a class="rounded-lg bg-gray-50 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100" href="{{ route('login.form') }}">
                             Sign In
                         </a>
-                        <a class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700" href=" ">
+                        <a class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700" href="{{ route('register.form') }}">
                             Create Account
                         </a>
                     @endauth

@@ -14,6 +14,8 @@ return new class extends Migration
             $table->text('description');
             $table->json('changes');
             $table->enum('type', ['feature', 'bugfix', 'improvement', 'security'])->default('feature');
+            $table->boolean('is_published')->default(false);
+            $table->timestamp('published_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
         });

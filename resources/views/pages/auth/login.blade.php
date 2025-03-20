@@ -9,7 +9,7 @@
                 <x-auth.login-form />
                 
                 <!-- Mobile Changelog Button -->
-                <div class="mt-6 flex justify-center md:hidden">
+                <div class="mt-6 flex justify-center md:hidden space-x-2">
                     <button 
                         type="button" 
                         onclick="toggleChangelog()"

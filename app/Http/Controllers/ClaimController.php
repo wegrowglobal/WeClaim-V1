@@ -56,6 +56,26 @@ class ClaimController extends Controller
     public function __construct(ClaimService $claimService)
     {
         $this->claimService = $claimService;
+        
+        // Apply middleware for all methods
+        $this->middleware('auth');
+        $this->middleware('track.activity');
+        
+        // Apply profile completion middleware for claim actions
+        $this->middleware('profile.complete')->except([
+            'home', 'show', 'viewDocument', 'handleEmailAction'
+        ]);
+        
+        // Apply email verification middleware for creating/editing claims
+        $this->middleware('verified')->only([
+            'new', 'store', 'saveStep', 'updateClaim', 'reviewClaim',
+            'processResubmission', 'resubmit', 'cancelClaim', 'export'
+        ]);
+        
+        // Apply admin middleware for admin-only actions
+        $this->middleware('admin')->only([
+            'adminIndex', 'edit', 'update', 'destroy'
+        ]);
     }
 
     public function index($view)
@@ -64,7 +84,7 @@ class ClaimController extends Controller
 
         if (!Auth::check()) {
             Log::warning('Unauthenticated user attempted to access claims index');
-            return redirect()->route('login');
+            return redirect()->route('login.form');
         }
 
         $user = Auth::user();
@@ -221,7 +241,7 @@ class ClaimController extends Controller
 
         if (!$user) {
             Log::warning('Unauthenticated user attempted to access approval screen');
-            return redirect()->route('login');
+            return redirect()->route('login.form');
         }
 
         if ($user->role_id === 1) {
@@ -241,7 +261,7 @@ class ClaimController extends Controller
             ]);
         } else {
             Log::error('Invalid user instance when accessing approval screen');
-            return redirect()->route('login');
+            return redirect()->route('login.form');
         }
     }
 
@@ -291,7 +311,7 @@ class ClaimController extends Controller
         }
 
         Log::error('Invalid user instance during claim review');
-        return route('login');
+        return route('login.form');
     }
 
     public function updateClaim(Request $request, $id)

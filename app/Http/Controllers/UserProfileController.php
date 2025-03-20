@@ -12,9 +12,17 @@ class UserProfileController extends Controller
 {
     protected $bankingInstitutionService;
 
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
     public function __construct(BankingInstitutionService $bankingInstitutionService)
     {
         $this->bankingInstitutionService = $bankingInstitutionService;
+        // Apply authentication middleware to all methods
+        $this->middleware('auth');
+        $this->middleware('track.activity');
     }
 
     public function show()

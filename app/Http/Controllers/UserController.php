@@ -16,10 +16,19 @@ use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Routing\Controller as BaseController;
 
-final class UserController extends Controller
+class UserController extends BaseController
 {
-
+    use AuthorizesRequests, ValidatesRequests;
+    
     protected $authService;
     protected $auth;
     private const LOGIN_ROUTE = 'login';
@@ -30,6 +39,11 @@ final class UserController extends Controller
     {
         $this->authService = $authService;
         $this->auth = $auth;
+        
+        // Apply middleware selectively in the constructor
+        $this->middleware('guest')->only(['login']);
+        $this->middleware('auth')->except(['login']);
+        $this->middleware('verified')->only(['changePassword']);
     }
 
     public function login(LoginRequest $request): RedirectResponse
@@ -179,5 +193,62 @@ final class UserController extends Controller
                 'message' => 'Failed to update password.'
             ], 500);
         }
+    }
+
+    /**
+     * Update the user's profile picture.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateProfilePicture(Request $request)
+    {
+        $request->validate([
+            'profile_picture' => 'required|image|mimes:jpg,png,jpeg,gif|max:2048',
+        ]);
+
+        $user = Auth::user();
+        
+        // Delete old profile picture if exists
+        if ($user->profile_picture && Storage::exists('public/' . $user->profile_picture)) {
+            Storage::delete('public/' . $user->profile_picture);
+        }
+        
+        // Store new profile picture
+        $imagePath = $request->file('profile_picture')->store('profile_pictures', 'public');
+        
+        // Update user with new picture path
+        $user->profile_picture = $imagePath;
+        $user->save();
+        
+        return redirect()->back()->with('success', 'Profile picture updated successfully.');
+    }
+
+    /**
+     * Update the user's banking information.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateBankingInfo(Request $request)
+    {
+        $request->validate([
+            'bank_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:20',
+            'account_holder_name' => 'required|string|max:255',
+        ]);
+
+        $user = Auth::user();
+        
+        $user->bankingInformation()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'bank_name' => $request->bank_name,
+                'account_number' => $request->account_number,
+                'account_holder_name' => $request->account_holder_name
+            ]
+        );
+        
+        return redirect()->back()->with('success', 'Banking information updated successfully.');
     }
 }

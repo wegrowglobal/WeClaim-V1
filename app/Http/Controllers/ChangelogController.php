@@ -9,6 +9,19 @@ use Illuminate\Support\Facades\Auth;
 class ChangelogController extends Controller
 {
     /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        // Admin only needs to access index
+        $this->middleware('admin')->only('index');
+        
+        // No middleware needed for public published changelogs
+    }
+
+    /**
      * Display the changelog management page.
      */
     public function index()

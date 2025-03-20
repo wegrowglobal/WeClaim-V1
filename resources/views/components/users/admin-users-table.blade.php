@@ -3,9 +3,12 @@
 <div class="overflow-hidden rounded-lg bg-white">
     <!-- Filters -->
     <div class="border-b border-gray-200 p-3 sm:p-4">
-        <form class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0" method="GET"
-            action="{{ route('users.management') }}">
-            <div class="flex flex-col space-y-3 sm:flex-row sm:space-x-4 sm:space-y-0">
+        <form
+            id="usersSearchForm"
+            class="relative mb-4"
+            method="GET" 
+            action="{{ route('admin.users') }}">
+            <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
                 <div class="relative flex-grow focus-within:shadow-sm">
                     <input
                         class="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-xs sm:text-sm focus:border-wgg-border focus:outline-none"
@@ -52,7 +55,7 @@
                 </button>
                 @if (request()->hasAny(['search', 'role', 'department']))
                     <a class="inline-flex w-full items-center justify-center rounded-lg border border-red-600 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
-                        href="{{ route('users.management') }}">
+                        href="{{ route('admin.users') }}">
                         Clear Filters
                     </a>
                 @endif

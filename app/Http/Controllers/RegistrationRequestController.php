@@ -16,9 +16,45 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Models\Department;
+use Illuminate\Support\Facades\Auth;
+use App\Mail\RegistrationRequestSubmitted;
+use App\Mail\RegistrationRequestApproved;
+use App\Mail\RegistrationRequestRejected;
+use App\Mail\PasswordSetupInvitation;
 
 class RegistrationRequestController extends Controller
 {
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        // Apply guest middleware to registration form and submission
+        $this->middleware('guest')->only([
+            'showRegistrationForm', 
+            'submitRequest', 
+            'showConfirmation',
+            'showSetPasswordForm',
+            'setPassword',
+            'showPasswordSetupSuccess'
+        ]);
+        
+        // Apply auth and appropriate role middleware to admin actions
+        $this->middleware(['auth', 'role:1,5'])->only([
+            'approveFromDashboard',
+            'rejectFromDashboard'
+        ]);
+        
+        // Apply signed route middleware to email approval/rejection links
+        $this->middleware('signed')->only([
+            'approveRequest',
+            'rejectRequest'
+        ]);
+    }
+
     public function showRegistrationForm()
     {
         return view('pages.auth.register');
@@ -48,10 +84,10 @@ class RegistrationRequestController extends Controller
                         return response()->json([
                             'success' => false,
                             'message' => 'An account with this email already exists.',
-                            'redirect' => route('login')
+                            'redirect' => route('login.form')
                         ], 422);
                     }
-                    return redirect()->route('login')
+                    return redirect()->route('login.form')
                         ->with('info', 'An account with this email already exists.');
                 }
             }
@@ -63,10 +99,10 @@ class RegistrationRequestController extends Controller
                     return response()->json([
                         'success' => false,
                         'message' => 'An account with this email already exists.',
-                        'redirect' => route('login')
+                        'redirect' => route('login.form')
                     ], 422);
                 }
-                return redirect()->route('login')
+                return redirect()->route('login.form')
                     ->with('info', 'An account with this email already exists.');
             }
 

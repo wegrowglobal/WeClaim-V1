@@ -13,9 +13,18 @@ class BulkEmailController extends Controller
 {
     protected $claimService;
 
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
     public function __construct(ClaimService $claimService)
     {
         $this->claimService = $claimService;
+        // Only authenticated, verified staff or admin can send bulk emails
+        $this->middleware('auth');
+        $this->middleware('verified');
+        $this->middleware('role:1,5');
     }
 
     public function index()
