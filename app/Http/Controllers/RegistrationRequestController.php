@@ -43,7 +43,12 @@ class RegistrationRequestController extends Controller
         ]);
         
         // Apply auth and appropriate role middleware to admin actions
-        $this->middleware(['auth', 'role:1,5'])->only([
+        $this->middleware('auth')->only([
+            'approveFromDashboard',
+            'rejectFromDashboard'
+        ]);
+        
+        $this->middleware('role:1,5')->only([
             'approveFromDashboard',
             'rejectFromDashboard'
         ]);

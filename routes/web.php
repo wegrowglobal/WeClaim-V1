@@ -79,7 +79,7 @@ Route::get('/coming-soon', function () {
 })->name('coming-soon');
 
 // Routes for all authenticated users
-Route::middleware(['auth', 'track.activity'])->group(function () {
+Route::middleware('auth', 'track.activity')->group(function () {
     // Home Route
     Route::get('/', [ClaimController::class, 'home'])->name('home');
     
@@ -113,12 +113,12 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     Route::prefix('password')->name('password.')->group(function () {
         Route::get('/change', [UserController::class, 'showChangePassword'])->name('change');
         Route::post('/change', [UserController::class, 'changePassword'])
-            ->middleware(['verified'])
+            ->middleware('verified')
             ->name('change.submit');
     });
     
     // Routes that require completed profile
-    Route::middleware(['profile.complete'])->group(function () {
+    Route::middleware('profile.complete')->group(function () {
         // Claims Routes
         Route::prefix('claims')->name('claims.')->group(function () {
             // Main Claims Routes
@@ -135,7 +135,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
                 ->name('view.document');
                 
             // Claims that require verified email
-            Route::middleware(['verified'])->group(function () {
+            Route::middleware('verified')->group(function () {
                 Route::get('/new', [ClaimController::class, 'new'])->name('new');
                 
                 // Form Steps Routes
@@ -166,12 +166,12 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
     });
     
     // Reports & Settings Routes - require verification
-    Route::middleware(['verified'])->group(function () {
+    Route::middleware('verified')->group(function () {
         Route::view('/report', 'pages.reports')->name('reports');
         Route::view('/settings', 'pages.settings')->name('settings');
         
         // Routes that need role check for staff (1) and/or admin (5)
-        Route::middleware(['role:1,5'])->group(function () {
+        Route::middleware('role:1,5')->group(function () {
             // Bulk Email Routes
             Route::prefix('claims')->name('claims.')->group(function () {
                 Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('bulk-email');
@@ -194,7 +194,7 @@ Route::middleware(['auth', 'track.activity'])->group(function () {
 });
 
 // Admin only routes
-Route::middleware(['admin', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('admin', 'verified')->prefix('admin')->name('admin.')->group(function () {
     // Admin claims management
     Route::get('/claims', [ClaimController::class, 'adminIndex'])->name('claims');
     
@@ -214,7 +214,7 @@ Route::middleware(['admin', 'verified'])->prefix('admin')->name('admin.')->group
 });
 
 // Registration Approval/Rejection Routes - these require a signed URL
-Route::middleware(['signed'])->group(function () {
+Route::middleware('signed')->group(function () {
     Route::get('/register/approve/{token}', [RegistrationRequestController::class, 'approveRequest'])->name('register.approve');
     Route::get('/register/reject/{token}', [RegistrationRequestController::class, 'rejectRequest'])->name('register.reject');
 });

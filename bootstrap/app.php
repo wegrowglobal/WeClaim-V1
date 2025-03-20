@@ -56,6 +56,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'maintenance' => \App\Http\Middleware\CheckForMaintenanceMode::class,
             'profile.complete' => \App\Http\Middleware\EnsureProfileIsComplete::class,
         ]);
+        
+        // Define middleware groups
+        $middleware->group('auth.verified', ['auth', 'verified']);
+        $middleware->group('admin', ['auth', 'role:5']);
+        $middleware->group('staff', ['auth', 'role:1']);
+        $middleware->group('verified.staff', ['auth', 'verified', 'role:1']);
+        $middleware->group('verified.admin', ['auth', 'verified', 'role:5']);
+        $middleware->group('track.user.activity', ['auth', 'track.activity']);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
