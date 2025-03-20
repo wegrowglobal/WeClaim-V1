@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 
 <head>
     <!-- Required meta tags -->
@@ -36,7 +36,7 @@
     @livewireStyles
 </head>
 
-<body>
+<body class="flex flex-col min-h-screen bg-gray-50">
 
     @include('partials.navbar')
 
@@ -53,14 +53,11 @@
     @include('partials.mobile-menu')
 
     <!-- Main Content -->
-    <main class="content-container bg-white px-4 py-4 md:px-0 md:py-8">
-        <div class="max-w-8xl mx-auto px-0 md:px-6 lg:px-8">
+    <main class="content-container flex-grow bg-white px-4 py-4 md:px-6 md:py-8">
+        <div class="max-w-8xl mx-auto w-full">
             @yield('content')
         </div>
     </main>
-
-    <!-- Footer -->
-    @include('partials.footer')
 
     <!-- Incomplete Profile Alert -->
     <x-alerts.incomplete-profile />
