@@ -13,7 +13,7 @@ Usage guidelines and documentation are available to authorized company personnel
 This codebase is proprietary to Wegrow Global Sdn. Bhd. The code is made publicly visible for transparency and collaboration purposes with our stakeholders, but its use is restricted to authorized personnel only.
 
 ## License
-This project is licensed under the terms of the license included in this repository. See the [LICENSE](LICENSE) file for details. The license restricts usage to Wegrow Global Sdn. Bhd. only.
+This project is licensed under the terms of the license included in this repository. See the [LICENSE](LICENSE.MD) file for details. The license restricts usage to Wegrow Global Sdn. Bhd. only.
 
 ## Contact
 For inquiries about this repository, please contact [your internal contact information or department].
