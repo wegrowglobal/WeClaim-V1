@@ -1,10 +1,10 @@
 # WeClaim V1
 
 ## Overview
-WeClaim V1 is a proprietary claiming system developed for internal use at [Your Company Name]. This repository contains the source code for our claim processing infrastructure.
+WeClaim V1 is a proprietary claiming system developed for internal use at Wegrow Global Sdn. Bhd. This repository contains the source code for our claim processing infrastructure.
 
 ## Important Notice
-**PRIVATE USE ONLY**: While this repository is publicly visible, the code is intended exclusively for use within [Your Company Name]. This is not open source software and is not available for public use, distribution, or modification by external parties.
+**PRIVATE USE ONLY**: While this repository is publicly visible, the code is intended exclusively for use within Wegrow Global Sdn. Bhd. This is not open source software and is not available for public use, distribution, or modification by external parties.
 
 ## Usage
 Usage guidelines and documentation are available to authorized company personnel in our internal documentation portal.
