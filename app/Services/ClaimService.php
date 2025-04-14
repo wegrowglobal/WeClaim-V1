@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Claim;
-use App\Models\User;
-use App\Models\ClaimDocument;
-use App\Models\ClaimReview;
+use App\Models\Claim\Claim;
+use App\Models\User\User;
+use App\Models\Claim\ClaimDocument;
+use App\Models\Claim\ClaimReview;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,7 +16,7 @@ use App\Mail\ClaimActionMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ClaimStatusNotification;
-use App\Models\SystemConfig;
+use App\Models\System\SystemConfig;
 
 class ClaimService
 {

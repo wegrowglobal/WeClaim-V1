@@ -2,7 +2,7 @@
 
 namespace App\Livewire;
 
-use App\Models\User;
+use App\Models\User\User;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;

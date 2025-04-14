@@ -1,5 +1,5 @@
 @php
-    use App\Models\Claim;
+    use App\Models\Claim\Claim;
 
     $colors = [
         Claim::STATUS_SUBMITTED => [

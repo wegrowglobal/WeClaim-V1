@@ -3,9 +3,9 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Department;
+use App\Models\User\User;
+use App\Models\Auth\Role;
+use App\Models\User\Department;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 class DatabaseSeeder extends Seeder

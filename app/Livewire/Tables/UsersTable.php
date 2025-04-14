@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Tables;
 
-use App\Models\Department;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\User\Department;
+use App\Models\Auth\Role;
+use App\Models\User\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;

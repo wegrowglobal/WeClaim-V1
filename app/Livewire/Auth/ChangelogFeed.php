@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Auth;
 
-use App\Models\Changelog;
+use App\Models\System\Changelog;
 use Livewire\Component;
 
 class ChangelogFeed extends Component

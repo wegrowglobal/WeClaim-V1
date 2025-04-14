@@ -3,24 +3,24 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Support\Facades\Broadcast;
-use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\ChatController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserProfileController;
-use App\Http\Controllers\ResetPasswordController;
-use App\Http\Controllers\ForgotPasswordController;
-use App\Http\Controllers\RegistrationRequestController;
+use App\Http\Controllers\Claims\ClaimController;
+use App\Http\Controllers\Chat\ChatController;
+use App\Http\Controllers\Notification\NotificationController;
+use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\User\UserProfileController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\RegistrationRequestController;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\FileController;
-use App\Http\Controllers\SystemConfigController;
-use App\Http\Controllers\BulkEmailController;
-use App\Http\Controllers\SignatureController;
-use App\Http\Controllers\ChangelogController;
+use App\Http\Controllers\System\SystemConfigController;
+use App\Http\Controllers\Admin\BulkEmailController;
+use App\Http\Controllers\Signature\SignatureController;
+use App\Http\Controllers\System\ChangelogController;
 use App\Http\Controllers\MiddlewareTestController;
-use App\Http\Controllers\UserSecurityController;
+use App\Http\Controllers\User\UserSecurityController;
 
 
 // Guest Routes

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Role;
-use App\Models\Department;
+use App\Models\User\User;
+use App\Models\Auth\Role;
+use App\Models\User\Department;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;

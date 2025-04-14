@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @php
-    use App\Models\Claim;
+    use App\Models\Claim\Claim;
 @endphp
 
 @section('content')

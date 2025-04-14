@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Claim;
+use App\Models\Claim\Claim;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 

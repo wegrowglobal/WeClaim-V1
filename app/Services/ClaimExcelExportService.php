@@ -8,7 +8,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Color;
-use App\Models\Claim;
+use App\Models\Claim\Claim;
 use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 class ClaimExcelExportService

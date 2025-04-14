@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Department;
+use App\Models\User\Department;
 use Illuminate\Database\Seeder;
 
 class DepartmentSeeder extends Seeder

@@ -5,7 +5,7 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\RegistrationRequest;
+use App\Models\Auth\RegistrationRequest;
 
 class RegistrationApprovalRequest extends Mailable
 {

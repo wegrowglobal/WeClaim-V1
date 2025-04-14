@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Tables;
 
-use App\Models\Claim;
-use App\Models\User;
+use App\Models\Claim\Claim;
+use App\Models\User\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;

@@ -3,7 +3,7 @@
 namespace App\Mail;
 
 use Illuminate\Mail\Mailable;
-use App\Models\User;
+use App\Models\User\User;
 
 class AccountCreated extends Mailable
 {
