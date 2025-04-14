@@ -49,22 +49,19 @@ class UserController extends BaseController
     public function login(LoginRequest $request): RedirectResponse
     {
         try {
-            $credentials = $request->validated();
-            $remember = $request->boolean('remember');
-
-            if (!$this->authService->attemptLogin($credentials, $remember)) {
-                Log::warning('Failed login attempt', [
-                    'email' => $credentials['email'],
-                    'ip' => $request->ip()
-                ]);
-
-                throw new AuthenticationException(self::LOGIN_FAILED_MESSAGE);
-            }
-
+            $request->authenticate();
+            
             $user = Auth::user();
             if (!$user) {
                 throw new RuntimeException('User not found after successful login');
             }
+            
+            // Log remember token status for debugging
+            Log::info('Login successful', [
+                'user_id' => $user->id,
+                'remember_requested' => $request->boolean('remember'),
+                'remember_token_exists' => !empty($user->remember_token)
+            ]);
 
             $request->session()->regenerate();
             $request->session()->put([
@@ -126,7 +123,7 @@ class UserController extends BaseController
         try {
             $request->validate([
                 'current_password' => ['required', 'string'],
-                'password' => ['required', 'string', 'min:8', 'confirmed'],
+                'password' => ['required', 'string', new \App\Rules\StrongPassword(), 'confirmed'],
                 'password_confirmation' => ['required']
             ]);
 

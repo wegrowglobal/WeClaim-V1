@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\StrongPassword;
 
 class ResetPasswordRequest extends FormRequest
 {
@@ -19,7 +20,7 @@ class ResetPasswordRequest extends FormRequest
             'password' => [
                 'required',
                 'string',
-                'min:8',
+                new StrongPassword(),
                 'confirmed'
             ],
         ];
@@ -28,7 +29,6 @@ class ResetPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.min' => 'The password must be at least 8 characters.',
             'password.confirmed' => 'The password confirmation does not match.',
         ];
     }

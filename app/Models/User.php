@@ -67,4 +67,12 @@ class User extends Authenticatable
     {
         return $this->hasOne(BankingInformation::class);
     }
+
+    /**
+     * Get the login activities for the user.
+     */
+    public function loginActivities()
+    {
+        return $this->hasMany(LoginActivity::class);
+    }
 }

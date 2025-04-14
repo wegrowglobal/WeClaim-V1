@@ -20,6 +20,7 @@ use App\Http\Controllers\BulkEmailController;
 use App\Http\Controllers\SignatureController;
 use App\Http\Controllers\ChangelogController;
 use App\Http\Controllers\MiddlewareTestController;
+use App\Http\Controllers\UserSecurityController;
 
 
 // Guest Routes
@@ -170,6 +171,12 @@ Route::middleware('auth', 'track.activity')->group(function () {
         Route::view('/report', 'pages.reports')->name('reports');
         Route::view('/settings', 'pages.settings')->name('settings');
         
+        // Security Routes
+        Route::prefix('security')->name('security.')->group(function () {
+            Route::get('/login-activity', [UserSecurityController::class, 'loginActivity'])->name('login-activity');
+            Route::get('/remember-status', [UserSecurityController::class, 'checkRememberToken'])->name('remember-status');
+        });
+        
         // Routes that need role check for staff (1) and/or admin (5)
         Route::middleware('role:1,5')->group(function () {
             // Bulk Email Routes
@@ -211,6 +218,9 @@ Route::middleware('admin', 'verified')->prefix('admin')->name('admin.')->group(f
     
     // Changelog management
     Route::get('/changelogs', [ChangelogController::class, 'index'])->name('changelogs');
+    
+    // Security management
+    Route::get('/failed-logins', [UserSecurityController::class, 'failedLogins'])->name('failed-logins');
 });
 
 // Registration Approval/Rejection Routes - these require a signed URL
