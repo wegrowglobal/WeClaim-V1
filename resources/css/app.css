@@ -22,9 +22,9 @@
    margin: 0;
    }
 
-   /* Default Font Family Across All Pages */
+   /* Default Font Family - Removed (Handled by Tailwind config) */
    html {
-       font-family: "Inter", system-ui, -apple-system, sans-serif;
+       /* font-family: "Inter", system-ui, -apple-system, sans-serif; */
        -webkit-font-smoothing: antialiased;
        -moz-osx-font-smoothing: grayscale;
    }

@@ -64,19 +64,20 @@
                                     </svg>
                                     Manage Claims
                                 </a>
-                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.users.index') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
+                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.users.index') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}"
                                    href="{{ route('admin.users.index') }}">
                                     <svg class="h-4 w-4 {{ request()->routeIs('admin.users.index') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
                                     Manage Users
                                 </a>
-                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.system.changelogs') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}" 
-                                   href="{{ route('admin.system.changelogs') }}">
-                                    <svg class="h-4 w-4 {{ request()->routeIs('admin.system.changelogs') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                <a class="group flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium {{ request()->routeIs('admin.system.failed-logins') ? 'bg-gray-50 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}"
+                                   href="{{ route('admin.system.failed-logins') }}">
+                                    <svg class="h-4 w-4 {{ request()->routeIs('admin.system.failed-logins') ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600' }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6.364-8.364l-1.414 1.414M18.364 6.636l-1.414 1.414M12 3v2m-6.364 8.364l-1.414-1.414M18.364 17.364l-1.414-1.414M3 12h2m8.364 6.364l1.414 1.414M6.636 6.636l1.414 1.414M17 12h2" />
+                                        <circle cx="12" cy="12" r="3" />
                                     </svg>
-                                    Manage Changelogs
+                                    Failed Logins
                                 </a>
                             @endif
                         @endauth

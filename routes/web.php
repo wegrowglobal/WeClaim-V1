@@ -10,7 +10,7 @@ use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\User\UserProfileController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\RegistrationRequestController;
+use App\Http\Controllers\Auth\RequestAccountController;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Http\Request;
@@ -18,54 +18,43 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\System\SystemConfigController;
 use App\Http\Controllers\Admin\BulkEmailController;
 use App\Http\Controllers\Signature\SignatureController;
-use App\Http\Controllers\System\ChangelogController;
 use App\Http\Controllers\MiddlewareTestController;
 use App\Http\Controllers\User\UserSecurityController;
 
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
-    Route::get('/login', function () {
-        return view('pages.auth.login');
-    })->name('login.form');
+    Route::get('login', function () {
+        return view('auth.login.login');
+    })->name('login');
 
-    // Get published changelogs for login page
-    Route::get('/changelogs/published', [ChangelogController::class, 'getPublishedChangelogs'])
-        ->name('changelogs.published');
-
-    Route::post('/login', [UserController::class, 'login'])->name('login');
+    Route::post('login', [UserController::class, 'login'])->name('login');
 
     // Password Reset Routes
     Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
         ->name('password.request');
     Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
         ->name('password.email');
-    Route::get('forgot-password/confirmation', [ForgotPasswordController::class, 'showConfirmation'])
+    Route::get('forgot-password-confirmation', [ForgotPasswordController::class, 'showConfirmation'])
         ->name('password.confirmation');
     Route::get('reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
         ->name('password.reset');
     Route::post('reset-password', [ResetPasswordController::class, 'reset'])
         ->name('password.update');
-    Route::view('password-reset-success', 'pages.auth.password-reset-success')
+    Route::view('password-reset-success', 'auth.password.password-reset-success')
         ->name('password.reset.success');
         
     // Registration Routes
-    Route::prefix('register')->name('register.')->group(function () {
-        Route::get('/', [RegistrationRequestController::class, 'showRegistrationForm'])->name('form');
-        Route::post('/', [RegistrationRequestController::class, 'submitRequest'])->name('request');
-        Route::get('/confirmation', [RegistrationRequestController::class, 'showConfirmation'])->name('confirmation');
-        Route::get('/success', function () {
-            return view('pages.auth.register-success');
-        })->name('success');
-    });
+    Route::get('request', [RequestAccountController::class, 'showRegistrationForm'])->name('request.form');
+    Route::post('request', [RequestAccountController::class, 'store'])->name('request.store');
     
     // Password Setup Routes
     Route::prefix('password')->name('password.')->group(function () {
-        Route::get('/set/{token}', [RegistrationRequestController::class, 'showSetPasswordForm'])->name('set');
-        Route::post('/save', [RegistrationRequestController::class, 'savePassword'])->name('save');
-        Route::get('/setup/{token}', [RegistrationRequestController::class, 'showSetPasswordForm'])->name('setup.form');
-        Route::post('/setup/{token}', [RegistrationRequestController::class, 'setPassword'])->name('setup');
-        Route::get('/setup-success', [RegistrationRequestController::class, 'showPasswordSetupSuccess'])->name('setup.success');
+        Route::get('/set/{token}', [RequestAccountController::class, 'showSetPasswordForm'])->name('set');
+        Route::post('/save', [RequestAccountController::class, 'savePassword'])->name('save');
+        Route::get('/setup/{token}', [RequestAccountController::class, 'showSetPasswordForm'])->name('setup.form');
+        Route::post('/setup/{token}', [RequestAccountController::class, 'setPassword'])->name('setup');
+        Route::get('/setup-success', [RequestAccountController::class, 'showPasswordSetupSuccess'])->name('setup.success');
     });
 });
 
@@ -157,7 +146,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // System Management
     Route::prefix('system')->name('system.')->group(function () {
-        Route::get('/changelogs', [ChangelogController::class, 'index'])->name('changelogs');
         Route::get('/failed-logins', [UserSecurityController::class, 'failedLogins'])->name('failed-logins');
         Route::get('/config', [SystemConfigController::class, 'index'])->name('config');
         Route::post('/config', [SystemConfigController::class, 'update'])->name('config.update');
@@ -166,6 +154,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 // Registration Approval/Rejection Routes - these require a signed URL
 Route::middleware('signed')->group(function () {
-    Route::get('/register/approve/{token}', [RegistrationRequestController::class, 'approveRequest'])->name('register.approve');
-    Route::get('/register/reject/{token}', [RegistrationRequestController::class, 'rejectRequest'])->name('register.reject');
+    Route::get('/register/approve/{token}', [RequestAccountController::class, 'approveRequest'])->name('register.approve');
+    Route::get('/register/reject/{token}', [RequestAccountController::class, 'rejectRequest'])->name('register.reject');
+});
+
+// Fallback route for unmatched GET requests (optional)
+Route::fallback(function () {
+    // return view('errors.404'); // Or redirect to a specific page like dashboard or home
+    return redirect('/');
 });

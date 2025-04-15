@@ -10,7 +10,7 @@ class ForgotPasswordController extends Controller
 {
     public function showLinkRequestForm()
     {
-        return view('pages.auth.forgot-password');
+        return view('auth.password.forgot-password');
     }
 
     public function sendResetLinkEmail(Request $request)
@@ -30,6 +30,6 @@ class ForgotPasswordController extends Controller
 
     public function showConfirmation()
     {
-        return view('pages.auth.forgot-password-confirmation');
+        return view('auth.password.forgot-password-confirmation');
     }
 }

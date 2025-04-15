@@ -24,7 +24,7 @@ use App\Mail\RegistrationRequestApproved;
 use App\Mail\RegistrationRequestRejected;
 use App\Mail\PasswordSetupInvitation;
 
-class RegistrationRequestController extends Controller
+class RequestAccountController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -63,7 +63,8 @@ class RegistrationRequestController extends Controller
 
     public function showRegistrationForm()
     {
-        return view('pages.auth.register');
+        $departments = Department::orderBy('name')->pluck('name');
+        return view('auth.request.request', ['departments' => $departments]);
     }
 
     public function submitRequest(Request $request)
@@ -162,7 +163,7 @@ class RegistrationRequestController extends Controller
 
     public function showConfirmation()
     {
-        return view('pages.auth.register-confirmation');
+        return view('auth.request.request-confirmation');
     }
 
     public function approveRequest($token)
@@ -188,7 +189,7 @@ class RegistrationRequestController extends Controller
                     'requested_department' => $request->department,
                     'available_departments' => DB::table('departments')->pluck('name')
                 ]);
-                return view('pages.auth.registration-error', [
+                return view('auth.request.request-error', [
                     'message' => 'Department not found. Please contact administrator.'
                 ]);
             }
@@ -216,7 +217,7 @@ class RegistrationRequestController extends Controller
 
                 DB::commit();
 
-                return view('pages.auth.registration-approved');
+                return view('auth.request.request-approved');
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Failed to create user or update request status', [
@@ -234,7 +235,7 @@ class RegistrationRequestController extends Controller
                 'token' => $token
             ]);
 
-            return view('pages.auth.registration-error', [
+            return view('auth.request.request-error', [
                 'message' => 'Failed to approve registration request. Please try again later.'
             ]);
         }
@@ -251,14 +252,14 @@ class RegistrationRequestController extends Controller
 
             Mail::to($request->email)->send(new RegistrationRejected($request));
 
-            return view('pages.auth.registration-rejected');
+            return view('auth.request.request-rejected');
         } catch (\Exception $e) {
             Log::error('Registration rejection failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return view('pages.auth.registration-error', [
+            return view('auth.request.request-error', [
                 'message' => 'Failed to reject registration request. Please try again later.'
             ]);
         }
@@ -268,7 +269,7 @@ class RegistrationRequestController extends Controller
     {
         $user = User::where('password_setup_token', $token)->firstOrFail();
 
-        return view('pages.auth.set-password', [
+        return view('auth.password.set-password', [
             'token' => $token,
             'email' => $user->email
         ]);
@@ -293,7 +294,7 @@ class RegistrationRequestController extends Controller
 
     public function showPasswordSetupSuccess()
     {
-        return view('pages.auth.password-setup-success');
+        return view('auth.password.password-setup-success');
     }
 
     public function approveFromDashboard($id)

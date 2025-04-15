@@ -12,10 +12,9 @@ use App\Http\Requests\ResetPasswordRequest;
 
 class ResetPasswordController extends Controller
 {
-    public function showResetForm(Request $request)
+    public function showResetForm(Request $request, $token = null)
     {
-        $token = $request->route()->parameter('token');
-        return view('pages.auth.reset-password', ['token' => $token, 'email' => $request->email]);
+        return view('auth.password.reset-password', ['token' => $token, 'email' => $request->email]);
     }
 
     public function reset(ResetPasswordRequest $request)
@@ -34,7 +33,7 @@ class ResetPasswordController extends Controller
 
         // Check if password was reset successfully
         if ($status === Password::PASSWORD_RESET) {
-            return view('pages.auth.password-reset-success');
+            return view('auth.password.password-reset-success');
         }
 
         return back()->withErrors(['email' => __($status)]);

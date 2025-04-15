@@ -21,6 +21,7 @@ class DepartmentSeeder extends Seeder
             'IT and Technical',
             'Procurement and Assets',
             'Retails',
+            'Operations',
             'All'
         ];
 

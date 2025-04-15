@@ -28,9 +28,9 @@ class DatabaseSeeder extends Seeder
         Schema::disableForeignKeyConstraints();
 
         // Clear existing data
-        \App\Models\ClaimLocation::truncate();
-        \App\Models\ClaimDocument::truncate();
-        \App\Models\Claim::truncate();
+        \App\Models\Claim\ClaimLocation::truncate();
+        \App\Models\Claim\ClaimDocument::truncate();
+        \App\Models\Claim\Claim::truncate();
         User::truncate();
         Role::truncate();
         Department::truncate();
