@@ -30,8 +30,10 @@ class UserManagementController extends Controller
 
     public function index()
     {
-        $users = User::query()
-            ->with(['role', 'department'])
+        // Start query potentially including soft-deleted users
+        $query = User::query()->withTrashed();
+
+        $users = $query->with(['role', 'department'])
             ->when(request('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
@@ -44,6 +46,14 @@ class UserManagementController extends Controller
             })
             ->when(request('department'), function ($query, $department) {
                 $query->where('department_id', $department);
+            })
+            ->when(request('status'), function ($query, $status) {
+                if ($status === 'active') {
+                    $query->whereNull('deleted_at'); // Filter for active (not soft-deleted)
+                } elseif ($status === 'inactive') {
+                    $query->whereNotNull('deleted_at'); // Filter for inactive (soft-deleted)
+                }
+                // No else needed: if status is empty, withTrashed() includes all
             })
             ->paginate(10);
 
@@ -64,7 +74,8 @@ class UserManagementController extends Controller
                 'role' => request('role'),
                 'department' => request('department'),
                 'sort' => request('sort'),
-                'direction' => request('direction')
+                'direction' => request('direction'),
+                'status' => request('status')
             ]
         ]);
     }
