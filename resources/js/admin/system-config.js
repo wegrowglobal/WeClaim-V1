@@ -1,7 +1,7 @@
-import ErrorHandler from './utils/error-handler.js';
-import Logger from './utils/logger.js';
-import { SwalUtils } from './utils/swal-utils.js';
-import ValidationUtils from './utils/validation.js';
+import ErrorHandler from '../utils/error-handler.js';
+import Logger from '../utils/logger.js';
+import { SwalUtils } from '../utils/swal-utils.js';
+import ValidationUtils from '../utils/validation.js';
 
 class SystemConfigManager {
     constructor() {

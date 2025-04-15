@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Models\Auth\RegistrationRequest;
 use App\Mail\RegistrationApprovalRequest;
 use Illuminate\Http\Request;

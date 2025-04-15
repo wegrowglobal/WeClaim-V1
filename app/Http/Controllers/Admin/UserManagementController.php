@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\User\User;
 use App\Models\Auth\Role;
 use App\Models\User\Department;
@@ -53,7 +54,7 @@ class UserManagementController extends Controller
         Log::info('SQL Query: ' . RegistrationRequest::query()->orderBy('created_at', 'desc')->toSql());
         Log::info('Total Records: ' . $pendingRequests->count());
 
-        return view('pages.user.management', [
+        return view('pages.admin.users.index', [
             'users' => $users,
             'roles' => Role::all(),
             'departments' => Department::all(),

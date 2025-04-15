@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use App\Models\User\LoginActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,7 @@ class UserSecurityController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10);
             
-        return view('pages.user.login-activity', [
+        return view('pages.user.security.login-activity', [
             'activities' => $activities
         ]);
     }

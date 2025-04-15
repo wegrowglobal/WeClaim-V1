@@ -88,139 +88,80 @@ Route::middleware('auth', 'track.activity')->group(function () {
     Route::post('/logout', [UserController::class, 'logout'])->name('logout');
     
     // Profile Routes
-    Route::prefix('profile')->group(function () {
-        Route::get('/', [UserProfileController::class, 'show'])->name('profile');
-        Route::put('/', [UserProfileController::class, 'update'])->name('profile.update');
-    });
-
-    // Signature Routes
-    Route::prefix('signature')->group(function () {
-        Route::post('/', [SignatureController::class, 'store'])->name('signature.store');
-        Route::delete('/', [SignatureController::class, 'destroy'])->name('signature.destroy');
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [UserProfileController::class, 'show'])->name('show');
+        Route::put('/', [UserProfileController::class, 'update'])->name('update');
+        Route::post('/signature', [SignatureController::class, 'store'])->name('signature.store');
+        Route::delete('/signature', [SignatureController::class, 'destroy'])->name('signature.destroy');
     });
     
     // Notification Routes
-    Route::prefix('notifications')->group(function () {
-        Route::get('/', [NotificationController::class, 'index'])->name('notifications');
-        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])
-            ->name('notifications.mark-all-as-read');
-        Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])
-            ->name('notifications.mark-as-read');
-        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])
-            ->name('notifications.unread-count');
-    });
-    
-    // Password Change Routes
-    Route::prefix('password')->name('password.')->group(function () {
-        Route::get('/change', [UserController::class, 'showChangePassword'])->name('change');
-        Route::post('/change', [UserController::class, 'changePassword'])
-            ->middleware('verified')
-            ->name('change.submit');
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+        Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+        Route::get('/unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
     });
     
     // Routes that require completed profile
     Route::middleware('profile.complete')->group(function () {
         // Claims Routes
         Route::prefix('claims')->name('claims.')->group(function () {
-            // Main Claims Routes
             Route::get('/dashboard', [ClaimController::class, 'dashboard'])->name('dashboard');
+            Route::get('/new', [ClaimController::class, 'new'])->name('new');
+            Route::post('/store', [ClaimController::class, 'store'])->name('store');
             Route::get('/approval', [ClaimController::class, 'approval'])->name('approval');
             
-            // View Claim
-            Route::get('/{id}', [ClaimController::class, 'show'])
-                ->defaults('view', 'pages.claims.claim')
-                ->name('view');
+            // Form Steps Routes
+            Route::prefix('steps')->name('steps.')->group(function () {
+                Route::post('/save', [ClaimController::class, 'saveStep'])->name('save');
+                Route::post('/reset', [ClaimController::class, 'resetSession'])->name('reset');
+                Route::get('/{step}', [ClaimController::class, 'getStep'])->name('get');
+                Route::get('/{step}/progress', [ClaimController::class, 'getProgressSteps'])->name('progress');
+            });
             
-            // Document Routes
-            Route::get('/{claim}/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])
-                ->name('view.document');
-                
-            // Claims that require verified email
-            Route::middleware('verified')->group(function () {
-                Route::get('/new', [ClaimController::class, 'new'])->name('new');
-                
-                // Form Steps Routes
-                Route::post('/save-step', [ClaimController::class, 'saveStep'])->name('save-step');
-                Route::post('/reset-session', [ClaimController::class, 'resetSession'])->name('reset-session');
-                Route::get('/get-step/{step}', [ClaimController::class, 'getStep'])->name('get-step');
-                Route::get('/get-progress-steps/{step}', [ClaimController::class, 'getProgressSteps'])
-                    ->name('progress-steps');
-                    
-                // Claim Actions
-                Route::post('/store', [ClaimController::class, 'store'])->name('store');
-                Route::get('/{id}/review', [ClaimController::class, 'reviewClaim'])->name('review');
-                Route::post('/{claim}/export', [ClaimController::class, 'export'])->name('export');
-                Route::put('/{claim}/cancel', [ClaimController::class, 'cancelClaim'])->name('cancel');
-                
-                // Email Actions
-                Route::post('/send-to-datuk/{id}', [ClaimController::class, 'sendToDatuk'])
-                    ->name('mail.to.datuk');
-                    
-                // Resubmit Routes
-                Route::get('/resubmit/{claim}', [ClaimController::class, 'showResubmitForm'])->name('resubmit');
-                Route::post('/resubmit/{claim}', [ClaimController::class, 'processResubmission'])->name('resubmit.process');
-                
-                // Claim Review Actions
-                Route::post('/{id}/update', [ClaimController::class, 'updateClaim'])->name('update');
+            // Individual Claim Routes
+            Route::prefix('{claim}')->group(function () {
+                Route::get('/', [ClaimController::class, 'show'])->name('show');
+                Route::get('/review', [ClaimController::class, 'reviewClaim'])->name('review');
+                Route::post('/update', [ClaimController::class, 'updateClaim'])->name('update');
+                Route::post('/export', [ClaimController::class, 'export'])->name('export');
+                Route::put('/cancel', [ClaimController::class, 'cancelClaim'])->name('cancel');
+                Route::get('/resubmit', [ClaimController::class, 'showResubmitForm'])->name('resubmit');
+                Route::post('/resubmit', [ClaimController::class, 'processResubmission'])->name('resubmit.process');
+                Route::get('/document/{type}/{filename}', [ClaimController::class, 'viewDocument'])->name('document');
             });
         });
     });
-    
-    // Reports & Settings Routes - require verification
-    Route::middleware('verified')->group(function () {
-        Route::view('/report', 'pages.reports')->name('reports');
-        Route::view('/settings', 'pages.settings')->name('settings');
-        
-        // Security Routes
-        Route::prefix('security')->name('security.')->group(function () {
-            Route::get('/login-activity', [UserSecurityController::class, 'loginActivity'])->name('login-activity');
-            Route::get('/remember-status', [UserSecurityController::class, 'checkRememberToken'])->name('remember-status');
-        });
-        
-        // Routes that need role check for staff (1) and/or admin (5)
-        Route::middleware('role:1,5')->group(function () {
-            // Bulk Email Routes
-            Route::prefix('claims')->name('claims.')->group(function () {
-                Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('bulk-email');
-                Route::post('/bulk-email/send', [BulkEmailController::class, 'sendBulkEmail'])->name('bulk-email.send');
-            });
-            
-            // Registration request management
-            Route::post('/registration-requests/{id}/approve', [RegistrationRequestController::class, 'approveFromDashboard'])
-                ->name('registration-requests.approve-dashboard');
-            Route::post('/registration-requests/{id}/reject', [RegistrationRequestController::class, 'rejectFromDashboard'])
-                ->name('registration-requests.reject-dashboard');
-        });
-    });
-    
-    // Success Page Route
-    Route::get('/claims/success', function () {
-        return view('pages.claims.success');
-    })
-    ->name('claims.success.page');
 });
 
-// Admin only routes
-Route::middleware('admin', 'verified')->prefix('admin')->name('admin.')->group(function () {
-    // Admin claims management
-    Route::get('/claims', [ClaimController::class, 'adminIndex'])->name('claims');
+// Admin Routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Claims Management
+    Route::prefix('claims')->name('claims.')->group(function () {
+        Route::get('/', [ClaimController::class, 'adminIndex'])->name('index');
+        Route::get('/{claim}/edit', [ClaimController::class, 'edit'])->name('edit');
+        Route::put('/{claim}', [ClaimController::class, 'update'])->name('update');
+        Route::delete('/{claim}', [ClaimController::class, 'destroy'])->name('delete');
+        Route::get('/bulk-email', [BulkEmailController::class, 'index'])->name('bulk-email');
+        Route::post('/bulk-email/send', [BulkEmailController::class, 'sendBulkEmail'])->name('bulk-email.send');
+    });
     
-    // Claims crud operations
-    Route::get('/claims/{claim}/edit', [ClaimController::class, 'edit'])->name('claims.edit');
-    Route::put('/claims/{claim}', [ClaimController::class, 'update'])->name('claims.update');
-    Route::delete('/claims/{claim}', [ClaimController::class, 'destroy'])->name('claims.destroy');
+    // User Management
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserManagementController::class, 'index'])->name('index');
+        Route::post('/', [UserManagementController::class, 'store'])->name('store');
+        Route::put('/{id}', [UserManagementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [UserManagementController::class, 'destroy'])->name('delete');
+    });
     
-    // User management
-    Route::get('/users', [UserManagementController::class, 'index'])->name('users');
-    Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
-    Route::put('/users/{id}', [UserManagementController::class, 'update'])->name('users.update');
-    Route::delete('/users/{id}', [UserManagementController::class, 'destroy'])->name('users.destroy');
-    
-    // Changelog management
-    Route::get('/changelogs', [ChangelogController::class, 'index'])->name('changelogs');
-    
-    // Security management
-    Route::get('/failed-logins', [UserSecurityController::class, 'failedLogins'])->name('failed-logins');
+    // System Management
+    Route::prefix('system')->name('system.')->group(function () {
+        Route::get('/changelogs', [ChangelogController::class, 'index'])->name('changelogs');
+        Route::get('/failed-logins', [UserSecurityController::class, 'failedLogins'])->name('failed-logins');
+        Route::get('/config', [SystemConfigController::class, 'index'])->name('config');
+        Route::post('/config', [SystemConfigController::class, 'update'])->name('config.update');
+    });
 });
 
 // Registration Approval/Rejection Routes - these require a signed URL

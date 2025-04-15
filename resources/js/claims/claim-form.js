@@ -1,7 +1,7 @@
-import { ClaimMap } from './maps/claim-map.js';
-import ErrorHandler from './utils/error-handler.js';
-import ValidationUtils from './utils/validation.js';
-import Logger from './utils/logger.js';
+import { ClaimMap } from '../maps/claim-map.js';
+import ErrorHandler from '../utils/error-handler.js';
+import ValidationUtils from '../utils/validation.js';
+import Logger from '../utils/logger.js';
 
 class ClaimForm {
     constructor() {
@@ -384,7 +384,7 @@ class ClaimForm {
         });
 
         try {
-            const response = await fetch('/claims/save-step', {
+            const response = await fetch('/claims/steps/save', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1344,7 +1344,7 @@ class ClaimForm {
 
     async loadStep(step) {
         try {
-            const response = await fetch(`/claims/get-step/${step}`, {
+            const response = await fetch(`/claims/steps/${step}`, {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'

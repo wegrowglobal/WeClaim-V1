@@ -168,7 +168,7 @@
 
         @auth
             <div class="mt-6 space-y-2">
-                <a class="btn bg-blue-500 font-medium text-white hover:bg-blue-600" href="{{ route('profile') }}">
+                <a class="btn bg-blue-500 font-medium text-white hover:bg-blue-600" href="{{ route('profile.show') }}">
                     <svg class="icon-small mr-3" class="bi bi-person-circle" xmlns="http://www.w3.org/2000/svg"
                         width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />

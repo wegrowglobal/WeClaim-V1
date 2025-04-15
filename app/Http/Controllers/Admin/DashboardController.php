@@ -73,7 +73,7 @@ class DashboardController extends Controller
             ->orderBy('month')
             ->get();
         
-        return view('admin.dashboard', compact(
+        return view('pages.admin.dashboard', compact(
             'metrics', 
             'latestClaims', 
             'latestUsers', 

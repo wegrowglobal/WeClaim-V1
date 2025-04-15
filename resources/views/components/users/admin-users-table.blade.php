@@ -7,7 +7,7 @@
             id="usersSearchForm"
             class="relative mb-4"
             method="GET" 
-            action="{{ route('admin.users') }}">
+            action="{{ route('admin.users.index') }}">
             <div class="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
                 <div class="relative flex-grow focus-within:shadow-sm">
                     <input
@@ -55,7 +55,7 @@
                 </button>
                 @if (request()->hasAny(['search', 'role', 'department']))
                     <a class="inline-flex w-full items-center justify-center rounded-lg border border-red-600 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
-                        href="{{ route('admin.users') }}">
+                        href="{{ route('admin.users.index') }}">
                         Clear Filters
                     </a>
                 @endif

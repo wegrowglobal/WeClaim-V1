@@ -45,7 +45,7 @@ class ClaimsManagementController extends Controller
         
         $claims = $query->orderBy('created_at', 'desc')->paginate(10);
         
-        return view('admin.claims.index', compact('claims', 'status'));
+        return view('pages.admin.claims.index', compact('claims', 'status'));
     }
 
     /**
@@ -63,7 +63,7 @@ class ClaimsManagementController extends Controller
             'claim_id' => $id
         ]);
         
-        return view('admin.claims.show', compact('claim'));
+        return view('pages.admin.claims.show', compact('claim'));
     }
 
     /**

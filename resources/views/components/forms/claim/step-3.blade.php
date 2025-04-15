@@ -398,5 +398,5 @@
 </div>
 
 @push('scripts')
-    @vite(['resources/js/claim-document.js', 'resources/js/claim-accommodation.js'])
+    @vite(['resources/js/claims/claim-document.js', 'resources/js/claims/claim-accommodation.js'])
 @endpush

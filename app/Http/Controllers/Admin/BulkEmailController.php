@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
 use App\Models\Claim\Claim;
 use App\Services\ClaimService;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class BulkEmailController extends Controller
             ->orderBy('submitted_at', 'desc')
             ->get();
 
-        return view('pages.claims.bulk-email', compact('claims'));
+        return view('pages.claims.actions.bulk-email', compact('claims'));
     }
 
     public function sendBulkEmail(Request $request)

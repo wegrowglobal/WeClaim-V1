@@ -28,7 +28,7 @@
                             </div>
                         </div>
                         @if($claim->documents()->exists() && $claim->documents->first() && $claim->documents->first()->email_file_name)
-                            <a href="{{ route('claims.view.document', ['claim' => $claim->id, 'type' => 'email', 'filename' => $claim->documents->first()->email_file_name]) }}" 
+                            <a href="{{ route('claims.document', ['claim' => $claim->id, 'type' => 'email', 'filename' => $claim->documents->first()->email_file_name]) }}" 
                                target="_blank"
                                class="inline-flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-500">
                                 <span>View Document</span>
@@ -75,7 +75,7 @@
                                     </svg>
                                     <span class="text-sm text-gray-600">Toll Receipt</span>
                                 </div>
-                                <a href="{{ route('claims.view.document', ['claim' => $claim->id, 'type' => 'toll', 'filename' => $claim->documents->first()->toll_file_name]) }}" 
+                                <a href="{{ route('claims.document', ['claim' => $claim->id, 'type' => 'toll', 'filename' => $claim->documents->first()->toll_file_name]) }}" 
                                    target="_blank"
                                    class="inline-flex items-center space-x-1 text-sm text-indigo-600 hover:text-indigo-500">
                                     <span>View Receipt</span>

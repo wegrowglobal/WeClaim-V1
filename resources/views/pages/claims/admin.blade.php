@@ -68,5 +68,5 @@
         </div>
     </div>
 
-    @vite(['resources/js/filter.js', 'resources/js/view-toggle.js', 'resources/js/admin.js'])
+    @vite(['resources/js/components/filter.js', 'resources/js/admin/admin.js'])
 @endsection

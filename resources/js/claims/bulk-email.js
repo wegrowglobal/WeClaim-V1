@@ -1,6 +1,6 @@
-import { SwalUtils } from './utils/swal-utils';
-import Logger from './utils/logger';
-import ErrorHandler from './utils/error-handler';
+import { SwalUtils } from '../utils/swal-utils';
+import Logger from '../utils/logger';
+import ErrorHandler from '../utils/error-handler';
 
 class BulkEmailHandler {
     constructor() {

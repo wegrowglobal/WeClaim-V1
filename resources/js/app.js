@@ -1,5 +1,5 @@
 import './bootstrap';
-import { initializeTableFilters } from './table-filter';
+import { initializeTableFilters } from './components/table-filter';
 
 // Initialize table filters when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

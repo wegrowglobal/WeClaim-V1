@@ -28,11 +28,11 @@ class EnsureProfileIsComplete
                         return response()->json([
                             'error' => 'Profile incomplete',
                             'message' => 'You need to complete your profile before accessing this feature',
-                            'redirect' => route('profile')
+                            'redirect' => route('profile.show')
                         ], 403);
                     }
                     
-                    return redirect()->route('profile')
+                    return redirect()->route('profile.show')
                         ->with('error', 'Please complete your profile before continuing.');
                 }
             }
@@ -49,11 +49,11 @@ class EnsureProfileIsComplete
                         return response()->json([
                             'error' => 'Banking information missing',
                             'message' => 'You need to add your banking information before submitting claims',
-                            'redirect' => route('profile')
+                            'redirect' => route('profile.show')
                         ], 403);
                     }
                     
-                    return redirect()->route('profile')
+                    return redirect()->route('profile.show')
                         ->with('error', 'Please add your banking information before submitting claims.');
                 }
             }

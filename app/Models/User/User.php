@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Notifications\ResetPasswordNotification;
+use App\Models\Auth\Role;
+use App\Models\Claim\Claim;
+use App\Models\User\Department;
+use App\Models\User\BankingInformation;
+use App\Models\User\LoginActivity;
 
 class User extends Authenticatable
 {

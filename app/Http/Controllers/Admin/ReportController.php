@@ -65,7 +65,7 @@ class ReportController extends Controller
             'Admin viewed dashboard and statistics'
         );
         
-        return view('admin.reports.dashboard', compact(
+        return view('pages.admin.reports.dashboard', compact(
             'stats', 
             'claimsByMonth', 
             'claimsByCategory', 
@@ -125,7 +125,7 @@ class ReportController extends Controller
             'Admin viewed user activity report'
         );
         
-        return view('admin.reports.user_activity', compact(
+        return view('pages.admin.reports.user_activity', compact(
             'activities', 
             'users', 
             'activityTypes'
@@ -171,7 +171,7 @@ class ReportController extends Controller
             ['period' => $period]
         );
         
-        return view('admin.reports.claim_processing', compact(
+        return view('pages.admin.reports.claim_processing', compact(
             'processedClaims', 
             'metrics', 
             'processingTimeDistribution', 
@@ -219,7 +219,7 @@ class ReportController extends Controller
             ['period' => $period]
         );
         
-        return view('admin.reports.financial', compact(
+        return view('pages.admin.reports.financial', compact(
             'totalPaidOut', 
             'amountByCategory', 
             'monthlyPayoutTrend', 

@@ -260,7 +260,7 @@
                                 required>
                             <option value="">Select a Bank</option>
                             @foreach($banks as $bank)
-                                <option value="{{ $bank }}" {{ old('bank_name', auth()->user()->bankingInformation?->bank_name) === $bank ? 'selected' : '' }}>
+                                <option value="{{ $bank }}" {{ old('bank_name', optional(auth()->user()->bankingInformation)->bank_name) === $bank ? 'selected' : '' }}>
                                     {{ $bank }}
                                 </option>
                             @endforeach
@@ -271,14 +271,14 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" for="account_holder">Account Holder Name</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="account_holder_name">Account Holder Name</label>
                         <input type="text" 
-                               id="account_holder" 
-                               name="account_holder" 
-                               value="{{ old('account_holder', auth()->user()->bankingInformation?->account_holder) }}"
+                               id="account_holder_name" 
+                               name="account_holder_name" 
+                               value="{{ old('account_holder_name', optional(auth()->user()->bankingInformation)->account_holder_name) }}"
                                class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600"
                                required>
-                        @error('account_holder')
+                        @error('account_holder_name')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
@@ -288,7 +288,7 @@
                         <input type="text" 
                                id="account_number" 
                                name="account_number" 
-                               value="{{ old('account_number', auth()->user()->bankingInformation?->account_number) }}"
+                               value="{{ old('account_number', optional(auth()->user()->bankingInformation)->account_number) }}"
                                class="block w-full rounded-lg border-0 bg-gray-50 px-4 py-3 text-sm transition-all focus:bg-white focus:ring-2 focus:ring-indigo-600"
                                required>
                         @error('account_number')
@@ -346,7 +346,7 @@
     </div>
 </div>
 
-@vite(['resources/js/maps/profile-map.js', 'resources/js/profile.js'])
+@vite(['resources/js/user/profile.js'])
 
 <script>
 function toggleVisibility(inputId) {
@@ -425,3 +425,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        window.profileInstance = new Profile();
+    });
+</script>
+@endpush

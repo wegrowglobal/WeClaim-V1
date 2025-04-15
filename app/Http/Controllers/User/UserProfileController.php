@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\BankingInstitutionService;
@@ -69,7 +70,7 @@ class UserProfileController extends Controller
                 'zip_code' => 'required|string',
                 'country' => 'required|string',
                 'bank_name' => 'required|string',
-                'account_holder' => 'required|string',
+                'account_holder_name' => 'required|string',
                 'account_number' => 'required|string',
                 'signature_path' => 'nullable|string'
             ]);
@@ -141,18 +142,27 @@ class UserProfileController extends Controller
             $user->update($userData);
 
             // Handle banking information
+            Log::info('Updating banking information', [
+                'user_id' => $user->id,
+                'bank_name' => $request->bank_name,
+                'account_holder_name' => $request->account_holder_name,
+                'account_number' => substr($request->account_number, 0, 4) . '****' // Log only first 4 digits for security
+            ]);
+
             $user->bankingInformation()->updateOrCreate(
                 ['user_id' => $user->id],
                 [
                     'bank_name' => $request->bank_name,
-                    'account_holder' => $request->account_holder,
+                    'account_holder_name' => $request->account_holder_name,
                     'account_number' => $request->account_number
                 ]
             );
 
+            Log::info('Banking information updated successfully');
+
             Log::info('Profile update completed successfully');
 
-            return redirect()->route('profile')->with('success', 'Profile updated successfully!');
+            return redirect()->route('profile.show')->with('success', 'Profile updated successfully!');
         } catch (\Exception $e) {
             Log::error('Profile update error', [
                 'error' => $e->getMessage(),

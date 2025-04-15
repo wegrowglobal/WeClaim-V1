@@ -43,10 +43,10 @@ class BreadcrumbsServiceProvider extends ServiceProvider
 
             case 'claims.view':
                 // Check if coming from admin page using previous URL
-                if (url()->previous() === route('claims.admin')) {
+                if (url()->previous() === route('admin.claims')) {
                     $breadcrumbs[] = [
                         'name' => 'Claims Management',
-                        'url' => route('claims.admin')
+                        'url' => route('admin.claims')
                     ];
                 } else {
                     $breadcrumbs[] = [
@@ -104,17 +104,17 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                 ];
                 break;
 
-            case 'claims.admin':
+            case 'admin.claims':
                 $breadcrumbs[] = [
                     'name' => 'Claims Management',
-                    'url' => route('claims.admin')
+                    'url' => route('admin.claims')
                 ];
                 break;
 
-            case 'users.management':
+            case 'admin.users':
                 $breadcrumbs[] = [
                     'name' => 'User Management',
-                    'url' => route('users.management')
+                    'url' => route('admin.users')
                 ];
                 break;
 
@@ -212,20 +212,6 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     'url' => route('admin.users')
                 ];
             }
-
-            case 'admin.claims':
-                $breadcrumbs[] = [
-                    'name' => 'Claims Management',
-                    'url' => route('admin.claims')
-                ];
-                break;
-
-            case 'admin.users':
-                $breadcrumbs[] = [
-                    'name' => 'User Management',
-                    'url' => route('admin.users')
-                ];
-                break;
         }
 
         return array_values(array_filter($breadcrumbs));

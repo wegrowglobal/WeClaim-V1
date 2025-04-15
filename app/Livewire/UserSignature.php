@@ -134,6 +134,6 @@ class UserSignature extends Component
         $this->user = User::find($this->user->id);
         $this->signatureImage = $this->user->signature_path;
         
-        return view('livewire.user-signature');
+        return view('livewire.profile.signature');
     }
 }

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserController extends BaseController
 {
@@ -110,7 +111,9 @@ class UserController extends BaseController
     public function profile()
     {
         $user = Auth::user();
-        return view('user.profile', compact('user'));
+        $this->logService->log('user', 'viewed_profile', 'User viewed their profile');
+        
+        return view('pages.user.profile', compact('user'));
     }
 
     public function showChangePassword(): View

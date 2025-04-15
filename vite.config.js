@@ -14,7 +14,8 @@ export default defineConfig({
                 
                 // Core JS
                 'resources/js/app.js',
-                'resources/js/mobile-menu.js',
+                'resources/js/components/mobile-menu.js',
+                'resources/js/components/filter.js',
                 
                 // Map Related
                 'resources/js/maps/base-map.js',
@@ -23,16 +24,17 @@ export default defineConfig({
                 'resources/js/maps/review-map.js',
                 
                 // Claim Related
-                'resources/js/claim-form.js',
-                'resources/js/claim-document.js',
-                'resources/js/claim-review.js',
-                'resources/js/claim-resubmit.js',
-                'resources/js/claim-accommodation.js',
-                'resources/js/claim-export.js',
-                'resources/js/accommodation-manager.js',
-                'resources/js/accommodation-resubmit.js',
-                'resources/js/approval-form.js',
-                'resources/js/rejection-form.js',
+                'resources/js/claims/claim-form.js',
+                'resources/js/claims/claim-document.js',
+                'resources/js/claims/claim-review.js',
+                'resources/js/claims/claim-resubmit.js',
+                'resources/js/claims/claim-accommodation.js',
+                'resources/js/claims/claim-export.js',
+                'resources/js/claims/accommodation-manager.js',
+                'resources/js/claims/accommodation-resubmit.js',
+                'resources/js/claims/approval-form.js',
+                'resources/js/claims/rejection-form.js',
+                'resources/js/claims/bulk-email.js',
                 
                 // Utils
                 'resources/js/utils/error-handler.js',
@@ -46,18 +48,18 @@ export default defineConfig({
                 'resources/js/utils/rate-limiter.js',
                 'resources/js/utils/constants.js',
                 
-                // Features
-                'resources/js/filter.js',
-                'resources/js/card-filter.js',
-                'resources/js/profile.js',
-                'resources/js/register-handler.js',
-                'resources/js/users.js',
-                'resources/js/admin.js',
+                // Features & Components
+                'resources/js/components/filter.js',
+                'resources/js/components/card-filter.js',
+                'resources/js/user/profile.js',
+                'resources/js/auth/register-handler.js',
+                'resources/js/user/users.js',
+                'resources/js/admin/admin.js',
                 
-                // Config
+                // Config & Admin
                 'resources/js/config.js',
-                'resources/js/system-config.js',
-                'resources/js/bulk-email.js'
+                'resources/js/admin/system-config.js',
+                
             ],
             refresh: true,
         }),

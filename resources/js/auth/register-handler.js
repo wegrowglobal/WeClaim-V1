@@ -1,4 +1,4 @@
-import ErrorHandler from './utils/error-handler';
+import ErrorHandler from '../utils/error-handler';
 import Swal from 'sweetalert2';
 
 window.handleRegistration = function(form) {

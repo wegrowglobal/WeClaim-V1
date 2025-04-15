@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\System;
 
+use App\Http\Controllers\Controller;
 use App\Models\System\Changelog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,7 +32,7 @@ class ChangelogController extends Controller
             return redirect()->route('home')->with('error', 'Unauthorized access.');
         }
 
-        return view('pages.admin.changelog.index');
+        return view('pages.admin.system.changelogs.index');
     }
 
     /**

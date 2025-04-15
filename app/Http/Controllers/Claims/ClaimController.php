@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Claims;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClaimRequest;
 use App\Models\Claim\Claim;
 use App\Models\User\User;
@@ -66,12 +67,6 @@ class ClaimController extends Controller
             'home', 'show', 'viewDocument', 'handleEmailAction'
         ]);
         
-        // Apply email verification middleware for creating/editing claims
-        $this->middleware('verified')->only([
-            'new', 'store', 'saveStep', 'updateClaim', 'reviewClaim',
-            'processResubmission', 'resubmit', 'cancelClaim', 'export'
-        ]);
-        
         // Apply admin middleware for admin-only actions
         $this->middleware('admin')->only([
             'adminIndex', 'edit', 'update', 'destroy'
@@ -134,53 +129,34 @@ class ClaimController extends Controller
         return view('pages.home', $data);
     }
 
-    public function show($id, $view)
+    public function show($id)
     {
-        Log::info('Showing claim details', ['claim_id' => $id, 'view' => $view]);
+        try {
+            $claim = Claim::with([
+                'locations' => function ($query) {
+                    $query->orderBy('order');
+                },
+                'accommodations',
+                'documents',
+                'user',
+                'reviews'
+            ])->findOrFail($id);
 
-        $claim = Claim::with(['locations' => function ($query) {
-            $query->orderBy('order');
-        }])->findOrFail($id);
-
-        $claims = collect([$claim]);
-
-        // Prepare location data for the map
-        $locationData = $claim->locations->map(function ($location) {
-            return [
-                'order' => $location->order,
-                'from' => [
-                    'name' => $location->from_location,
-                    'lat' => $location->from_latitude,
-                    'lng' => $location->from_longitude
-                ],
-                'to' => [
-                    'name' => $location->to_location,
-                    'lat' => $location->to_latitude,
-                    'lng' => $location->to_longitude
-                ],
-                'distance' => $location->distance
-            ];
-        })->values()->all();
-
-        Log::info('Retrieved claim for viewing', [
-            'claim_id' => $claim->id,
-            'user_id' => $claim->user_id,
-            'status' => $claim->status,
-            'locations_count' => count($locationData)
-        ]);
-
-        return view('pages.claims.claim', [
-            'claim' => $claim,
-            'claims' => $claims,
-            'claimService' => $this->claimService,
-            'locationData' => $locationData
-        ]);
+            // Return the review view directly instead of redirecting
+            return view('pages.claims.actions.review', compact('claim')); 
+        } catch (ModelNotFoundException $e) {
+            Log::error('Claim not found in show method', ['claim_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()->route('claims.dashboard')->with('error', 'Claim not found');
+        } catch (\Exception $e) {
+            Log::error('Error in show method', ['claim_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()->route('claims.dashboard')->with('error', 'An error occurred while viewing the claim.');
+        }
     }
 
     public function store(StoreClaimRequest $request): JsonResponse
     {
         try {
-            $user = Auth::user();
+        $user = Auth::user();
             
             // Only allow Staff (role_id = 1) and Admin (role_id = 5) to create claims
             if (!in_array($user->role_id, [1, 5])) {
@@ -190,44 +166,33 @@ class ClaimController extends Controller
                 ], 403);
             }
 
-            Log::info('Claim submission started', [
-                'user_id' => Auth::id(),
-                'data' => $request->except(['toll_file', 'email_file'])
-            ]);
-
             $claim = $this->claimService->createClaim(
                 $request->validated(),
                 Auth::id()
             );
 
-            Log::info('Claim submitted successfully', ['claim_id' => $claim->id]);
-
-            // Clear all session data related to the claim
+            // Clear session data
             $request->session()->forget([
                 'claim_draft',
                 'claim_data',
                 'current_step',
-                'map_data',
-                // Add any other claim-related session keys
+                'map_data'
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Claim submitted successfully',
-                'claim_id' => $claim->id
+                'redirect' => route('claims.show', $claim->id)
             ]);
         } catch (\Exception $e) {
             Log::error('Claim submission failed:', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id(),
-                'data' => $request->except(['toll_file', 'email_file'])
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to submit claim: ' . $e->getMessage(),
-                'debug_message' => config('app.debug') ? $e->getTraceAsString() : null
+                'message' => 'Failed to submit claim: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -255,10 +220,10 @@ class ClaimController extends Controller
                 'claims_count' => $claims->count(),
                 'user_role' => $user->role->name
             ]);
-            return view('claims.approval', [
-                'claims' => $claims,
-                'claimService' => $this->claimService
-            ]);
+            return view('pages.claims.actions.approval', [
+            'claims' => $claims,
+            'claimService' => $this->claimService
+        ]);
         } else {
             Log::error('Invalid user instance when accessing approval screen');
             return redirect()->route('login.form');
@@ -267,59 +232,31 @@ class ClaimController extends Controller
 
     public function reviewClaim($id)
     {
-        Log::info('Accessing claim review', ['claim_id' => $id]);
-
-        $user = Auth::user();
-        $claim = Claim::with(['locations' => function ($query) {
-            $query->orderBy('order');
-        }])->findOrFail($id);
-
-        // Debug the locations data
-        Log::info('Claim locations data:', [
-            'claim_id' => $id,
-            'locations' => $claim->locations->toArray()
-        ]);
-
-        if ($user instanceof User) {
-            if (!$this->claimService->canReviewClaim($user, $claim)) {
-                Log::warning('Unauthorized claim review attempt', [
-                    'user_id' => $user->id,
-                    'claim_id' => $id,
-                    'user_role' => $user->role->name
-                ]);
-                return redirect()->route('claims.approval')
-                    ->with('error', 'You do not have permission to review this claim.');
-            }
-
-            $reviews = $claim->reviews()->orderBy('department')->orderBy('review_order')->get();
-
-            // Prepare location data for the map
-            $locationData = $claim->locations->map(function ($location) {
-                return [
-                    'order' => $location->order,
-                    'from_location' => $location->from_location,
-                    'to_location' => $location->to_location,
-                    'distance' => $location->distance,
-                    'from_latitude' => $location->from_latitude,
-                    'from_longitude' => $location->from_longitude,
-                    'to_latitude' => $location->to_latitude,
-                    'to_longitude' => $location->to_longitude,
-                ];
-            })->values()->all();
-
-            return view('pages.claims.review', compact('claim', 'reviews', 'locationData'));
+        if (!Auth::check()) {
+            return redirect()->route('login');
         }
 
-        Log::error('Invalid user instance during claim review');
-        return route('login.form');
+        try {
+            $claim = Claim::findOrFail($id);
+            
+            if (!$this->claimService->canReviewClaim(Auth::user(), $claim)) {
+                return redirect()->route('claims.dashboard')
+                    ->with('error', 'You do not have permission to review this claim');
+            }
+
+            return view('pages.claims.review', compact('claim'));
+        } catch (ModelNotFoundException $e) {
+            return redirect()->route('claims.dashboard')
+                ->with('error', 'Claim not found');
+        }
     }
 
     public function updateClaim(Request $request, $id)
     {
         try {
             $claim = Claim::findOrFail($id);
-            $user = Auth::user();
-
+        $user = Auth::user();
+        
             if (!$user instanceof User) {
                 throw new Exception('Invalid user instance');
             }
@@ -387,7 +324,7 @@ class ClaimController extends Controller
 
         if (!file_exists($filePath)) {
             Log::error('Physical file missing', [
-                'claim_id' => $claim->id,
+            'claim_id' => $claim->id,
                 'path' => $filePath
             ]);
             abort(404, 'File not found');
@@ -415,7 +352,7 @@ class ClaimController extends Controller
 
         Log::info('Retrieved approval statistics', $statistics);
 
-        return view('pages.claims.approval', [
+        return view('pages.claims.actions.approval', [
             'claims' => $claims,
             'statistics' => $statistics,
             'claimService' => $this->claimService,
@@ -424,7 +361,7 @@ class ClaimController extends Controller
 
     public function dashboard()
     {
-        $user = Auth::user();
+            $user = Auth::user();
         Log::info('Accessing user dashboard', ['user_id' => $user->id]);
 
         $claims = Claim::where('user_id', $user->id)->get();
@@ -445,7 +382,7 @@ class ClaimController extends Controller
             'statistics' => $statistics
         ]);
 
-        return view('pages.claims.dashboard', [
+        return view('pages.claims.actions.dashboard', [
             'claims' => $claims,
             'statistics' => $statistics,
             'claimService' => $this->claimService,
@@ -466,20 +403,20 @@ class ClaimController extends Controller
             $claim = Claim::findOrFail($id);
 
             if ($claim->status !== Claim::STATUS_APPROVED_HR) {
-                return response()->json([
-                    'success' => false,
+            return response()->json([
+                'success' => false,
                     'message' => 'Claim must be approved by HR before sending to Datuk.'
-                ], 400);
-            }
-
+            ], 400);
+        }
+        
             // Update claim status to Pending Datuk
             $claim->status = Claim::STATUS_PENDING_DATUK;
             $claim->save();
-
+        
             $this->claimService->sendClaimToDatuk($claim);
-
-            return response()->json([
-                'success' => true,
+        
+        return response()->json([
+            'success' => true,
                 'message' => 'Email sent to Datuk successfully.'
             ]);
         } catch (\Exception $e) {
@@ -512,9 +449,9 @@ class ClaimController extends Controller
                     'claim_id' => $id,
                     'action' => $action
                 ]);
-                return view('pages.claims.email-action', [
+                return view('pages.claims.actions.email-action', [
                     'success' => false,
-                    'message' => 'Invalid action specified.'
+                    'message' => 'Invalid action specified'
                 ]);
             }
 
@@ -523,24 +460,24 @@ class ClaimController extends Controller
                     'claim_id' => $id,
                     'current_status' => $claim->status
                 ]);
-                return view('pages.claims.email-action', [
+                return view('pages.claims.actions.email-action', [
                     'success' => false,
-                    'message' => 'This claim has already been processed.'
+                    'message' => 'This claim is no longer awaiting approval or rejection'
                 ]);
             }
 
             $success = $this->claimService->handleDatukAction($claim, $action, $token);
 
             if (!$success) {
-                return view('pages.claims.email-action', [
+                return view('pages.claims.actions.email-action', [
                     'success' => false,
-                    'message' => 'Invalid or expired approval link. Please contact HR to resend the approval request.'
+                    'message' => 'Claim not found'
                 ]);
             }
 
             $message = $action === 'approve' ? 
-                'Claim has been approved successfully.' : 
-                'Claim has been rejected successfully.';
+                'Claim status updated successfully' : 
+                'Claim status updated successfully';
 
             Log::info('Email action processed successfully', [
                 'claim_id' => $id,
@@ -548,7 +485,7 @@ class ClaimController extends Controller
                 'new_status' => $claim->status
             ]);
 
-            return view('pages.claims.email-action', [
+            return view('pages.claims.actions.email-action', [
                 'success' => true,
                 'message' => $message
             ]);
@@ -558,9 +495,9 @@ class ClaimController extends Controller
                 'claim_id' => $id,
                 'error' => $e->getMessage()
             ]);
-            return view('pages.claims.email-action', [
+            return view('pages.claims.actions.email-action', [
                 'success' => false,
-                'message' => 'Claim not found.'
+                'message' => 'Claim not found'
             ]);
         } catch (\Exception $e) {
             Log::error('Error processing email action', [
@@ -569,9 +506,9 @@ class ClaimController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return view('pages.claims.email-action', [
+            return view('pages.claims.actions.email-action', [
                 'success' => false,
-                'message' => 'An error occurred while processing your request.'
+                'message' => 'An error occurred: ' . $e->getMessage()
             ]);
         }
     }
@@ -580,8 +517,8 @@ class ClaimController extends Controller
     {
         try {
             if (!in_array($claim->status, [Claim::STATUS_APPROVED_FINANCE, Claim::STATUS_DONE])) {
-                return response()->json([
-                    'success' => false,
+            return response()->json([
+                'success' => false,
                     'message' => 'Only claims with status "Approved Finance" or "Done" can be exported'
                 ], 403);
             }
@@ -696,7 +633,7 @@ class ClaimController extends Controller
         if ($redirect = $this->checkProfileCompletion()) {
             return $redirect;
         }
-
+        
         $user = Auth::user();
         
         // Only allow Staff (role_id = 1) and Admin (role_id = 5) to access claim creation
@@ -712,7 +649,7 @@ class ClaimController extends Controller
             return redirect()->route('claims.new', ['step' => 1]);
         }
 
-        return view('pages.claims.new', [
+        return view('pages.claims.process.new', [
             'currentStep' => (int) $step,
             'draftData' => $draftData
         ]);
@@ -742,11 +679,11 @@ class ClaimController extends Controller
             ])->render();
         } catch (\Exception $e) {
             Log::error('Error loading step', [
-                'step' => $step,
+            'step' => $step, 
                 'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
+        ]);
+        
+        return response()->json([
                 'error' => 'Error loading step'
             ], 500);
         }
@@ -861,7 +798,7 @@ class ClaimController extends Controller
             ->latest()
             ->first();
 
-        return view('pages.claims.resubmit', [
+        return view('pages.claims.process.resubmit', [
             'claim' => $claim,
             'latestRejection' => $latestRejection
         ]);
@@ -897,7 +834,7 @@ class ClaimController extends Controller
                     'distances.*' => 'required|numeric|min:0',
                     'locations' => 'required|array|min:2',
                     'locations.*' => 'required|string|max:255',
-                    'petrol_amount' => 'required|numeric|min:0',
+                'petrol_amount' => 'required|numeric|min:0',
                     'total_distance' => 'required|numeric|min:0',
                 ]);
             }
@@ -1139,7 +1076,7 @@ class ClaimController extends Controller
                 'updated_by' => Auth::id(),
                 'changes' => $validatedData
             ]);
-
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Claim updated successfully'
@@ -1155,7 +1092,7 @@ class ClaimController extends Controller
                 'claim_id' => $claim->id,
                 'error' => $e->getMessage()
             ]);
-
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating claim'
@@ -1200,7 +1137,7 @@ class ClaimController extends Controller
                 'step' => $step,
                 'error' => $e->getMessage()
             ]);
-
+            
             return response()->json([
                 'error' => 'Error loading step'
             ], 500);
@@ -1224,7 +1161,7 @@ class ClaimController extends Controller
         // Load accommodations relationship
         $claim->load('accommodations');
 
-        return view('pages.claims.resubmit', [
+        return view('pages.claims.process.resubmit', [
             'claim' => $claim,
             'latestRejection' => $latestRejection,
             'accommodations' => $claim->accommodations

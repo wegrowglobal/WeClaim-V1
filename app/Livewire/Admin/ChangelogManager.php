@@ -16,6 +16,7 @@ class ChangelogManager extends Component
     public $version = '';
     public $type = 'feature';
     public $is_published = false;
+    public $user;
     
     public $editingChangelogId = null;
     public $isEditing = false;
@@ -30,11 +31,16 @@ class ChangelogManager extends Component
         'is_published' => 'boolean',
     ];
 
+    public function mount()
+    {
+        $this->user = Auth::user();
+    }
+
     public function render()
     {
         // Check if user is super admin
-        if (Auth::user()->role_id !== 5) {
-            return view('livewire.error', [
+        if (!$this->user || $this->user->role_id !== 5) {
+            return view('livewire.components.error-display', [
                 'message' => 'Unauthorized access.'
             ]);
         }

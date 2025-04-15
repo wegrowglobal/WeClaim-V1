@@ -114,7 +114,7 @@
 @endsection
 
 @push('scripts')
-    @vite(['resources/js/claim-form.js', 'resources/js/maps/claim-map.js'])
+    @vite(['resources/js/claims/claim-form.js'])
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

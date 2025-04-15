@@ -15,7 +15,11 @@
     @include('partials.cdn-fonts')
 
     <!-- Vite -->
-    @vite(['resources/css/app.css', 'resources/js/mobile-menu.js'])
+    @vite([
+        'resources/css/app.css',
+        'resources/js/app.js',
+        'resources/js/components/mobile-menu.js'
+    ])
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">

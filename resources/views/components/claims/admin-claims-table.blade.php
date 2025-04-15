@@ -117,7 +117,7 @@
                                         </svg>
                                         <span class="sr-only">Edit</span>
                                     </button>
-                                    <a href="{{ route('claims.view', $claim->id) }}" 
+                                    <a href="{{ route('claims.show', $claim->id) }}" 
                                        class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 sm:p-2 text-gray-500 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                         <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

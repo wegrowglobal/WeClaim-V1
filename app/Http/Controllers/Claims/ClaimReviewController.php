@@ -90,7 +90,7 @@ class ClaimReviewController extends Controller
                 'has_previous_reviews' => $previousReviews->count() > 0
             ]);
             
-            return view('pages.claims.review', [
+            return view('pages.claims.actions.review', [
                 'claim' => $claim,
                 'previousReviews' => $previousReviews,
                 'claimService' => $this->claimService,
@@ -307,7 +307,7 @@ class ClaimReviewController extends Controller
                     'action' => $action
                 ]);
                 
-                return view('pages.claims.email-action-result', [
+                return view('pages.claims.actions.email-action-result', [
                     'success' => false,
                     'message' => 'Invalid action specified'
                 ]);
@@ -323,7 +323,7 @@ class ClaimReviewController extends Controller
                     'current_status' => $claim->status
                 ]);
                 
-                return view('pages.claims.email-action-result', [
+                return view('pages.claims.actions.email-action-result', [
                     'success' => false,
                     'message' => 'This claim is no longer awaiting approval'
                 ]);
@@ -350,7 +350,7 @@ class ClaimReviewController extends Controller
                 // Notify claim owner
                 $this->notificationService->sendClaimStatusNotification($claim);
                 
-                return view('pages.claims.email-action-result', [
+                return view('pages.claims.actions.email-action-result', [
                     'success' => true,
                     'message' => 'The claim has been approved successfully',
                     'claim' => $claim
@@ -375,7 +375,7 @@ class ClaimReviewController extends Controller
                 // Notify claim owner
                 $this->notificationService->sendClaimStatusNotification($claim);
                 
-                return view('pages.claims.email-action-result', [
+                return view('pages.claims.actions.email-action-result', [
                     'success' => true,
                     'message' => 'The claim has been rejected',
                     'claim' => $claim
@@ -383,7 +383,7 @@ class ClaimReviewController extends Controller
             }
         } catch (ModelNotFoundException $e) {
             Log::error('Claim not found for email action', ['claim_id' => $id]);
-            return view('pages.claims.email-action-result', [
+            return view('pages.claims.actions.email-action-result', [
                 'success' => false,
                 'message' => 'Claim not found'
             ]);
@@ -393,7 +393,7 @@ class ClaimReviewController extends Controller
                 'action' => $action,
                 'error' => $e->getMessage()
             ]);
-            return view('pages.claims.email-action-result', [
+            return view('pages.claims.actions.email-action-result', [
                 'success' => false,
                 'message' => 'An error occurred while processing the action: ' . $e->getMessage()
             ]);

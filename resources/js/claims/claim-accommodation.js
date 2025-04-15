@@ -1,5 +1,5 @@
-import { LocationManager } from './utils/location-manager';
-import ErrorHandler from './utils/error-handler';
+import { LocationManager } from '../utils/location-manager';
+import ErrorHandler from '../utils/error-handler';
 
 class AccommodationManager {
     constructor() {

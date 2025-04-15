@@ -8,6 +8,7 @@ use App\Models\User\User;
 use App\Services\LogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ClaimManagementController extends Controller
 {
@@ -87,7 +88,7 @@ class ClaimManagementController extends Controller
             'Admin viewed claims list'
         );
         
-        return view('admin.claims.index', compact('claims', 'statusCounts'));
+        return view('pages.admin.claims.index', compact('claims', 'statusCounts'));
     }
 
     /**
@@ -98,16 +99,14 @@ class ClaimManagementController extends Controller
      */
     public function show($id)
     {
-        $claim = Claim::with(['user', 'documents', 'notes', 'activities'])->findOrFail($id);
+        $claim = Claim::with(['user', 'documents', 'activities'])->findOrFail($id);
         
-        $this->logService->log(
-            'admin', 
-            'viewed_claim_details', 
-            'Admin viewed claim details',
-            ['claim_id' => $claim->id]
-        );
+        $this->logService->log('admin_claim_view', [
+            'admin_id' => Auth::id(),
+            'claim_id' => $id
+        ]);
         
-        return view('admin.claims.show', compact('claim'));
+        return view('pages.admin.claims.show', compact('claim'));
     }
 
     /**
@@ -231,7 +230,7 @@ class ClaimManagementController extends Controller
             // Trigger notification logic would go here
         }
         
-        return redirect()->back()
+        return redirect()->route('admin.claims.show', $id)
             ->with('success', 'Claim status updated successfully.');
     }
 

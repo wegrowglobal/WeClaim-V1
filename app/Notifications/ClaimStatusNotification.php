@@ -45,7 +45,7 @@ class ClaimStatusNotification extends Notification implements ShouldQueue
     {
         return match($this->action) {
             'rejected' => route('claims.edit', $this->claim),
-            default => route('claims.show', $this->claim)
+            default => route('claims.view', $this->claim)
         };
     }
 }
