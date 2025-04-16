@@ -114,7 +114,7 @@
             <p class="text-sm text-gray-700">
                 Don't have an account?
                 <a class="font-medium text-black hover:underline"
-                    href="{{ route('request.form') }}">
+                    href="{{ route('register.request.create') }}">
                     Request one
                 </a>
             </p>

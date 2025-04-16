@@ -19,7 +19,7 @@
         <p class="mt-2 text-sm text-gray-700">Create a secure password for your account.</p>
     </div>
 
-    <form class="space-y-5" method="POST" action="{{ route('password.setup', ['token' => $token]) }}">
+    <form class="space-y-5" method="POST" action="{{ route('password.setup.set') }}">
         @csrf
         <input type="hidden" name="token" value="{{ $token }}">
 
@@ -36,7 +36,7 @@
         <div>
             <label class="mb-1 block text-sm font-medium text-black" for="password">Password</label>
             <div class="relative">
-                <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 pr-10 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('password') border-black @enderror"
+                <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 pr-10 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('password') border-red-600 @enderror"
                     id="password"
                     name="password"
                     type="password"
@@ -49,7 +49,10 @@
                 </button>
             </div>
             @error('password')
-                <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
             @enderror
         </div>
 

@@ -18,19 +18,15 @@ class BreadcrumbsServiceProvider extends ServiceProvider
 
     protected function generateBreadcrumbs()
     {
+        $breadcrumbs = [];
+        
         $route = request()->route();
-        if (!$route) {
+    if (!$route) {
             return $this->getDefaultBreadcrumbs();
         }
 
         $routeName = $route->getName();
         $parameters = $route->parameters();
-
-        // Start with Dashboard
-        $breadcrumbs = [[
-            'name' => 'Dashboard',
-            'url' => route('home')
-        ]];
 
         // Handle different routes
         switch ($routeName) {

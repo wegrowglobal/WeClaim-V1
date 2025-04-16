@@ -76,10 +76,10 @@
                                             </tr>
                                             <tr>
                                                 <td width="120" style="padding: 8px 16px; color: #374151; font-size: 14px; font-weight: 500;">
-                                                    Last Name
+                                                    Second Name
                                                 </td>
                                                 <td style="padding: 8px 16px; color: #6B7280; font-size: 14px;">
-                                                    {{ $request->last_name }}
+                                                    {{ $request->second_name }}
                                                 </td>
                                             </tr>
                                             <tr>
@@ -92,10 +92,18 @@
                                             </tr>
                                             <tr>
                                                 <td width="120" style="padding: 8px 16px; color: #374151; font-size: 14px; font-weight: 500;">
+                                                    Role
+                                                </td>
+                                                <td style="padding: 8px 16px; color: #6B7280; font-size: 14px;">
+                                                    {{ $request->role->name ?? 'N/A' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td width="120" style="padding: 8px 16px; color: #374151; font-size: 14px; font-weight: 500;">
                                                     Department
                                                 </td>
                                                 <td style="padding: 8px 16px; color: #6B7280; font-size: 14px;">
-                                                    {{ $request->department }}
+                                                    {{ $request->department->name ?? 'N/A' }}
                                                 </td>
                                             </tr>
                                             <tr>
@@ -125,7 +133,7 @@
                                                     <table cellpadding="0" cellspacing="0" border="0" style="min-width: 180px;">
                                                         <tr>
                                                             <td style="background-color: #059669; border-radius: 6px; padding: 8px;">
-                            <a href="{{ route('register.approve', $request->token) }}" 
+                            <a href="{{ URL::signedRoute('register.approve', ['token' => $request->token]) }}" 
                                                                     style="display: block; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; text-align: center;">
                                 ✓ Approve Registration
                             </a>
@@ -137,7 +145,7 @@
                                                     <table cellpadding="0" cellspacing="0" border="0" style="min-width: 180px;">
                     <tr>
                                                             <td style="background-color: #DC2626; border-radius: 6px; padding: 8px;">
-                            <a href="{{ route('register.reject', $request->token) }}" 
+                            <a href="{{ URL::signedRoute('register.reject', ['token' => $request->token]) }}" 
                                                                     style="display: block; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; text-align: center;">
                                 ✗ Reject Registration
                             </a>

@@ -42,17 +42,17 @@ Route::middleware('guest')->group(function () {
     Route::view('password-reset-success', 'auth.password.password-reset-success')
         ->name('password.reset.success');
         
-    // Registration Routes
-    Route::get('request', [RequestAccountController::class, 'showRegistrationForm'])->name('request.form');
-    Route::post('request', [RequestAccountController::class, 'store'])->name('request.store');
-    
-    // Password Setup Routes
-    Route::prefix('password')->name('password.')->group(function () {
-        Route::get('/set/{token}', [RequestAccountController::class, 'showSetPasswordForm'])->name('set');
-        Route::post('/save', [RequestAccountController::class, 'savePassword'])->name('save');
-        Route::get('/setup/{token}', [RequestAccountController::class, 'showSetPasswordForm'])->name('setup.form');
-        Route::post('/setup/{token}', [RequestAccountController::class, 'setPassword'])->name('setup');
-        Route::get('/setup-success', [RequestAccountController::class, 'showPasswordSetupSuccess'])->name('setup.success');
+    // Registration Request Routes
+    Route::get('request-account', [RequestAccountController::class, 'create'])->name('register.request.create');
+    Route::post('request-account', [RequestAccountController::class, 'store'])->name('register.request.store');
+    // Confirmation page route (assuming it exists)
+    Route::view('request-account/success', 'auth.request.request-confirmation')->name('register.success'); 
+
+    // Password Setup Routes (for users setting password after approval)
+    Route::prefix('password-setup')->name('password.setup.')->group(function () {
+        Route::get('/{token}', [RequestAccountController::class, 'showSetPasswordForm'])->name('form');
+        Route::post('/', [RequestAccountController::class, 'setPassword'])->name('set');
+        Route::get('/success', [RequestAccountController::class, 'showPasswordSetupSuccess'])->name('success');
     });
 });
 
@@ -150,10 +150,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     });
 });
 
-// Registration Approval/Rejection Routes - these require a signed URL
+// Registration Approval/Rejection Routes - require a signed URL
 Route::middleware('signed')->group(function () {
-    Route::get('/register/approve/{token}', [RequestAccountController::class, 'approveRequest'])->name('register.approve');
-    Route::get('/register/reject/{token}', [RequestAccountController::class, 'rejectRequest'])->name('register.reject');
+    Route::get('/register/approve/{token}', [RequestAccountController::class, 'approve'])->name('register.approve');
+    Route::get('/register/reject/{token}', [RequestAccountController::class, 'reject'])->name('register.reject');
 });
 
 // Fallback route for unmatched GET requests (optional)

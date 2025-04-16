@@ -30,69 +30,96 @@
         </div>
     @endif
 
-    <form class="space-y-5" method="POST" action="{{ route('request.store') }}">
+    <form class="space-y-5" method="POST" action="{{ route('register.request.store') }}">
         @csrf
 
         <div>
             <label class="mb-1 block text-sm font-medium text-black" for="first_name">First Name</label>
-            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('first_name') border-black @enderror"
+            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('first_name') border-red-600 @enderror"
                 id="first_name"
                 name="first_name"
                 type="text"
                 value="{{ old('first_name') }}"
                 placeholder="Enter your first name"
                 required>
-            {{-- Remove specific error display if desired --}}
-            {{-- @error('first_name')
-                <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror --}}
+            @error('first_name')
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
+            @enderror
         </div>
 
         <div>
-            <label class="mb-1 block text-sm font-medium text-black" for="last_name">Last Name</label>
-            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('last_name') border-black @enderror"
-                id="last_name"
-                name="last_name"
+            <label class="mb-1 block text-sm font-medium text-black" for="second_name">Second Name</label>
+            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('second_name') border-red-600 @enderror"
+                id="second_name"
+                name="second_name"
                 type="text"
-                value="{{ old('last_name') }}"
-                placeholder="Enter your last name"
+                value="{{ old('second_name') }}"
+                placeholder="Enter your second name"
                 required>
-            {{-- Remove specific error display if desired --}}
-            {{-- @error('last_name')
-                <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror --}}
+            @error('second_name')
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
+            @enderror
         </div>
 
         <div>
             <label class="mb-1 block text-sm font-medium text-black" for="email">Email</label>
-            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('email') border-black @enderror"
+            <input class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('email') border-red-600 @enderror"
                 id="email"
                 name="email"
                 type="email"
                 value="{{ old('email') }}"
                 placeholder="your@email.com"
                 required>
-            {{-- Remove specific error display if desired --}}
-            {{-- @error('email')
-                <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror --}}
+            @error('email')
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
+            @enderror
         </div>
 
         <div>
-            <label class="mb-1 block text-sm font-medium text-black" for="department">Department</label>
-            <select class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('department') border-black @enderror"
-                id="department"
-                name="department"
+            <label class="mb-1 block text-sm font-medium text-black" for="role_id">Role</label>
+            <select class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('role_id') border-red-600 @enderror"
+                id="role_id"
+                name="role_id"
                 required>
-                <option value="" disabled {{ old('department') ? '' : 'selected' }}>Select Department</option>
-                @foreach($departments as $departmentName)
-                    <option value="{{ $departmentName }}" {{ old('department') == $departmentName ? 'selected' : '' }}>{{ $departmentName }}</option>
+                <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>Select Role</option>
+                @foreach($roles as $id => $roleName)
+                    <option value="{{ $id }}" {{ old('role_id') == $id ? 'selected' : '' }}>{{ $roleName }}</option>
                 @endforeach
             </select>
-            {{-- Remove specific error display if desired --}}
-            {{-- @error('department')
-                <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror --}}
+            @error('role_id')
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
+            @enderror
+        </div>
+
+        <div>
+            <label class="mb-1 block text-sm font-medium text-black" for="department_id">Department</label>
+            <select class="block w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-black focus:outline-none focus:ring-1 focus:ring-black @error('department_id') border-red-600 @enderror"
+                id="department_id"
+                name="department_id"
+                required>
+                <option value="" disabled {{ old('department_id') ? '' : 'selected' }}>Select Department</option>
+                @foreach($departments as $id => $departmentName)
+                    <option value="{{ $id }}" {{ old('department_id') == $id ? 'selected' : '' }}>{{ $departmentName }}</option>
+                @endforeach
+            </select>
+            @error('department_id')
+                <div class="mt-1 flex items-center text-sm text-red-600">
+                  <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <span class="font-medium">{{ $message }}</span>
+                </div>
+            @enderror
         </div>
 
         <button class="flex w-full items-center justify-center rounded-md bg-black px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"

@@ -3,400 +3,289 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\StoreRegistrationRequest;
 use App\Models\Auth\RegistrationRequest;
-use App\Mail\RegistrationApprovalRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use App\Http\Requests\RegistrationRequestRequest;
-use Illuminate\Support\Str;
-use App\Models\User\User;
-use App\Mail\AccountCreated;
-use Illuminate\Mail\Mailable;
-use App\Mail\RegistrationRejected;
-use Illuminate\Support\Facades\DB;
-use App\Models\Auth\Role;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use App\Models\User\Department;
-use Illuminate\Support\Facades\Auth;
-use App\Mail\RegistrationRequestSubmitted;
-use App\Mail\RegistrationRequestApproved;
-use App\Mail\RegistrationRequestRejected;
-use App\Mail\PasswordSetupInvitation;
+use App\Models\Auth\Role;
+use Illuminate\Http\Request; // Keep Request for potential future use, though StoreRegistrationRequest handles validation
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RegistrationApprovalRequest; // Assuming this mail exists for notifying admins
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use App\Models\User\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use App\Mail\RegistrationRequestApproved; // Assuming exists
+use App\Mail\RegistrationRequestRejected; // Assuming exists
+use App\Mail\PasswordSetupInvitation; // Assuming exists
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Http\Requests\Auth\SetPasswordRequest; // Need to create this
+use Illuminate\Validation\ValidationException;
 
 class RequestAccountController extends Controller
 {
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * Show the account registration request form.
      */
-    public function __construct()
+    public function create(): View
     {
-        // Apply guest middleware to registration form and submission
-        $this->middleware('guest')->only([
-            'showRegistrationForm', 
-            'submitRequest', 
-            'showConfirmation',
-            'showSetPasswordForm',
-            'setPassword',
-            'showPasswordSetupSuccess'
-        ]);
-        
-        // Apply auth and appropriate role middleware to admin actions
-        $this->middleware('auth')->only([
-            'approveFromDashboard',
-            'rejectFromDashboard'
-        ]);
-        
-        $this->middleware('role:1,5')->only([
-            'approveFromDashboard',
-            'rejectFromDashboard'
-        ]);
-        
-        // Apply signed route middleware to email approval/rejection links
-        $this->middleware('signed')->only([
-            'approveRequest',
-            'rejectRequest'
-        ]);
+        // Fetch necessary data for the form (e.g., departments, roles)
+        $departments = Department::orderBy('name')->pluck('name', 'id');
+        // Assuming only certain roles can be requested, adjust if needed
+        $roles = Role::whereIn('id', [1, 2, 3, 4])->orderBy('name')->pluck('name', 'id'); 
+
+        return view('auth.request.request', compact('departments', 'roles'));
     }
 
-    public function showRegistrationForm()
-    {
-        $departments = Department::orderBy('name')->pluck('name');
-        return view('auth.request.request', ['departments' => $departments]);
-    }
-
-    public function submitRequest(Request $request)
+    /**
+     * Store a newly created registration request in storage.
+     */
+    public function store(StoreRegistrationRequest $request): RedirectResponse
     {
         try {
-            // Check for existing registration request
-            $existingRequest = RegistrationRequest::where('email', $request->email)
-                ->whereIn('status', ['pending', 'approved'])
-                ->first();
-
-            if ($existingRequest) {
-                if ($existingRequest->status === 'pending') {
-                    if ($request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'You already have a pending registration request. Please wait for approval.',
-                            'redirect' => route('register.success')
-                        ], 422);
-                    }
-                    return redirect()->route('register.success')
-                        ->with('info', 'You already have a pending registration request. Please wait for approval.');
-                } else {
-                    if ($request->wantsJson()) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'An account with this email already exists.',
-                            'redirect' => route('login.form')
-                        ], 422);
-                    }
-                    return redirect()->route('login.form')
-                        ->with('info', 'An account with this email already exists.');
-                }
-            }
-
-            // Check for existing user
-            $existingUser = User::where('email', $request->email)->first();
-            if ($existingUser) {
-                if ($request->wantsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'An account with this email already exists.',
-                        'redirect' => route('login.form')
-                    ], 422);
-                }
-                return redirect()->route('login.form')
-                    ->with('info', 'An account with this email already exists.');
-            }
-
-            $validated = $request->validate([
-                'first_name' => 'required|string|max:255',
-                'last_name' => 'required|string|max:255',
-                'email' => 'required|email',
-                'department' => 'required|string'
-            ]);
+            $validatedData = $request->validated();
 
             $registrationRequest = RegistrationRequest::create([
-                'first_name' => $validated['first_name'],
-                'last_name' => $validated['last_name'],
-                'email' => $validated['email'],
-                'department' => $validated['department'],
-                'status' => 'pending',
-                'token' => Str::random(64)
+                'first_name' => $validatedData['first_name'],
+                'second_name' => $validatedData['second_name'],
+                'email' => $validatedData['email'],
+                'role_id' => $validatedData['role_id'],
+                'department_id' => $validatedData['department_id'],
+                'status' => 'Pending', // Default status from migration
+                'token' => Str::random(64),
+                'token_expires_at' => Carbon::now()->addHours(24), // Set token expiry (e.g., 24 hours)
             ]);
 
-            Mail::to("it@wegrow-global.com")->send(
-                new RegistrationApprovalRequest($registrationRequest)
-            );
+            // Notify administrators (adjust recipient as needed)
+            // Assuming an admin email is configured in .env or config
+            $adminEmail = config('mail.admin_address', 'it@wegrow-global.com'); 
+            Mail::to($adminEmail)->send(new RegistrationApprovalRequest($registrationRequest));
+            Log::info('Registration request submitted and admin notified.', ['email' => $validatedData['email']]);
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Registration request submitted successfully.',
-                    'redirect' => route('register.success')
-                ]);
-            }
+            // Redirect to a success/confirmation page
+            // Assuming a route named 'register.success' exists for the confirmation page
+            return redirect()->route('register.success') 
+                         ->with('success', 'Your registration request has been submitted successfully. Please wait for approval.');
 
-            return redirect()->route('register.success')
-                ->with('success', 'Registration request submitted successfully.');
         } catch (\Exception $e) {
-            Log::error('Registration request failed', [
+            Log::error('Failed to store registration request.', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->safe()->except(['password', 'password_confirmation']), // Log safe data
             ]);
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to submit registration request. Please try again later.'
-                ], 500);
-            }
-
+            // Redirect back with error message
             return back()->withInput()
-                ->with('error', 'Failed to submit registration request. Please try again later.');
+                       ->with('error', 'An unexpected error occurred while submitting your request. Please try again later.');
         }
     }
 
-    public function showConfirmation()
-    {
-        return view('auth.request.request-confirmation');
-    }
-
-    public function approveRequest($token)
+    /**
+     * Approve a registration request via signed URL.
+     */
+    public function approve(Request $request, string $token): View
     {
         try {
-            $request = RegistrationRequest::where('token', $token)
-                ->where('status', 'pending')
+            // Find the request, ensuring it's pending and token hasn't expired
+            $registrationRequest = RegistrationRequest::where('token', $token)
+                ->where('status', 'Pending')
                 ->firstOrFail();
 
-            Log::info('Processing registration approval', [
+            if ($registrationRequest->isTokenExpired()) {
+                 Log::warning('Attempt to approve request with expired token.', ['token' => $token]);
+                 return view('auth.request.request-error', ['message' => 'This approval link has expired.']);
+            }
+
+            // Use a transaction to ensure atomicity
+            DB::beginTransaction();
+
+            // 1. Create the User
+            $passwordSetupToken = Str::random(64); // Token for setting the initial password
+            $user = User::create([
+                'first_name' => $registrationRequest->first_name,
+                'second_name' => $registrationRequest->second_name,
+                'email' => $registrationRequest->email,
+                'role_id' => $registrationRequest->role_id,
+                'department_id' => $registrationRequest->department_id,
+                'password' => Hash::make(Str::random(40)), // Set a temporary strong random password
+                'password_setup_token' => $passwordSetupToken,
+                'password_setup_expires_at' => Carbon::now()->addHours(48), // Link expiry
+                'email_verified_at' => now(), // Mark email as verified since it came through request
+                // Add other necessary user fields if any, e.g., is_active = true
+            ]);
+
+            // 2. Update Registration Request Status
+            $registrationRequest->status = 'Approved';
+            // Optionally nullify the token after use
+            // $registrationRequest->token = null; 
+            // $registrationRequest->token_expires_at = null;
+            $registrationRequest->save();
+
+            // 3. Send Password Setup Email to User
+            Mail::to($user->email)->send(new PasswordSetupInvitation($user, $passwordSetupToken));
+
+            DB::commit();
+
+            Log::info('Registration request approved and user created.', ['request_id' => $registrationRequest->id, 'user_id' => $user->id, 'email' => $user->email]);
+            return view('auth.request.request-approved'); // Show an approval confirmation view
+
+        } catch (ModelNotFoundException $e) {
+            Log::error('Registration approval failed: Request not found or already processed.', ['token' => $token]);
+            return view('auth.request.request-error', ['message' => 'Invalid or expired approval link.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to approve registration request.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'token' => $token,
-                'department' => $request->department,
-                'email' => $request->email
             ]);
-
-            // Get department ID from name with case-insensitive search
-            $departmentId = DB::table('departments')
-                ->whereRaw('LOWER(name) = ?', [strtolower($request->department)])
-                ->value('id');
-
-            if (!$departmentId) {
-                Log::error('Department not found after all attempts', [
-                    'requested_department' => $request->department,
-                    'available_departments' => DB::table('departments')->pluck('name')
-                ]);
-                return view('auth.request.request-error', [
-                    'message' => 'Department not found. Please contact administrator.'
-                ]);
-            }
-
-            // All new users get role_id 1 (staff)
-            $roleId = 1;
-
-            DB::beginTransaction();
-            try {
-                // Create user with temporary token for password setup
-                $passwordToken = Str::random(64);
-                $user = User::create([
-                    'first_name' => $request->first_name,
-                    'second_name' => $request->last_name,
-                    'email' => $request->email,
-                    'department_id' => $departmentId,
-                    'password' => Hash::make(Str::random(32)),
-                    'password_setup_token' => $passwordToken,
-                    'role_id' => $roleId
-                ]);
-
-                $request->update(['status' => 'approved']);
-
-                Mail::to($user->email)->send(new AccountCreated($user, $passwordToken));
-
-                DB::commit();
-
-                return view('auth.request.request-approved');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('Failed to create user or update request status', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                    'token' => $token,
-                    'email' => $request->email
-                ]);
-                throw $e;
-            }
-        } catch (\Exception $e) {
-            Log::error('Registration approval failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'token' => $token
-            ]);
-
-            return view('auth.request.request-error', [
-                'message' => 'Failed to approve registration request. Please try again later.'
-            ]);
+            return view('auth.request.request-error', ['message' => 'An unexpected error occurred during approval. Please contact support.']);
         }
     }
 
-    public function rejectRequest($token)
+    /**
+     * Reject a registration request via signed URL.
+     */
+    public function reject(Request $request, string $token): View
     {
-        try {
-            $request = RegistrationRequest::where('token', $token)
-                ->where('status', 'pending')
+         try {
+            // Find the request, ensuring it's pending
+            $registrationRequest = RegistrationRequest::where('token', $token)
+                ->where('status', 'Pending')
                 ->firstOrFail();
+                
+             // Optionally check token expiry for rejection as well
+             if ($registrationRequest->isTokenExpired()) {
+                 Log::warning('Attempt to reject request with expired token.', ['token' => $token]);
+                 // Decide if expired token prevents rejection - maybe still allow rejection?
+                 // return view('auth.request.request-error', ['message' => 'This rejection link has expired.']);
+             }
 
-            $request->update(['status' => 'rejected']);
+            $registrationRequest->status = 'Rejected';
+            // Optionally nullify the token after use
+            // $registrationRequest->token = null; 
+            // $registrationRequest->token_expires_at = null;
+            $registrationRequest->save();
 
-            Mail::to($request->email)->send(new RegistrationRejected($request));
+            // Notify the user of rejection
+            Mail::to($registrationRequest->email)->send(new RegistrationRequestRejected($registrationRequest));
 
-            return view('auth.request.request-rejected');
+            Log::info('Registration request rejected.', ['request_id' => $registrationRequest->id, 'email' => $registrationRequest->email]);
+            return view('auth.request.request-rejected'); // Show a rejection confirmation view
+
+        } catch (ModelNotFoundException $e) {
+            Log::error('Registration rejection failed: Request not found or already processed.', ['token' => $token]);
+            return view('auth.request.request-error', ['message' => 'Invalid or expired rejection link.']);
         } catch (\Exception $e) {
-            Log::error('Registration rejection failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return view('auth.request.request-error', [
-                'message' => 'Failed to reject registration request. Please try again later.'
-            ]);
-        }
-    }
-
-    public function showSetPasswordForm($token)
-    {
-        $user = User::where('password_setup_token', $token)->firstOrFail();
-
-        return view('auth.password.set-password', [
-            'token' => $token,
-            'email' => $user->email
-        ]);
-    }
-
-    public function setPassword(Request $request, $token)
-    {
-        $request->validate([
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        $user = User::where('password_setup_token', $token)->firstOrFail();
-
-        $user->update([
-            'password' => Hash::make($request->password),
-            'password_setup_token' => null,
-            'email_verified_at' => now()
-        ]);
-
-        return redirect()->route('password.setup.success');
-    }
-
-    public function showPasswordSetupSuccess()
-    {
-        return view('auth.password.password-setup-success');
-    }
-
-    public function approveFromDashboard($id)
-    {
-        try {
-            $request = RegistrationRequest::findOrFail($id);
-
-            if ($request->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This request has already been processed'
-                ], 400);
-            }
-
-            // Get department ID from name
-            $departmentId = DB::table('departments')
-                ->where('name', $request->department)
-                ->value('id');
-
-            if (!$departmentId) {
-                Log::error('Department not found', ['department' => $request->department]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid department configuration'
-                ], 400);
-            }
-
-            // All new users get role_id 1 (staff)
-            $roleId = 1;
-
-            DB::beginTransaction();
-            try {
-                // Create user with temporary token for password setup
-                $passwordToken = Str::random(64);
-                $user = User::create([
-                    'first_name' => $request->first_name,
-                    'second_name' => $request->last_name,
-                    'email' => $request->email,
-                    'department_id' => $departmentId,
-                    'password' => Hash::make(Str::random(32)),
-                    'password_setup_token' => $passwordToken,
-                    'role_id' => $roleId
-                ]);
-
-                $request->update(['status' => 'approved']);
-
-                Mail::to($user->email)->send(new AccountCreated($user, $passwordToken));
-
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Registration request approved successfully'
-                ]);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
-        } catch (\Exception $e) {
-            Log::error('Registration approval failed from dashboard', [
+            Log::error('Failed to reject registration request.', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_id' => $id
+                'token' => $token,
             ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to approve registration request: ' . $e->getMessage()
-            ], 500);
+            return view('auth.request.request-error', ['message' => 'An unexpected error occurred during rejection. Please contact support.']);
         }
     }
-
-    public function rejectFromDashboard($id)
+    
+    /**
+     * Show the password setup form.
+     */
+    public function showSetPasswordForm(string $token): View
     {
         try {
-            $request = RegistrationRequest::findOrFail($id);
+            // Find user by the password setup token
+            $user = User::where('password_setup_token', $token)->firstOrFail();
 
-            if ($request->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This request has already been processed'
-                ], 400);
+            // Check if token is expired
+            if (!$user->password_setup_token || !$user->password_setup_expires_at || Carbon::now()->gt($user->password_setup_expires_at)) {
+                 Log::warning('Attempt to access password setup with invalid/expired token.', ['token' => $token]);
+                return view('auth.password.link-expired'); // Show link expired view
+            }
+            
+            // Check if password has already been set (token should be nullified after setup)
+            // If password_setup_token is still present but password is not the temporary one, something might be wrong
+            // Or, more simply, check if email_verified_at is set and password_setup_token is null.
+            // A more robust check might involve a specific status field or checking if the password hash matches the temp one.
+            if ($user->password_setup_token === null) { // Simple check: if token is null, password was set
+                 Log::info('Attempt to access password setup form after password already set.', ['user_id' => $user->id]);
+                return view('auth.password.already-set'); // Show password already set view
             }
 
-            $request->update(['status' => 'rejected']);
-
-            Mail::to($request->email)->send(new RegistrationRejected($request));
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Registration request rejected successfully'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Registration rejection failed from dashboard', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            return view('auth.password.set-password', [
+                'token' => $token,
+                'email' => $user->email // Pass the email to the view
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reject registration request'
-            ], 500);
+        } catch (ModelNotFoundException $e) {
+             Log::error('Password setup form access failed: User not found for token.', ['token' => $token]);
+            return view('auth.password.link-invalid'); // Show invalid link view
         }
     }
-}
+
+    /**
+     * Set the user's password.
+     */
+    public function setPassword(SetPasswordRequest $request): RedirectResponse
+    {
+        try {
+            $validated = $request->validated();
+            $token = $validated['token'];
+
+            // Find user by the password setup token
+            $user = User::where('password_setup_token', $token)->firstOrFail();
+
+            // Double-check token validity/expiry
+            if (!$user->password_setup_token || !$user->password_setup_expires_at || Carbon::now()->gt($user->password_setup_expires_at)) {
+                 Log::warning('Attempt to set password with invalid/expired token.', ['token' => $token]);
+                 // Redirect back with error or to an expired link page
+                 return redirect()->route('password.setup.form', ['token' => $token]) // Redirect back to form maybe?
+                                  ->with('error', 'Your password setup link has expired. Please request a new one if needed.');
+            }
+            
+             // Check if password has already been set
+            if ($user->password_setup_token === null) {
+                 Log::info('Attempt to set password after password already set.', ['user_id' => $user->id]);
+                 return redirect()->route('login') // Redirect to login
+                                  ->with('info', 'Your password has already been set. Please log in.');
+            }
+
+            // Update the password
+            $user->password = Hash::make($validated['password']);
+            $user->password_setup_token = null; // Nullify token after successful setup
+            $user->password_setup_expires_at = null;
+            $user->email_verified_at = $user->email_verified_at ?? now(); // Ensure email is marked verified
+            // Optionally set user status to active if not already
+            // $user->is_active = true;
+            $user->save();
+
+            Log::info('User password set successfully.', ['user_id' => $user->id]);
+
+            // Redirect to a success page or login page
+            return redirect()->route('password.setup.success') // Redirect to a dedicated success view
+                         ->with('success', 'Your password has been set successfully! You can now log in.');
+
+        } catch (ModelNotFoundException $e) {
+            Log::error('Password setting failed: User not found for token.', ['token' => $request->input('token')]);
+             return redirect()->back()->with('error', 'Invalid password setup link.'); // Or redirect to invalid link page
+        } catch (ValidationException $e) {
+             return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Failed to set user password.', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'token' => $request->input('token') // Ensure token is logged if available
+            ]);
+             return redirect()->back()->with('error', 'An unexpected error occurred while setting your password. Please try again.');
+        }
+    }
+
+    /**
+     * Show the password setup success page.
+     */
+    public function showPasswordSetupSuccess(): View
+    {
+        return view('auth.password.setup-success'); // Simple view confirming success
+    }
+} 

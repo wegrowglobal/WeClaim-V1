@@ -47,7 +47,7 @@
                                         <table cellpadding="0" cellspacing="0" border="0" style="min-width: 180px;">
                                             <tr>
                                                 <td style="background-color: #4F46E5; border-radius: 6px; padding: 8px;">
-                                                    <a href="{{ route('password.setup.form', $token) }}" 
+                                                    <a href="{{ $setupUrl }}" 
                                                         style="display: block; padding: 16px 32px; color: #ffffff; font-size: 16px; font-weight: 500; text-decoration: none; text-align: center;">
                                                         Set Password
                                                     </a>

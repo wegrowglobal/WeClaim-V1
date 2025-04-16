@@ -10,9 +10,10 @@
         $user->state && 
         $user->zip_code && 
         $user->country && 
+        $user->signature_path &&
         $user->bankingInformation && 
         $user->bankingInformation->bank_name && 
-        $user->bankingInformation->account_holder && 
+        $user->bankingInformation->account_holder_name &&
         $user->bankingInformation->account_number;
 
     $shouldShow = $user && $user->role_id === 1 && !$isProfileComplete;
@@ -32,7 +33,7 @@
                     <h3 class="text-sm font-medium text-gray-900">Complete Your Profile</h3>
                     <p class="mt-1 text-sm text-gray-500">Please complete your profile information to start creating claims.</p>
                     <div class="mt-3">
-                        <a href="{{ route('profile') }}" 
+                        <a href="{{ route('profile.show') }}" 
                            class="inline-flex items-center rounded-lg bg-yellow-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
                             Complete Profile
                         </a>

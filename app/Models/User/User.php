@@ -36,6 +36,7 @@ class User extends Authenticatable
         'department_id',
         'password',
         'password_setup_token',
+        'password_setup_expires_at',
         'role_id'
     ];
 
@@ -47,6 +48,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'password_setup_expires_at' => 'datetime',
     ];
 
     public function claims()

@@ -1,6 +1,5 @@
 import './bootstrap';
 import { initializeTableFilters } from './components/table-filter';
-import './auth/login-handler';
 
 // Initialize table filters when the DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

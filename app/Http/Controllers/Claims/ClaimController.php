@@ -382,7 +382,7 @@ class ClaimController extends Controller
             'statistics' => $statistics
         ]);
 
-        return view('pages.claims.actions.dashboard', [
+        return view('pages.claims.dashboard', [
             'claims' => $claims,
             'statistics' => $statistics,
             'claimService' => $this->claimService,
