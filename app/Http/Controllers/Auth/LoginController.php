@@ -1,203 +1,95 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User\User;
-use App\Models\User\LoginActivity;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Auth\ThrottlesLogins;
+use App\Http\Requests\LoginRequest;
+use App\Services\AuthService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 use Illuminate\Validation\ValidationException;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
-    use AuthorizesRequests, ThrottlesLogins;
-
-    /**
-     * Maximum number of login attempts allowed.
-     */
-    protected $maxAttempts = 5;
-
-    /**
-     * Number of minutes to lock the login for.
-     */
-    protected $decayMinutes = 5;
+    protected AuthService $authService;
 
     /**
      * Create a new controller instance.
+     *
+     * @param AuthService $authService
      */
-    public function __construct()
+    public function __construct(AuthService $authService)
     {
         $this->middleware('guest')->except('logout');
+        $this->authService = $authService;
     }
 
     /**
-     * Show the login form.
+     * Show the application's login form.
+     *
+     * @return View
      */
-    public function showLoginForm()
+    public function showLoginForm(): View
     {
-        return view('auth.login.login');
+        return view('auth.login.login'); // Matches the existing route definition
     }
 
     /**
      * Handle a login request to the application.
+     *
+     * @param  LoginRequest  $request
+     * @return RedirectResponse
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request): RedirectResponse
     {
-        Log::info('Login attempt', [
-            'email' => $request->email,
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent()
-        ]);
-        
         try {
-            // Validate login data
-            $credentials = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required|string'
-            ]);
-            
-            // Check if the user has exceeded maximum login attempts
-            if ($this->hasTooManyLoginAttempts($request)) {
-                $this->fireLockoutEvent($request);
-                Log::warning('Too many login attempts', ['email' => $request->email]);
-                
-                // Log the failed attempt with lockout
-                $this->logLoginAttempt($request, false, true);
-                
-                return $this->sendLockoutResponse($request);
-            }
-            
-            // Find the user by email
-            $user = User::where('email', $credentials['email'])->first();
-            
-            // Check if user exists and is active
-            if (!$user) {
-                Log::warning('Login attempt with non-existent email', ['email' => $request->email]);
-                $this->logLoginAttempt($request, false);
-                $this->incrementLoginAttempts($request);
-                
-                throw ValidationException::withMessages([
-                    'email' => 'These credentials do not match our records.'
-                ]);
-            }
-            
-            // Check if user is active
-            if (!$user->is_active) {
-                Log::warning('Login attempt with inactive account', ['email' => $request->email]);
-                $this->logLoginAttempt($request, false, false, 'Account is inactive');
-                
-                throw ValidationException::withMessages([
-                    'email' => 'Your account has been deactivated. Please contact the administrator.'
-                ]);
-            }
-            
-            // Attempt to authenticate
-            $remember = $request->filled('remember');
-            
-            if (Auth::attempt($credentials, $remember)) {
-                // Reset login attempts
-                $this->clearLoginAttempts($request);
-                
-                // Log successful login
-                $this->logLoginAttempt($request, true);
-                
-                // Update last login time
-                $user->last_login_at = now();
-                $user->save();
-                
-                Log::info('Login successful', ['user_id' => $user->id, 'email' => $user->email]);
-                
-                return redirect()->intended('/');
-            }
-            
-            // Authentication failed
-            Log::warning('Login failed - invalid credentials', ['email' => $request->email]);
-            $this->logLoginAttempt($request, false, false, 'Invalid credentials');
-            $this->incrementLoginAttempts($request);
-            
-            throw ValidationException::withMessages([
-                'email' => 'These credentials do not match our records.'
-            ]);
+            $this->authService->attemptLogin($request->validated());
+
+            // Authentication was successful
+            $request->session()->regenerate();
+            Log::info('User logged in successfully after session regeneration.', ['user_id' => Auth::id()]);
+
+            // Redirect to intended location or default home
+            // Note: Laravel's Redirector automatically handles intended URL
+            return redirect()->intended(route('home'));
+
         } catch (ValidationException $e) {
-            return redirect()->back()
-                ->withErrors($e->errors())
-                ->withInput($request->except('password'));
-        } catch (\Exception $e) {
-            Log::error('Login error', [
-                'email' => $request->email,
-                'error' => $e->getMessage()
+            Log::warning('Login validation failed.', [
+                'email' => $request->input('email'),
+                'errors' => $e->errors()
             ]);
-            
+            // The AuthService already threw the ValidationException with appropriate messages
+            // Laravel will automatically redirect back with errors.
+            // We just re-throw it here to stop execution.
+            throw $e;
+        } catch (\Exception $e) {
+            // Catch unexpected errors during login attempt
+            Log::error('Unexpected error during login.', [
+                'email' => $request->input('email'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
-                ->withErrors(['email' => 'An error occurred during login. Please try again.'])
-                ->withInput($request->except('password'));
+                         ->withInput($request->only('email', 'remember'))
+                         ->withErrors(['email' => 'An unexpected error occurred. Please try again later.']);
         }
     }
 
     /**
      * Log the user out of the application.
+     *
+     * @param  Request  $request
+     * @return RedirectResponse
      */
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
-        $user = Auth::user();
-        
-        Log::info('User logged out', [
-            'user_id' => $user ? $user->id : null,
-            'email' => $user ? $user->email : null
-        ]);
-        
-        Auth::logout();
-        
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        
-        return redirect()->route('login.form');
-    }
+        $this->authService->logout($request);
 
-    /**
-     * Get the login username (email) to be used by the controller.
-     */
-    public function username()
-    {
-        return 'email';
-    }
-
-    /**
-     * Log a login attempt in the database.
-     */
-    private function logLoginAttempt(Request $request, bool $successful, bool $locked = false, ?string $reason = null)
-    {
-        try {
-            // Find user if email exists
-            $user = User::where('email', $request->email)->first();
-            
-            $activity = new LoginActivity([
-                'user_id' => $user ? $user->id : null,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'successful' => $successful,
-                'locked' => $locked,
-                'reason' => $reason
-            ]);
-            
-            $activity->save();
-            
-            Log::info('Login activity logged', [
-                'email' => $request->email,
-                'successful' => $successful,
-                'locked' => $locked
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error logging login activity', [
-                'email' => $request->email,
-                'error' => $e->getMessage()
-            ]);
-        }
+        return redirect('/'); // Redirect to home or login page after logout
     }
 } 

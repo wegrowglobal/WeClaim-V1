@@ -19,6 +19,17 @@
         <p class="mt-2 text-sm text-gray-700">Fill in your details to request an account.</p>
     </div>
 
+    {{-- Display ALL validation errors --}}
+    @if ($errors->any())
+        <div class="mb-4 rounded-md border border-black p-3"> {{-- Simple border, no bg --}}
+            <ul class="list-inside text-sm text-black">
+                @foreach ($errors->all() as $error)
+                    <li class="font-medium">{{ $error }}</li> {{-- Make error text bold --}}
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form class="space-y-5" method="POST" action="{{ route('request.store') }}">
         @csrf
 
@@ -31,9 +42,10 @@
                 value="{{ old('first_name') }}"
                 placeholder="Enter your first name"
                 required>
-            @error('first_name')
+            {{-- Remove specific error display if desired --}}
+            {{-- @error('first_name')
                 <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror
+            @enderror --}}
         </div>
 
         <div>
@@ -45,9 +57,10 @@
                 value="{{ old('last_name') }}"
                 placeholder="Enter your last name"
                 required>
-            @error('last_name')
+            {{-- Remove specific error display if desired --}}
+            {{-- @error('last_name')
                 <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror
+            @enderror --}}
         </div>
 
         <div>
@@ -59,9 +72,10 @@
                 value="{{ old('email') }}"
                 placeholder="your@email.com"
                 required>
-            @error('email')
+            {{-- Remove specific error display if desired --}}
+            {{-- @error('email')
                 <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror
+            @enderror --}}
         </div>
 
         <div>
@@ -75,9 +89,10 @@
                     <option value="{{ $departmentName }}" {{ old('department') == $departmentName ? 'selected' : '' }}>{{ $departmentName }}</option>
                 @endforeach
             </select>
-            @error('department')
+            {{-- Remove specific error display if desired --}}
+            {{-- @error('department')
                 <span class="mt-1 text-xs font-medium text-black">{{ $message }}</span>
-            @enderror
+            @enderror --}}
         </div>
 
         <button class="flex w-full items-center justify-center rounded-md bg-black px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2"

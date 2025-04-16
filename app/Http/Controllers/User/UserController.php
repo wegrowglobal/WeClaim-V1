@@ -32,9 +32,6 @@ class UserController extends BaseController
     
     protected $authService;
     protected $auth;
-    private const LOGIN_ROUTE = 'login';
-    private const HOME_ROUTE = 'home';
-    private const LOGIN_FAILED_MESSAGE = 'Login failed. Please check your email and password.';
 
     public function __construct(AuthService $authService, Auth $auth)
     {
@@ -42,70 +39,7 @@ class UserController extends BaseController
         $this->auth = $auth;
         
         // Apply middleware selectively in the constructor
-        $this->middleware('guest')->only(['login']);
-        $this->middleware('auth')->except(['login']);
         $this->middleware('verified')->only(['changePassword']);
-    }
-
-    public function login(LoginRequest $request): RedirectResponse
-    {
-        try {
-            $request->authenticate();
-            
-            $user = Auth::user();
-            if (!$user) {
-                throw new RuntimeException('User not found after successful login');
-            }
-            
-            // Log remember token status for debugging
-            Log::info('Login successful', [
-                'user_id' => $user->id,
-                'remember_requested' => $request->boolean('remember'),
-                'remember_token_exists' => !empty($user->remember_token)
-            ]);
-
-            $request->session()->regenerate();
-            $request->session()->put([
-                'user_role' => $user->role?->name,
-                'user_department' => $user->department?->name
-            ]);
-            /* 
-            if ($user->role_id === 1) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return redirect()->route('coming-soon')->with('message', 'System is currently under maintenance for staff members.');
-            }
- */
-            return redirect()->intended(route(self::HOME_ROUTE));
-        } catch (AuthenticationException $e) {
-            return back()
-                ->withErrors([
-                    'email' => $e->getMessage(),
-                    'auth' => 'Invalid credentials provided.'
-                ])
-                ->withInput($request->only('email'));
-        } catch (\Exception $e) {
-            Log::error('Login error', [
-                'exception' => $e,
-                'email' => $request->email
-            ]);
-
-            return back()
-                ->withErrors([
-                    'auth' => 'An error occurred during login. Please try again.'
-                ])
-                ->withInput($request->only('email'));
-        }
-    }
-
-    public function logout(Request $request)
-    {
-        $this->authService->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect()->route(self::LOGIN_ROUTE);
     }
 
     public function profile()

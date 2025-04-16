@@ -8,6 +8,7 @@ use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\User\UserProfileController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\RequestAccountController;
@@ -24,11 +25,8 @@ use App\Http\Controllers\User\UserSecurityController;
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
-    Route::get('login', function () {
-        return view('auth.login.login');
-    })->name('login');
-
-    Route::post('login', [UserController::class, 'login'])->name('login');
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
 
     // Password Reset Routes
     Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
@@ -74,7 +72,7 @@ Route::middleware('auth', 'track.activity')->group(function () {
     Route::get('/', [ClaimController::class, 'home'])->name('home');
     
     // Logout Route
-    Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
     // Profile Routes
     Route::prefix('profile')->name('profile.')->group(function () {
