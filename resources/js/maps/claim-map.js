@@ -22,7 +22,9 @@ export class ClaimMap extends BaseMap {
         }
 
         const mapContainer = document.getElementById('map');
-        const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Initializing map...');
+        // Comment out the initial map loading state
+        // const loadingState = await SwalUtils.showMapLoading(mapContainer, 'Initializing map...');
+        let loadingState = { close: () => {} }; // Mock close method for finally block
         
         try {
             await this.initialize();
@@ -35,6 +37,7 @@ export class ClaimMap extends BaseMap {
             await SwalUtils.showError('Failed to initialize map', mapContainer);
             return false;
         } finally {
+            // Ensure close is called even if loadingState was mocked
             await loadingState.close();
         }
     }
@@ -146,7 +149,8 @@ export class ClaimMap extends BaseMap {
         }
 
         const mapContainer = document.getElementById('map');
-        const loadingState = await SwalUtils.showMapLoading(mapContainer);
+        // Commented out the loading state specific to route calculation
+        // const loadingState = await SwalUtils.showMapLoading(mapContainer);
         
         try {
             await this.rateLimiter.acquire();
@@ -163,7 +167,7 @@ export class ClaimMap extends BaseMap {
             console.error('Error updating route:', error);
             await SwalUtils.showError('Unable to calculate route', mapContainer);
         } finally {
-            loadingState.close();
+            // loadingState.close(); // Also comment out the closing if loading state is removed
             this.updateNextButtonState();
         }
     }
@@ -298,78 +302,77 @@ export class ClaimMap extends BaseMap {
     }
 
     updateSegmentInfo(legs) {
-        const container = document.getElementById('segment-details');
-        if (!container) return;
-
-        container.innerHTML = '';
+        const segmentDetailsContainer = document.getElementById('segment-details');
+        const segmentContainer = document.getElementById('location-pairs-info');
         
+        if (!segmentDetailsContainer || !segmentContainer) return;
+
+        segmentDetailsContainer.innerHTML = ''; // Clear previous details
+        let totalCost = 0;
+        const ratePerKm = parseFloat(document.getElementById('rate-per-km')?.value) || RATE_PER_KM;
+
+        if (!legs || legs.length === 0) {
+            segmentDetailsContainer.innerHTML = '<p class="text-gray-500">Segment details will appear here once the route is calculated.</p>';
+            segmentContainer.style.display = 'none';
+            return;
+        }
+
         legs.forEach((leg, index) => {
-            const color = this.locationManager.routeColors[index % this.locationManager.routeColors.length];
+            const segmentIndex = index + 1;
+            const startAddress = leg.start_address || 'N/A';
+            const endAddress = leg.end_address || 'N/A';
+            const segmentDistanceKm = leg.distance ? (leg.distance.value / 1000) : 0;
+            const segmentDistanceText = leg.distance ? leg.distance.text : 'N/A';
+            const segmentDurationText = leg.duration ? leg.duration.text : 'N/A';
+            const segmentCost = (segmentDistanceKm * ratePerKm).toFixed(2);
+            totalCost += parseFloat(segmentCost);
+
+            // New Segment HTML Structure
             const segmentHtml = `
-                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                    <!-- Location Header -->
-                    <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full" style="background-color: ${color}">
-                                    <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Route Segment ${index + 1}</p>
-                                    <p class="text-xs text-gray-500">${leg.start_address} → ${leg.end_address}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-medium text-gray-900">RM ${((leg.distance.value / 1000 * parseFloat(document.getElementById('rate-per-km')?.value || 0.60))).toFixed(2)}</p>
-                                <p class="text-xs text-gray-500">${this.formatDuration(leg.duration.value)}</p>
-                            </div>
+            <div class="segment-entry border border-gray-200 rounded-lg bg-white mb-4 overflow-hidden shadow-sm">
+                <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-blue-600 rounded-full text-xs font-semibold text-white">${segmentIndex}</div> 
+                        <h5 class="text-sm font-semibold leading-6 text-gray-900">Route Segment ${segmentIndex}</h5>
+                    </div>
+                    <div class="text-right">
+                         <p class="text-sm font-semibold text-gray-900">RM ${segmentCost}</p>
+                         <p class="text-xs text-gray-500">${segmentDurationText}</p>
+                     </div>
+                </div>
+                <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                    <div class="flex items-start gap-2">
+                         <div class="flex-shrink-0 mt-0.5 h-3 w-3 rounded-full bg-blue-500 ring-1 ring-blue-600/30"></div>
+                         <div>
+                             <p class="font-medium text-gray-600">From</p>
+                             <p class="text-gray-800">${startAddress}</p>
+                         </div>
+                    </div>
+                     <div class="flex items-start gap-2">
+                         <div class="flex-shrink-0 mt-0.5 h-3 w-3 rounded-full bg-red-500 ring-1 ring-red-600/30"></div>
+                        <div>
+                            <p class="font-medium text-gray-600">To</p>
+                            <p class="text-gray-800">${endAddress}</p>
                         </div>
                     </div>
-
-                    <!-- Details Grid -->
-                    <div class="p-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- From Location -->
-                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="inline-flex h-2 w-2 rounded-full" style="background-color: ${color}"></span>
-                                    <span class="text-xs font-medium text-gray-700">From</span>
-                                </div>
-                                <p class="text-sm text-gray-900 truncate" title="${leg.start_address}">${leg.start_address}</p>
-                            </div>
-
-                            <!-- To Location -->
-                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="inline-flex h-2 w-2 rounded-full" style="background-color: ${this.locationManager.routeColors[(index + 1) % this.locationManager.routeColors.length]}"></span>
-                                    <span class="text-xs font-medium text-gray-700">To</span>
-                                </div>
-                                <p class="text-sm text-gray-900 truncate" title="${leg.end_address}">${leg.end_address}</p>
-                            </div>
-
-                            <!-- Distance -->
-                            <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <div class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100">
-                                        <svg class="h-3 w-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                                        </svg>
-                                    </div>
-                                    <span class="text-xs font-medium text-gray-700">Distance</span>
-                                </div>
-                                <p class="text-sm font-medium text-gray-900">
-                                    ${(leg.distance.value / 1000).toFixed(2)} km
-                                </p>
-                            </div>
-                        </div>
+                     <div class="flex items-start gap-2">
+                         <svg class="flex-shrink-0 h-4 w-4 text-gray-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                         <div>
+                            <p class="font-medium text-gray-600">Distance</p>
+                            <p class="text-gray-800">${segmentDistanceText}</p>
+                         </div>
                     </div>
-                </div>`;
-            container.insertAdjacentHTML('beforeend', segmentHtml);
+                </div>
+            </div>
+            `;
+
+            segmentDetailsContainer.innerHTML += segmentHtml;
         });
 
-        document.getElementById('location-pairs-info').style.display = 'block';
+        segmentContainer.style.display = 'block';
+        // Update total cost display if it exists in this context (it's usually in step 3)
+        // this.updateDisplay('total-cost', totalCost.toFixed(2));
+        // this.updateHiddenInput('total-cost-input', totalCost.toFixed(2)); 
     }
 
     updateDisplay(elementId, value) {
@@ -481,9 +484,11 @@ export class ClaimMap extends BaseMap {
             this.initializeSortable(container);
 
             const mapContainer = document.getElementById('map');
-            const loadingState = uniqueLocations.size >= 2 ? 
-                await SwalUtils.showMapLoading(mapContainer) : 
-                null;
+            // Comment out loading state during initial load of saved locations
+            // const loadingState = uniqueLocations.size >= 2 ? 
+            //     await SwalUtils.showMapLoading(mapContainer) : 
+            //     null;
+            let loadingState = null; // Keep variable defined if needed by finally block
 
             try {
                 await this.updateRoute(); // This will handle plotting and route calculation

@@ -530,32 +530,38 @@ class AccommodationManager {
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Receipt
                             </label>
-                            <div class="document-upload-area">
+                            <div class="document-upload-area mt-1" id="accommodation_receipt_${this.accommodationIndex}-upload-area">
                                 <input type="file" 
                                     id="accommodation_receipt_${this.accommodationIndex}"
                                     name="accommodations[${this.accommodationIndex}][receipt]"
                                     class="hidden"
-                                    onchange="window.accommodationManager.updateFileName(${this.accommodationIndex}, this)"
+                                    onchange="window.claimDocument.updatePreview('accommodation_receipt_${this.accommodationIndex}', this)"
                                     accept=".pdf,.jpg,.jpeg,.png">
                                 <label for="accommodation_receipt_${this.accommodationIndex}"
-                                    class="document-upload-label block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 transition-colors hover:border-indigo-400"
-                                    ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('border-indigo-400');"
-                                    ondragleave="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400');"
-                                    ondrop="event.preventDefault(); event.stopPropagation(); this.classList.remove('border-indigo-400'); const input = document.getElementById('accommodation_receipt_${this.accommodationIndex}'); input.files = event.dataTransfer.files; window.accommodationManager.updateFileName(${this.accommodationIndex}, input);">
-                                    <div class="space-y-2 text-center">
-                                        <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                        </svg>
-                                        <div class="flex flex-col items-center text-sm">
-                                            <div>
-                                                <span class="font-medium text-indigo-600">Click to upload</span>
-                                                <span class="text-gray-500"> or drag and drop</span>
-                                            </div>
-                                            <p class="text-xs text-gray-500 mt-1">PDF, JPG, JPEG or PNG</p>
-                                        </div>
-                                    </div>
+                                    class="relative flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-gray-300 bg-white p-4 text-center hover:border-gray-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-2">
+                                    <svg class="h-8 w-8 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="ml-3 text-sm font-semibold text-gray-900">Upload receipt</span>
                                 </label>
-                                <div id="accommodation_receipt_name_${this.accommodationIndex}"></div>
+                            </div>
+                            <!-- Preview Area -->
+                            <div class="mt-2 hidden" id="accommodation_receipt_${this.accommodationIndex}-preview">
+                                <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+                                    <div class="flex items-center space-x-2 overflow-hidden">
+                                        <svg class="h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.5a.75.75 0 011.064 1.057l-.498.501-.002.002a4.5 4.5 0 01-6.364-6.364l7-7a4.5 4.5 0 016.368 6.36l-3.455 3.553A2.625 2.625 0 119.53 9.53l3.45-3.55a.75.75 0 011.064 1.06l-3.45 3.55a1.125 1.125 0 001.587 1.595l3.454-3.553a3 3 0 000-4.242z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span class="truncate text-gray-700" id="accommodation_receipt_${this.accommodationIndex}-filename">No file selected</span>
+                                    </div>
+                                    <button type="button" 
+                                        onclick="window.claimDocument.removeFile('accommodation_receipt_${this.accommodationIndex}')"
+                                        class="ml-4 flex-shrink-0 rounded-md p-1 text-gray-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

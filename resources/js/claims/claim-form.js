@@ -60,6 +60,16 @@ class ClaimForm {
         if (form) {
             form.setAttribute('novalidate', true);
         }
+
+        // Ensure summary calculation runs after initial elements might be populated
+        // especially important when landing directly on step 3
+        if (this.currentStep === 3) {
+             setTimeout(() => {
+                console.log('Running delayed initial summary calculation...');
+                this.updateAccommodationSummaryCost(); // Update accommodation first
+                this.updateTotalClaimSummary(); // Then update total
+             }, 100); // Small delay to allow elements to render
+        }
     }
 
     loadDraftData() {
@@ -168,11 +178,18 @@ class ClaimForm {
     }
 
     populateStep3(data) {
-        // Get the elements
-        const totalDistanceEl = document.querySelector('[data-summary="distance"]');
-        const petrolClaimEl = document.querySelector('[data-summary="petrol"]');
-        const totalLocationsEl = document.querySelector('[data-summary="locations"]');
+        console.log('Populating Step 3 Summary...');
+        const totalDistanceEl = document.getElementById('summary-distance');
+        const petrolClaimEl = document.getElementById('summary-cost');
+        const companyEl = document.getElementById('summary-company');
+        const datesEl = document.getElementById('summary-dates');
+        const remarksEl = document.getElementById('summary-remarks');
+        const tollCostEl = document.getElementById('summary-toll-cost');
 
+        if (companyEl && data.claim_company) companyEl.textContent = data.claim_company;
+        if (datesEl && data.date_from && data.date_to) datesEl.textContent = `${data.date_from} to ${data.date_to}`;
+        if (remarksEl && data.remarks) remarksEl.textContent = data.remarks;
+        
         if (data.total_distance) {
             const distance = parseFloat(data.total_distance).toFixed(2);
             if (totalDistanceEl) totalDistanceEl.textContent = `${distance} km`;
@@ -181,6 +198,11 @@ class ClaimForm {
         if (data.total_cost) {
             const cost = parseFloat(data.total_cost).toFixed(2);
             if (petrolClaimEl) petrolClaimEl.textContent = `RM ${cost}`;
+        }
+        
+        if (tollCostEl && data.toll_amount) {
+             const tollCost = parseFloat(data.toll_amount).toFixed(2);
+             tollCostEl.textContent = `RM ${tollCost}`;
         }
 
         if (data.locations) {
@@ -203,6 +225,61 @@ class ClaimForm {
                 
             if (totalLocationsEl) totalLocationsEl.textContent = `${locationCount} stops`;
         }
+
+        this.updateTotalClaimSummary();
+        console.log('Finished Populating Step 3 Summary.');
+    }
+
+    updateTotalClaimSummary() {
+        console.log('Updating Total Claim Summary...');
+        const petrolCostEl = document.getElementById('summary-cost');
+        const accommodationCostEl = document.getElementById('summary-accommodation-cost');
+        const tollCostEl = document.getElementById('summary-toll-cost');
+        const totalClaimEl = document.getElementById('summary-total-claim');
+
+        if (!totalClaimEl) {
+             console.error('Total claim element (#summary-total-claim) not found.');
+             return; 
+        }
+
+        const getValue = (element) => {
+            if (!element || !element.textContent) return 0;
+            // More robust regex to handle potential whitespace around RM
+            const match = element.textContent.trim().match(/RM\s*([\d\.]+)/);
+            const value = match ? parseFloat(match[1]) : 0;
+            console.log(`Read value from ${element.id}: ${value} (Original text: "${element.textContent}")`);
+            return value;
+        };
+
+        const petrolAmount = getValue(petrolCostEl);
+        const accommodationAmount = getValue(accommodationCostEl);
+        const tollAmount = getValue(tollCostEl);
+
+        const totalAmount = petrolAmount + accommodationAmount + tollAmount;
+        console.log(`Calculated Total: ${petrolAmount} + ${accommodationAmount} + ${tollAmount} = ${totalAmount}`);
+
+        totalClaimEl.textContent = `RM ${totalAmount.toFixed(2)}`;
+        console.log(`Updated #summary-total-claim to: RM ${totalAmount.toFixed(2)}`);
+    }
+
+    updateAccommodationSummaryCost() {
+        console.log('Updating Accommodation Summary Cost...');
+        const accommodationCostEl = document.getElementById('summary-accommodation-cost');
+        if (!accommodationCostEl) {
+            console.error('Accommodation cost element (#summary-accommodation-cost) not found.');
+            return;
+        }
+        
+        const priceInputs = document.querySelectorAll('#accommodations-container input[id^="accommodation_price_"]');
+        let totalAccommCost = 0;
+        priceInputs.forEach(input => {
+            const price = parseFloat(input.value) || 0;
+            totalAccommCost += price;
+            console.log(`Accommodation price input ${input.id} value: ${price}`);
+        });
+        
+        accommodationCostEl.textContent = `RM ${totalAccommCost.toFixed(2)}`;
+        console.log(`Updated #summary-accommodation-cost to: RM ${totalAccommCost.toFixed(2)}`);
     }
 
     bindEvents() {
@@ -265,6 +342,60 @@ class ClaimForm {
                 }
             }
         });
+
+        // Add listeners for changes that affect the total claim amount
+        const tollAmountInput = document.getElementById('toll_amount');
+        if (tollAmountInput) {
+            tollAmountInput.addEventListener('input', () => {
+                // Update the summary toll cost display first
+                const tollCostSummaryEl = document.getElementById('summary-toll-cost');
+                if (tollCostSummaryEl) {
+                     const amount = parseFloat(tollAmountInput.value) || 0;
+                     tollCostSummaryEl.textContent = `RM ${amount.toFixed(2)}`;
+                }
+                this.updateTotalClaimSummary();
+                this.debouncedSave(); // Also save draft on change
+            });
+        }
+        
+        // Listener for the has_toll checkbox
+        const hasTollCheckbox = document.getElementById('has_toll');
+        if(hasTollCheckbox) {
+            hasTollCheckbox.addEventListener('change', () => {
+                // If unchecked, clear toll summary and recalculate total
+                 const tollCostSummaryEl = document.getElementById('summary-toll-cost');
+                 if (tollCostSummaryEl && !hasTollCheckbox.checked) {
+                      tollCostSummaryEl.textContent = 'RM 0.00';
+                 }
+                 this.updateTotalClaimSummary();
+                 this.debouncedSave();
+            });
+        }
+
+        // Use event delegation for dynamically added accommodation price inputs
+        const accommodationsContainer = document.getElementById('accommodations-container');
+        if (accommodationsContainer) {
+            accommodationsContainer.addEventListener('input', (event) => {
+                if (event.target && event.target.matches('input[id^="accommodation_price_"]')) {
+                    // Update the summary accommodation cost display
+                    this.updateAccommodationSummaryCost(); 
+                    this.updateTotalClaimSummary();
+                    this.debouncedSave(); 
+                }
+            });
+            // Also update on removing an accommodation
+            accommodationsContainer.addEventListener('accommodationRemoved', () => {
+                this.updateAccommodationSummaryCost(); 
+                this.updateTotalClaimSummary();
+                this.debouncedSave();
+            });
+            // Also update on adding an accommodation (initial state is 0)
+            accommodationsContainer.addEventListener('accommodationAdded', () => {
+                 this.updateAccommodationSummaryCost(); 
+                 this.updateTotalClaimSummary();
+                 // Don't necessarily save draft just for adding an empty entry
+            });
+        }
     }
 
     async showContinuePrompt() {
@@ -679,7 +810,17 @@ class ClaimForm {
                           <ul class="text-left list-disc pl-5">
                               ${missingFields.map(field => `<li>${field}</li>`).join('')}
                           </ul>`,
-                    icon: 'warning'
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    customClass: {
+                        popup: 'rounded-lg shadow-xl border border-gray-200 bg-white',
+                        title: 'text-lg font-semibold text-gray-800 pt-4',
+                        htmlContainer: 'text-sm text-gray-600 px-4 pb-2 pt-2',
+                        icon: 'text-orange-400 border-orange-400',
+                        actions: 'px-4 pb-4 pt-2',
+                        confirmButton: 'inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500',
+                    },
+                    buttonsStyling: false
                 });
                 return;
             }
@@ -751,171 +892,243 @@ class ClaimForm {
                 formData.append('accommodations', JSON.stringify(accommodations));
             }
 
-            // Show confirmation dialog
-            const result = await Swal.fire({
-                title: 'Review Claim Details',
-                html: `
-                    <div class="space-y-6 px-4">
-                        <!-- Basic Information -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-start space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 shrink-0">
-                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-medium text-gray-900">Basic Information</p>
-                                        <p class="text-xs text-gray-500">Claim details and date range</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-4 space-y-3">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Company:</span>
-                                    <span class="font-medium ${draftData.claim_company ? 'text-gray-900' : 'text-red-600'}">
-                                        ${draftData.claim_company || 'Missing'}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Date Range:</span>
-                                    <span class="font-medium ${(draftData.date_from && draftData.date_to) ? 'text-gray-900' : 'text-red-600'}">
-                                        ${(draftData.date_from && draftData.date_to) ? 
-                                          `${draftData.date_from} to ${draftData.date_to}` : 
-                                          'Missing'}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Remarks:</span>
-                                    <span class="font-medium text-gray-900">
-                                        ${draftData.remarks || 'None'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+            // --- Build HTML Sections --- //
 
-                        <!-- Trip Details -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-start space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 shrink-0">
-                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-medium text-gray-900">Trip Details</p>
-                                        <p class="text-xs text-gray-500">Route and distance information</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-4 space-y-3">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Total Distance:</span>
-                                    <span class="font-medium text-gray-900">${parseFloat(draftData.total_distance).toFixed(2)} km</span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Total Locations:</span>
-                                    <span class="font-medium text-gray-900">${locations.length} Stops</span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Petrol Claim:</span>
-                                    <span class="font-medium text-gray-900">RM ${parseFloat(draftData.total_cost).toFixed(2)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Expenses -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-start space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 shrink-0">
-                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-medium text-gray-900">Additional Expenses</p>
-                                        <p class="text-xs text-gray-500">Toll and accommodation charges</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-4 space-y-3">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Toll Amount:</span>
-                                    <span class="font-medium ${tollAmount && tollAmount.value ? 'text-gray-900' : 'text-red-600'}">
-                                        RM ${tollAmount && tollAmount.value ? parseFloat(tollAmount.value).toFixed(2) : 'Missing'}
-                                    </span>
-                                </div>
-                                ${accommodations && accommodations.length > 0 ? `
-                                    <div class="flex items-center justify-between text-xs">
-                                        <span class="text-gray-600">Accommodation:</span>
-                                        <span class="font-medium text-gray-900">RM ${accommodations.reduce((sum, acc) => sum + parseFloat(acc.price || 0), 0).toFixed(2)}</span>
-                                    </div>
-                                    ${accommodations.map((acc, index) => `
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-600">Accommodation #${index + 1}:</span>
-                                            <span class="font-medium ${acc.location && acc.price && acc.check_in && acc.check_out ? 'text-gray-900' : 'text-red-600'}">
-                                                ${acc.location && acc.price && acc.check_in && acc.check_out ? 'Complete' : 'Incomplete'}
-                                            </span>
-                                        </div>
-                                    `).join('')}
-                                ` : ''}
-                            </div>
-                        </div>
-
-                        <!-- Documents -->
-                        <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                            <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
-                                <div class="flex items-start space-x-3">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shrink-0">
-                                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    </div>
-                                    <div class="text-left">
-                                        <p class="text-sm font-medium text-gray-900">Required Documents</p>
-                                        <p class="text-xs text-gray-500">Uploaded files and receipts</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="p-4 space-y-3">
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Toll Receipt:</span>
-                                    <span class="font-medium ${tollReceipt && tollReceipt.files[0] ? 'text-green-600' : 'text-red-600'}">
-                                        ${tollReceipt && tollReceipt.files[0] ? '✓ Uploaded' : '✗ Missing'}
-                                    </span>
-                                </div>
-                                <div class="flex items-center justify-between text-xs">
-                                    <span class="text-gray-600">Email Approval:</span>
-                                    <span class="font-medium ${emailApproval && emailApproval.files[0] ? 'text-green-600' : 'text-red-600'}">
-                                        ${emailApproval && emailApproval.files[0] ? '✓ Uploaded' : '✗ Missing'}
-                                    </span>
-                                </div>
-                                ${accommodations && accommodations.length > 0 ? `
-                                    <div class="flex items-center justify-between text-xs">
-                                        <span class="text-gray-600">Accommodation Receipts:</span>
-                                        <span class="font-medium text-green-600">✓ ${accommodations.length} Uploaded</span>
-                                    </div>
-                                ` : ''}
-                            </div>
+            const basicInfoHtml = `
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Basic Information</p>
+                            <p class="text-xs text-gray-500">Claim details and date range</p>
                         </div>
                     </div>
-                `,
+                    <div class="p-4 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Company:</span>
+                            <span class="font-medium ${draftData.claim_company ? 'text-gray-900' : 'text-red-600'}">${draftData.claim_company || 'Missing'}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Date Range:</span>
+                            <span class="font-medium ${(draftData.date_from && draftData.date_to) ? 'text-gray-900' : 'text-red-600'}">
+                                ${(draftData.date_from && draftData.date_to) ? `${draftData.date_from} to ${draftData.date_to}` : 'Missing'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Remarks:</span>
+                            <span class="font-medium text-gray-900">${draftData.remarks || 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const tripDetailsHtml = `
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 flex-shrink-0">
+                            <svg class="h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Trip Details</p>
+                            <p class="text-xs text-gray-500">Route and distance information</p>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Distance:</span>
+                            <span class="font-medium text-gray-900">${parseFloat(draftData.total_distance || 0).toFixed(2)} km</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Locations:</span>
+                            <span class="font-medium text-gray-900">${locations.length + 1} Location(s)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Petrol Claim:</span>
+                            <span class="font-medium text-gray-900">RM ${parseFloat(draftData.total_cost || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Additional Expenses Section Parts
+            let tollAmountHtml = '';
+            if (hasToll) {
+                const tollValue = tollAmount && tollAmount.value ? parseFloat(tollAmount.value).toFixed(2) : 'Missing';
+                const tollColor = tollAmount && tollAmount.value ? 'text-gray-900' : 'text-red-600';
+                tollAmountHtml = `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Toll Amount:</span>
+                        <span class="font-medium ${tollColor}">RM ${tollValue}</span>
+                    </div>
+                `;
+            }
+
+            let accommodationTotalHtml = '';
+            let accommodationDetailsHtml = '';
+            if (accommodations && accommodations.length > 0) {
+                const totalAccommCost = accommodations.reduce((sum, acc) => sum + parseFloat(acc.price || 0), 0).toFixed(2);
+                accommodationTotalHtml = `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Accommodation Total:</span>
+                        <span class="font-medium text-gray-900">RM ${totalAccommCost}</span>
+                    </div>
+                `;
+
+                accommodationDetailsHtml = accommodations.map((acc, index) => {
+                    const accComplete = acc.location && acc.price && acc.check_in && acc.check_out;
+                    const receiptInput = document.getElementById(`accommodation_receipt_${index}`);
+                    const receiptUploaded = receiptInput && receiptInput.files[0];
+                    const statusValid = accComplete && receiptUploaded;
+                    const statusColor = statusValid ? 'text-gray-900' : 'text-red-600';
+                    const statusText = statusValid ? 'Complete' : 'Incomplete';
+                    return `
+                        <div class="flex justify-between pl-4">
+                            <span class="text-gray-600">Entry #${index + 1}:</span>
+                            <span class="font-medium ${statusColor}">${statusText}</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                accommodationTotalHtml = `
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Accommodation:</span>
+                        <span class="font-medium text-gray-500 italic">N/A</span>
+                    </div>
+                `;
+            }
+
+            const additionalExpensesHtml = `
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                    <div class="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 flex-shrink-0">
+                            <svg class="h-5 w-5 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.879A1.5 1.5 0 0 0 10.5 17h3a1.5 1.5 0 0 0 1.121-.44l.879-.879M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Additional Expenses</p>
+                            <p class="text-xs text-gray-500">Toll and accommodation charges</p>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        ${tollAmountHtml}
+                        ${accommodationTotalHtml}
+                        ${accommodationDetailsHtml}
+                    </div>
+                </div>
+            `;
+
+            // Required Documents Section Parts
+            const checkIcon = `<svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>`;
+            const crossIcon = `<svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>`;
+
+            let tollReceiptStatusHtml = '';
+            if (hasToll) {
+                const uploaded = tollReceipt && tollReceipt.files[0];
+                const icon = uploaded ? checkIcon : crossIcon;
+                const text = uploaded ? 'Uploaded' : 'Missing';
+                const color = uploaded ? 'text-green-600' : 'text-red-600';
+                tollReceiptStatusHtml = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Toll Receipt:</span>
+                        <span class="flex items-center gap-1 font-medium ${color}">
+                            ${icon} ${text}
+                        </span>
+                    </div>
+                `;
+            }
+
+            let emailApprovalStatusHtml = '';
+            const emailUploaded = emailApproval && emailApproval.files[0];
+            const emailIcon = emailUploaded ? checkIcon : crossIcon;
+            const emailText = emailUploaded ? 'Uploaded' : 'Missing';
+            const emailColor = emailUploaded ? 'text-green-600' : 'text-red-600';
+            emailApprovalStatusHtml = `
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600">Email Approval:</span>
+                    <span class="flex items-center gap-1 font-medium ${emailColor}">
+                        ${emailIcon} ${emailText}
+                    </span>
+                </div>
+            `;
+
+            let accommReceiptsSummaryHtml = '';
+            if (accommodations && accommodations.length > 0) {
+                 // Basic check: assumes if there are accommodations, receipts are intended
+                 // More robust check would loop through `accommodation_receipt_` inputs
+                 const allReceiptsUploaded = accommodations.every((_, index) => {
+                     const receiptInput = document.getElementById(`accommodation_receipt_${index}`);
+                     return receiptInput && receiptInput.files[0];
+                 });
+                 const accommIcon = allReceiptsUploaded ? checkIcon : crossIcon;
+                 const accommText = allReceiptsUploaded ? `All ${accommodations.length} Uploaded` : 'Missing/Incomplete';
+                 const accommColor = allReceiptsUploaded ? 'text-green-600' : 'text-red-600';
+
+                accommReceiptsSummaryHtml = `
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Accomm. Receipts:</span>
+                         <span class="flex items-center gap-1 font-medium ${accommColor}">
+                            ${accommIcon} ${accommText}
+                        </span>
+                    </div>
+                `;
+            }
+
+            const requiredDocumentsHtml = `
+                <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+                     <div class="flex items-center gap-3 border-b border-gray-200 bg-gray-50 px-4 py-3">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">Required Documents</p>
+                            <p class="text-xs text-gray-500">Uploaded files and receipts</p>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-2 text-sm">
+                        ${tollReceiptStatusHtml}
+                        ${emailApprovalStatusHtml}
+                        ${accommReceiptsSummaryHtml}
+                    </div>
+                </div>
+            `;
+
+            // --- Combine HTML for Swal --- //
+            const finalHtml = `
+                <div class="space-y-4 p-4">
+                    ${basicInfoHtml}
+                    ${tripDetailsHtml}
+                    ${additionalExpensesHtml}
+                    ${requiredDocumentsHtml}
+                </div>
+            `;
+
+            // Show confirmation modal
+            const result = await Swal.fire({
+                title: 'Confirm Claim Submission',
+                html: finalHtml, // Use the combined HTML
                 showCancelButton: true,
                 confirmButtonText: 'Submit Claim',
                 cancelButtonText: 'Review Again',
                 customClass: {
-                    popup: 'rounded-lg shadow-xl border border-gray-200',
-                    title: 'text-xl font-medium text-gray-900 border-b border-gray-100 pb-3 text-left',
-                    htmlContainer: 'p-0',
-                    actions: 'w-full flex flex-row-reverse justify-between px-4 pb-4 gap-4',
-                    confirmButton: 'w-fit flex-1 order-2 inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
-                    cancelButton: 'w-fit flex-1 order-1 inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200'
+                    popup: 'rounded-lg shadow-xl border border-gray-200 bg-white',
+                    title: 'text-lg font-semibold text-gray-800 pt-4',
+                    htmlContainer: 'text-sm text-gray-600 px-4 pb-2 pt-2',
+                    icon: 'text-orange-400 border-orange-400',
+                    actions: 'px-4 pb-4 pt-2',
+                    confirmButton: 'inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500',
                 },
                 buttonsStyling: false,
-                width: '32rem',
+                width: '36rem',
                 showClass: {
                     popup: 'animate-popup-show'
                 },
@@ -949,7 +1162,7 @@ class ClaimForm {
                     customClass: {
                         popup: 'rounded-lg shadow-xl border border-gray-200',
                         title: 'text-xl font-medium text-gray-900',
-                        confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
+                        confirmButton: 'inline-flex items-center justify-center px-6 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
                     }
                 });
 
@@ -977,7 +1190,7 @@ class ClaimForm {
                 customClass: {
                     popup: 'rounded-lg shadow-xl border border-gray-200',
                     title: 'text-xl font-medium text-gray-900',
-                    confirmButton: 'inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
+                    confirmButton: 'inline-flex items-center justify-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200'
                 }
             });
         } finally {
@@ -1603,7 +1816,8 @@ class ClaimForm {
 
 // Initialize single instance
 document.addEventListener('DOMContentLoaded', () => {
-    new ClaimForm();
+    // Instantiate and attach to window for global access
+    window.claimForm = new ClaimForm(); 
 });
 
 // Export the class if needed

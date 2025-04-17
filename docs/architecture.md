@@ -56,11 +56,13 @@ The service layer contains the core business logic of the application:
 Models represent the database entities and their relationships:
 
 - **User**: System users with various roles
-- **Claim**: The central entity representing expense claims
-- **ClaimLocation**: Travel points within a claim
+- **Claim**: The central entity representing expense claims. Modified to include specific fields for Petty Cash (`park_location`, `advised_by`, `total_amount`) and a general `claim_type` to distinguish between types like 'Petrol' and 'Petty Cash'.
+- **ClaimLocation**: Travel points within a claim (primarily for Petrol claims)
+- **ClaimAccommodation**: Accommodation details for a claim
 - **ClaimDocument**: Supporting documents attached to claims
 - **ClaimReview**: Review entries from approvers
 - **ClaimHistory**: Historical record of claim changes
+- **PettyCashItem**: Represents individual line items within a Petty Cash claim, linked via a one-to-many relationship from `Claim`. Each item includes details like `item_name`, `quantity`, `price_per_unit`, and `purpose`.
 - **Role**: User roles (Staff, Admin, HR, Finance, Director)
 - **Department**: Organizational departments
 - **SystemConfig**: Application configuration settings
@@ -117,10 +119,12 @@ Models represent the database entities and their relationships:
 Key database relationships:
 
 - **User** 1→N **Claim**: A user can have multiple claims
-- **Claim** 1→N **ClaimLocation**: A claim can have multiple locations
+- **Claim** 1→N **ClaimLocation**: A claim can have multiple locations (primarily for Petrol claims)
+- **Claim** 1→N **ClaimAccommodation**: A claim can have accommodation details
 - **Claim** 1→N **ClaimDocument**: A claim can have multiple supporting documents
 - **Claim** 1→N **ClaimReview**: A claim can have multiple reviews
 - **Claim** 1→N **ClaimHistory**: A claim can have multiple history entries
+- **Claim** 1→N **PettyCashItem**: A claim of type 'Petty Cash' can have multiple line items.
 - **Role** 1→N **User**: A role can be assigned to multiple users
 - **Department** 1→N **User**: A department can have multiple users
 

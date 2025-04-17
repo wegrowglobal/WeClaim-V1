@@ -1,40 +1,47 @@
 class DocumentUpload {
     constructor() {
-        this.initializeUploads();
+        // Initialization is now handled by the component triggering updatePreview
         this.bindEvents();
     }
 
-    initializeUploads() {
-        // Initialize toll receipt upload
-        this.initializeUploadArea('toll');
-        // Initialize email approval upload
-        this.initializeUploadArea('email');
-        // Update summary if elements exist
-        this.updateSummary();
-    }
-
-    initializeUploadArea(type) {
-        const input = document.getElementById(`${type}_report`);
-        const preview = document.getElementById(`${type}-preview`);
-        const filename = document.getElementById(`${type}-filename`);
+    // Function called by the file input's onchange event
+    updatePreview(type, inputElement) {
+        // Construct IDs based on the input element's ID, which matches the component prop
+        const baseId = inputElement.id; // e.g., "email_report" or "toll_report"
+        const preview = document.getElementById(`${baseId}-preview`);
+        const filename = document.getElementById(`${baseId}-filename`);
         
-        if (!input || !preview || !filename) return;
+        if (!inputElement || !preview || !filename) {
+            console.error(`Preview elements not found for ID: ${baseId}`);
+            return;
+        }
 
-        input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                filename.textContent = file.name;
-                preview.classList.remove('hidden');
-            }
-        });
-
-        // Initialize drag and drop
-        const uploadArea = document.getElementById(`${type}-upload-area`);
-        if (uploadArea) {
-            this.initializeDragAndDrop(uploadArea, input);
+        const file = inputElement.files[0];
+        if (file) {
+            filename.textContent = file.name;
+            preview.classList.remove('hidden');
+        } else {
+            // If no file is selected (e.g., user cancelled), hide preview
+            filename.textContent = 'No file selected';
+            preview.classList.add('hidden');
         }
     }
 
+    // Function called by the remove button
+    removeFile(type) {
+        // Construct IDs based on the type passed (which should match the component's base ID like 'email_report')
+        // Ensure the correct base ID is passed to this function if it differs from just 'email' or 'toll'.
+        // Assuming the `type` passed here matches the component ID (e.g., 'email_report')
+        const input = document.getElementById(type);
+        const preview = document.getElementById(`${type}-preview`);
+        const filename = document.getElementById(`${type}-filename`);
+        
+        if (input) input.value = ''; // Clear the file input
+        if (preview) preview.classList.add('hidden');
+        if (filename) filename.textContent = 'No file selected';
+    }
+
+    // We still need drag and drop, but it should trigger the input's change event
     initializeDragAndDrop(area, input) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             area.addEventListener(eventName, (e) => {
@@ -61,50 +68,32 @@ class DocumentUpload {
             
             if (file) {
                 input.files = dt.files;
+                // Manually trigger the change event to ensure updatePreview runs
                 input.dispatchEvent(new Event('change'));
             }
         });
     }
 
-    updateSummary() {
-        const summaryDistance = document.getElementById('summary-distance');
-        const summaryPetrol = document.getElementById('summary-petrol');
-        const summaryLocations = document.getElementById('summary-locations');
-        const draftDataEl = document.getElementById('draftData');
-
-        if (!draftDataEl) return;
-
-        try {
-            const draftData = JSON.parse(draftDataEl.value);
-            
-            if (summaryDistance) {
-                summaryDistance.textContent = draftData.total_distance || '0';
-            }
-            if (summaryPetrol) {
-                summaryPetrol.textContent = draftData.total_cost || '0.00';
-            }
-            if (summaryLocations) {
-                const locations = draftData.locations ? 
-                    (typeof draftData.locations === 'string' ? 
-                        JSON.parse(draftData.locations) : 
-                        draftData.locations) : [];
-                summaryLocations.textContent = locations.length || '0';
-            }
-        } catch (error) {
-        }
-    }
-
     bindEvents() {
-        // Bind remove file events
-        window.removeFile = (type) => {
-            const input = document.getElementById(`${type}_report`);
-            const preview = document.getElementById(`${type}-preview`);
-            const filename = document.getElementById(`${type}-filename`);
-            
-            if (input) input.value = '';
-            if (preview) preview.classList.add('hidden');
-            if (filename) filename.textContent = 'No file selected';
+        // Expose methods to the window object for the component to call
+        window.claimDocument = {
+            updatePreview: this.updatePreview.bind(this),
+            removeFile: this.removeFile.bind(this)
         };
+
+        // Still initialize drag and drop for the relevant areas if they exist
+        // Note: This assumes the component structure provides these IDs
+        const emailArea = document.getElementById('email_report-upload-area');
+        const emailInput = document.getElementById('email_report');
+        if (emailArea && emailInput) {
+            this.initializeDragAndDrop(emailArea, emailInput);
+        }
+
+        const tollArea = document.getElementById('toll_report-upload-area');
+        const tollInput = document.getElementById('toll_report');
+        if (tollArea && tollInput) {
+            this.initializeDragAndDrop(tollArea, tollInput);
+        }
     }
 }
 
@@ -113,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if we're on step 3 before initializing
     const step3Container = document.querySelector('[data-step="3"]');
     if (step3Container) {
-        window.documentUpload = new DocumentUpload();
+        new DocumentUpload(); // Instantiate to bind events
     }
 });
 

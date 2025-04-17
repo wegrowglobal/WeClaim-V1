@@ -1,213 +1,174 @@
-<div class="bg-white rounded-lg shadow-sm ring-1 ring-black/5 animate-slide-in delay-200">
-    <div class="px-6 py-5" data-step="2">
-        @php
-            $draftData = $draftData ?? [];
-        @endphp
+<div data-step="2">
+    @php
+        $draftData = $draftData ?? [];
         
-        <script>
-            console.log('Step 2 - Initial draft data:', @json($draftData));
-        </script>
+        // Ensure draft data processing logic is kept
+        $locationsData = $draftData['locations'] ?? '[]';
+        if (is_array($locationsData)) {
+            $locationsData = json_encode($locationsData);
+        }
+        $decodedLocations = is_string($locationsData) ? json_decode($locationsData, true) : [];
+        $filteredLocations = array_filter($decodedLocations ?? []);
+        $totalDistance = $draftData['total_distance'] ?? '0';
+        $totalDuration = $draftData['total_duration'] ?? '0 min';
+        $totalCost = isset($draftData['total_cost']) ? $draftData['total_cost'] : '0.00';
+        $accommodations = [];
+        if (isset($draftData['accommodations'])) {
+            $accommodations = is_string($draftData['accommodations']) 
+                ? json_decode($draftData['accommodations'], true) 
+                : $draftData['accommodations'];
+        }
+    @endphp
+    
+    {{-- Removed script log --}}
 
-        <!-- Header -->
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h3 class="text-lg font-medium text-gray-900">Trip Details</h3>
-                <p class="text-sm text-gray-500 mt-1">Plan your route and calculate travel distance</p>
+    {{-- Use the new step header component --}}
+    <x-forms.claim.step-header 
+        title="Trip Details" 
+        subtitle="Plan your route and calculate travel distance." 
+        currentStep="2" 
+        totalSteps="3" />
+
+    {{-- Hidden Inputs (Keep as is) --}}
+    <input id="draftData" type="hidden" value="{{ json_encode(array_merge($draftData, ['accommodations' => $accommodations, 'locations' => $filteredLocations])) }}">
+    <input id="locations" name="locations" type="hidden" value="{{ json_encode($filteredLocations) }}">
+    <input id="total-distance-input" name="total_distance" type="hidden" value="{{ $totalDistance }}">
+    <input id="total-duration-input" name="total_duration" type="hidden" value="{{ $totalDuration }}">
+    <input id="total-cost-input" name="total_cost" type="hidden" value="{{ $totalCost }}">
+    <input id="rate-per-km" type="hidden" value="0.60"> {{-- Keep rate --}}
+    <input id="segments-data" name="segments_data" type="hidden" value="{{ old('segments_data', $draftData['segments_data'] ?? '[]') }}">
+
+    {{-- Form Sections --}}
+    <div class="space-y-10">
+        {{-- Location Stops Section --}}
+        <div>
+            <div class="">
+                <h4 class="text-base font-medium leading-6 text-gray-600">Location Stops</h4>
+                <p class="mt-1 text-sm text-gray-400">Add your starting and ending locations.</p>
+            </div>
+            <div class="mt-2 space-y-4">
+                {{-- Location Inputs Container --}}
+                <div id="location-inputs" class="space-y-4">
+                    {{-- 
+                        Dynamically Added Location Entry Structure (Target for JS):
+                        <div class="location-entry border border-gray-200 rounded-lg bg-white p-4 flex items-center space-x-4" data-index="{index}">
+                            <svg class="h-5 w-5 text-gray-400 cursor-move" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                            <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-gray-200 rounded-full text-xs font-semibold text-gray-700">{marker}</div>
+                            <div class="flex-grow relative">
+                                <label for="location-{index}" class="sr-only">Location {markerLabel}</label>
+                                <input type="text" id="location-{index}" name="locations[{index}]" class="location-autocomplete block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 pr-10" placeholder="Enter address or select from map" value="{locationValue}" required>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933...zM10 11.25a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" clip-rule="evenodd" /></svg>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.claimMap.removeLocation({index})" class="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                    --}}
+                </div>
+                {{-- Add Stop Button --}}
+                <div>
+                    <button id="add-location-btn" type="button"
+                            class="mt-4 inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        <svg class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                        </svg>
+                        Add Stop
+                    </button>
+                </div>
             </div>
         </div>
 
-        @php
-            // Properly handle the draft data
-            $draftData = $draftData ?? [];
-
-            // Handle locations data
-            $locationsData = $draftData['locations'] ?? '[]';
-            if (is_array($locationsData)) {
-                $locationsData = json_encode($locationsData);
-            }
-
-            // Decode for filtering if it's a JSON string
-            $decodedLocations = is_string($locationsData) ? json_decode($locationsData, true) : [];
-            $filteredLocations = array_filter($decodedLocations ?? []);
-
-            // Get other values with defaults
-            $totalDistance = $draftData['total_distance'] ?? '0';
-            $totalDuration = $draftData['total_duration'] ?? '0 min';
-
-            // Get total cost from the sum of segment costs
-            $totalCost = isset($draftData['total_cost']) ? $draftData['total_cost'] : '0.00';
-        @endphp
-
-        <!-- Hidden Inputs -->
-        @php
-            // Ensure accommodations data is preserved
-            $accommodations = [];
-            if (isset($draftData['accommodations'])) {
-                $accommodations = is_string($draftData['accommodations']) 
-                    ? json_decode($draftData['accommodations'], true) 
-                    : $draftData['accommodations'];
-            }
-        @endphp
-        <input id="draftData" type="hidden" value="{{ json_encode([
-            'claim_company' => $draftData['claim_company'] ?? '',
-            'date_from' => $draftData['date_from'] ?? '',
-            'date_to' => $draftData['date_to'] ?? '',
-            'remarks' => $draftData['remarks'] ?? '',
-            'total_distance' => $totalDistance,
-            'total_cost' => $totalCost,
-            'segments_data' => $draftData['segments_data'] ?? '[]',
-            'locations' => $filteredLocations,
-            'accommodations' => $accommodations
-        ]) }}">
-        <input id="locations" name="locations" type="hidden" value="{{ json_encode($filteredLocations) }}">
-        <input id="total-distance-input" name="total_distance" type="hidden" value="{{ $totalDistance }}">
-        <input id="total-duration-input" name="total_duration" type="hidden" value="{{ $totalDuration }}">
-        <input id="total-cost-input" name="total_cost" type="hidden" value="{{ $totalCost }}">
-
-        <!-- Main Content Section -->
-        <div class="space-y-6">
-            <!-- Location Controls Section -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
-                    <div class="flex items-center space-x-2 sm:space-x-3">
-                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Location Stops</p>
-                            <p class="text-xs text-gray-500">Add and manage your journey stops</p>
-                        </div>
+        {{-- Route Map & Stats Section --}}
+        <div>
+            <div>
+                <h4 class="text-base font-medium leading-6 text-gray-600">Route Map & Summary</h4>
+                <p class="mt-1 text-sm text-gray-400">View your route and calculate travel distance.</p>
+            </div>
+            <div class="mt-2 space-y-4">
+                {{-- Map Container --}}
+                <div class="relative h-[300px] sm:h-[400px] w-full rounded-md border border-gray-300 overflow-hidden bg-gray-100" id="map">
+                    {{-- Map placeholder text --}}
+                     <div class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                        Map will load here...
                     </div>
                 </div>
-
-                <div class="space-y-3 sm:space-y-4">
-                    <!-- Location Inputs -->
-                    <div class="" id="location-inputs">
-                        <!-- Locations will be added dynamically via JavaScript -->
+                {{-- Stats Grid --}}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {{-- Stat Card: Distance --}}
+                    <div class="rounded-md border border-gray-200 bg-gray-50 p-4 text-center sm:text-left">
+                        <p class="text-sm font-medium text-gray-500">Total Distance</p>
+                        <p class="mt-1 text-xl font-semibold text-gray-900"><span id="total-distance">{{ sprintf('%.2f', (float) $totalDistance) }}</span> km</p>
                     </div>
-
-                    <!-- Location Controls -->
-                    <div class="pl-3 pb-3 sm:pl-4 sm:pb-4 flex gap-2 sm:gap-3">
-                        <button
-                            class="inline-flex items-center rounded-lg bg-indigo-50 px-2 py-2 sm:px-3 text-sm font-medium text-indigo-600 transition-all hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            id="add-location-btn" type="button">
-                            <svg class="mr-1 sm:mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Add Stop
-                        </button>
+                    {{-- Stat Card: Duration --}}
+                    <div class="rounded-md border border-gray-200 bg-gray-50 p-4 text-center sm:text-left">
+                        <p class="text-sm font-medium text-gray-500">Total Duration</p>
+                        <p class="mt-1 text-xl font-semibold text-gray-900" id="total-duration">{{ $totalDuration ?: '0 min' }}</p>
+                    </div>
+                    {{-- Stat Card: Cost --}}
+                    <div class="rounded-md border border-gray-200 bg-gray-50 p-4 text-center sm:text-left">
+                        <p class="text-sm font-medium text-gray-500">Estimated Petrol Cost</p>
+                        <p class="mt-1 text-xl font-semibold text-gray-900">RM <span id="total-cost" data-cost-display>{{ sprintf('%.2f', (float) $totalCost) }}</span></p>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Map Section -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
-                    <div class="flex items-center space-x-2 sm:space-x-3">
-                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Route Map</p>
-                            <p class="text-xs text-gray-500">View and verify your travel route</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-3 sm:p-4 space-y-3 sm:space-y-4">
-                    <!-- Map Container -->
-                    <div class="relative">
-                        <div class="h-[250px] sm:h-[400px] w-full rounded-lg border border-gray-100 shadow-sm" id="map">
-                        </div>
-                    </div>
-
-                    <!-- Stats Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                        <!-- Total Distance -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
-                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                    </svg>
-                                </div>
-                                <p class="text-sm font-medium text-gray-700">Total Distance</p>
-                            </div>
-                            <div class="flex items-baseline">
-                                <span class="text-lg sm:text-xl font-semibold text-gray-900"
-                                    id="total-distance">{{ sprintf('%.2f', (float) $totalDistance) }}</span>
-                                <span class="ml-1 text-sm sm:text-base text-gray-500">km</span>
-                            </div>
-                        </div>
-
-                        <!-- Total Duration -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
-                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <p class="text-sm font-medium text-gray-700">Total Duration</p>
-                            </div>
-                            <div class="flex items-baseline">
-                                <span class="text-lg sm:text-xl font-semibold text-gray-900" id="total-duration">{{ $totalDuration }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Total Cost -->
-                        <div class="overflow-hidden rounded-lg border border-gray-100 bg-gray-50/50 p-3 sm:p-4 transition-all hover:bg-gray-50">
-                            <div class="mb-2 flex items-center space-x-2 sm:space-x-3">
-                                <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-100">
-                                    <svg class="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <p class="text-sm font-medium text-gray-700">Total Estimated Cost</p>
-                            </div>
-                            <div class="flex items-baseline">
-                                <span class="text-lg sm:text-xl font-semibold text-gray-900">RM</span>
-                                <span class="ml-1 text-lg sm:text-xl font-semibold text-gray-900" id="total-cost"
-                                    data-cost-display>{{ sprintf('%.2f', (float) $totalCost) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        {{-- Segment Info Section (Hidden by default) --}}
+        <div id="location-pairs-info" style="display: none;">
+            <div class="">
+                <h4 class="text-base font-medium leading-6 text-gray-600">Segment Details</h4>
+                <p class="mt-1 text-sm text-gray-400">View your route and calculate travel distance.</p>
             </div>
-
-            <!-- Add a hidden input to store the rate -->
-            <input id="rate-per-km" type="hidden" value="0.60">
-
-            <!-- Segment Info Section -->
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm" id="location-pairs-info" style="display: none;">
-                <div class="border-b border-gray-100 bg-gray-50 px-3 py-2 sm:px-4 sm:py-3">
-                    <div class="flex items-center space-x-2 sm:space-x-3">
-                        <div class="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-indigo-600">
-                            <svg class="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+            <div class="mt-2 space-y-4">
+                <div class="text-sm" id="segment-details">
+                    {{-- 
+                        Dynamically Added Segment Entry Structure (Target for JS):
+                        <div class="segment-entry border border-gray-200 rounded-lg bg-white mb-4 overflow-hidden">
+                            <div class="border-b border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0 h-6 w-6 flex items-center justify-center bg-blue-600 rounded-full text-xs font-semibold text-white">{segmentIndex}</div> 
+                                    <h5 class="text-sm font-semibold leading-6 text-gray-900">Route Segment {segmentIndex}</h5>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-gray-900">RM {segmentCost}</p>
+                                    <p class="text-xs text-gray-500">{segmentDuration}</p>
+                                </div>
+                            </div>
+                            <div class="p-4 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-shrink-0 mt-0.5 h-3 w-3 rounded-full bg-blue-500 ring-1 ring-blue-600/30"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-600">From</p>
+                                        <p class="text-gray-800">{startAddress}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-shrink-0 mt-0.5 h-3 w-3 rounded-full bg-red-500 ring-1 ring-red-600/30"></div>
+                                    <div>
+                                        <p class="font-medium text-gray-600">To</p>
+                                        <p class="text-gray-800">{endAddress}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2">
+                                    <svg class="flex-shrink-0 h-4 w-4 text-gray-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                                    <div>
+                                        <p class="font-medium text-gray-600">Distance</p>
+                                        <p class="text-gray-800">{segmentDistance}</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-medium text-gray-900">Segment Info</p>
-                            <p class="text-xs text-gray-500">View details for each segment of your journey</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="p-3 sm:p-4">
-                    <div class="space-y-3 sm:space-y-4" id="segment-details">
-                        <!-- Segments will be added here dynamically -->
-                    </div>
+                     --}}
+                    <p class="text-gray-500">Segment distances and durations will appear here once calculated.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+    {{-- Ensure claim-map.js and google-maps.js are loaded --}}
+    @vite(['resources/js/claims/claim-map.js', 'resources/js/utils/google-maps.js'])
+@endpush

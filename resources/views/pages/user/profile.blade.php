@@ -8,8 +8,8 @@
     
     {{-- Use the new page header component --}}
     <x-layout.page-header 
-        title="Profile Settings" 
-        subtitle="Manage your account information and preferences.">
+        title="Profile Information"
+        subtitle="Update your account's profile information and banking details.">
         {{-- No actions needed on the right for this page, so the slot is empty --}}
     </x-layout.page-header>
 
@@ -182,10 +182,10 @@
                 <h2 class="text-base font-semibold leading-7 text-gray-900">Banking Information</h2>
                 <p class="mt-1 text-sm leading-6 text-gray-600">Your bank details for claim reimbursements.</p>
                 <div class="mt-8 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-6">
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-2">
                         <label for="bank_name" class="block text-sm font-medium leading-6 text-gray-900">Bank Name</label>
                         <div class="mt-2">
-                             <select id="bank_name" name="bank_name" required class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:max-w-xs sm:text-sm sm:leading-6 @error('bank_name') ring-red-500 @enderror">
+                             <select id="bank_name" name="bank_name" required class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6 @error('bank_name') ring-red-500 @enderror">
                                 <option value="">Select a Bank</option>
                                 @foreach($banks as $bank)
                                     <option value="{{ $bank }}" {{ old('bank_name', optional(auth()->user()->bankingInformation)->bank_name) === $bank ? 'selected' : '' }}>{{ $bank }}</option>
@@ -194,7 +194,7 @@
                         </div>
                          @error('bank_name')<div class="mt-1 flex items-center text-sm text-red-600"><svg class="mr-1 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="font-medium">{{ $message }}</span></div>@enderror
                     </div>
-                    <div class="sm:col-span-3">
+                    <div class="sm:col-span-2">
                         <label for="account_holder_name" class="block text-sm font-medium leading-6 text-gray-900">Account Holder Name</label>
                         <div class="mt-2">
                             <input type="text" id="account_holder_name" name="account_holder_name" value="{{ old('account_holder_name', optional(auth()->user()->bankingInformation)->account_holder_name) }}" required
@@ -202,7 +202,7 @@
                         </div>
                         @error('account_holder_name')<div class="mt-1 flex items-center text-sm text-red-600"><svg class="mr-1 h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span class="font-medium">{{ $message }}</span></div>@enderror
                     </div>
-                     <div class="sm:col-span-full">
+                    <div class="sm:col-span-2">
                         <label for="account_number" class="block text-sm font-medium leading-6 text-gray-900">Account Number</label>
                         <div class="mt-2">
                            <input type="text" id="account_number" name="account_number" value="{{ old('account_number', optional(auth()->user()->bankingInformation)->account_number) }}" required

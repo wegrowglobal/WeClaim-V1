@@ -14,9 +14,10 @@ trait ChecksProfileCompletion
             $user->state && 
             $user->zip_code && 
             $user->country && 
+            $user->signature_path &&
             $user->bankingInformation && 
             $user->bankingInformation->bank_name && 
-            $user->bankingInformation->account_holder && 
+            $user->bankingInformation->account_holder_name &&
             $user->bankingInformation->account_number;
     }
 
@@ -26,7 +27,7 @@ trait ChecksProfileCompletion
         
         if ($user->role_id === 1 && !$this->isProfileComplete($user)) {
             return redirect()
-                ->route('profile')
+                ->route('profile.show')
                 ->with('warning', 'Please complete your profile before creating a claim.');
         }
 

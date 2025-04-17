@@ -20,12 +20,20 @@ The `TableFilter` component provides a complete solution for filtering, searchin
 // In your Livewire component
 public function render()
 {
+    // Define possible claim types (could be dynamic from config or constants)
+    $claimTypes = [
+        Claim::CLAIM_TYPE_PETROL => 'Petrol',
+        Claim::CLAIM_TYPE_PETTY_CASH => 'Petty Cash',
+        // Add other claim types here
+    ];
+
     return view('your-view', [
-        'model' => User::class,
-        'searchColumns' => ['first_name', 'second_name', 'email'],
+        'model' => Claim::class, // Example using Claim model
+        'searchColumns' => ['title', 'description', 'user.name'], // Example search columns
         'filterOptions' => [
-            'role_id' => Role::pluck('name', 'id')->toArray(),
-            'department_id' => Department::pluck('name', 'id')->toArray(),
+            'status' => Claim::STATUSES, // Example status filter
+            'claim_type' => $claimTypes, // Filter by claim type
+            // 'park_location' => ['MHS' => 'MHS', 'ZT' => 'ZT', ...], // Optionally add park filter if needed
         ],
     ]);
 }
@@ -39,16 +47,26 @@ public function render()
     :filter-options="$filterOptions">
     <x-slot:header>
         <x-table-header column="id" label="ID" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('id')" />
-        <x-table-header column="first_name" label="Name" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('first_name')" />
-        <x-table-header column="email" label="Email" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('email')" responsive breakpoint="sm" />
+        <x-table-header column="title" label="Title" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('title')" />
+        <x-table-header column="claim_type" label="Type" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('claim_type')" />
+        <x-table-header column="user.name" label="User" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('user.name')" responsive breakpoint="sm" />
+        <x-table-header column="status" label="Status" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('status')" />
+        <x-table-header column="total_amount" label="Amount" :sort-column="$sortColumn" :sort-direction="$sortDirection" wire:click="sortBy('total_amount')" />
     </x-slot:header>
     
     <x-slot:body>
         @foreach($data as $item)
             <tr>
                 <x-table-cell>{{ $item->id }}</x-table-cell>
-                <x-table-cell truncate>{{ $item->first_name }} {{ $item->second_name }}</x-table-cell>
-                <x-table-cell responsive breakpoint="sm">{{ $item->email }}</x-table-cell>
+                <x-table-cell truncate>{{ $item->title }}</x-table-cell>
+                <x-table-cell>{{ $item->claim_type }}</x-table-cell>
+                <x-table-cell responsive breakpoint="sm">{{ $item->user->name ?? 'N/A' }}</x-table-cell>
+                <x-table-cell>
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $item->getStatusBadgeClass() }}">
+                        {{ $item->status }}
+                    </span>
+                </x-table-cell>
+                <x-table-cell>{{ number_format($item->total_amount, 2) }}</x-table-cell>
             </tr>
         @endforeach
     </x-slot:body>

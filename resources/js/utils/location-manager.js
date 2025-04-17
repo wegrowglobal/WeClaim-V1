@@ -52,7 +52,7 @@ export class LocationManager {
 
     createLocationInput(index, value = '', showDelete = false) {
         const wrapper = document.createElement('div');
-        wrapper.className = 'location-pair bg-white shadow-sm ring-1 ring-black/5 p-4 relative flex flex-col gap-3';
+        wrapper.className = 'location-pair bg-white shadow-sm rounded-md ring-1 ring-black/5 p-4 relative flex flex-col gap-3';
         
         const letter = String.fromCharCode(65 + index);
         const color = this.getColorForIndex(index);

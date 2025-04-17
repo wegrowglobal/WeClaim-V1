@@ -2,9 +2,12 @@
 
 @php
     $sizes = [
-        'sm' => 'h-8 w-8',
-        'md' => 'h-16 w-16',
-        'lg' => 'h-24 w-24',
+        'xs' => 'h-4 w-4',
+        'sm' => 'h-6 w-6',
+        'md' => 'h-8 w-8',
+        'lg' => 'h-10 w-10',
+        'xl' => 'h-12 w-12',
+        '2xl' => 'h-16 w-16',
     ];
     $sizeClass = $sizes[$size] ?? $sizes['md'];
 

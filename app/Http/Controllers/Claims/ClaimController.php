@@ -104,26 +104,67 @@ class ClaimController extends Controller
 
     public function home()
     {
-        $statistics = $this->getHomePageStatistics();
         $user = Auth::user();
+        if (!$user) {
+            // Should not happen due to auth middleware, but good practice
+            return redirect()->route('login'); 
+        }
 
+        $roleName = $user->role->name; // e.g., Staff, HR, Finance, Datuk, Admin
+        $statistics = $this->getHomePageStatistics(); // General stats potentially based on role
         $data = [
-            'totalClaims' => $statistics['totalClaims'],
-            'approvedClaims' => $statistics['approvedClaims'],
-            'pendingClaims' => $statistics['pendingClaims'],
-            'rejectedClaims' => $statistics['rejectedClaims'],
+            'statistics' => $statistics,
             'claimService' => $this->claimService
         ];
 
-        // Add additional statistics for non-staff users
-        if ($user && $user->role->name !== 'Staff') {
-            $data['pendingReview'] = Claim::where('status', '!=', Claim::STATUS_DONE)
-                ->where('status', '!=', Claim::STATUS_REJECTED)
-                ->count();
-            $data['totalAmount'] = Claim::sum(DB::raw('petrol_amount + toll_amount'));
-            $data['pendingClaims'] = Claim::where('status', '!=', Claim::STATUS_DONE)
-                ->where('status', '!=', Claim::STATUS_REJECTED)
-                ->get();
+        Log::info('Loading home page', ['user_id' => $user->id, 'role' => $roleName]);
+
+        // Fetch role-specific data
+        switch ($roleName) {
+            case 'Staff':
+                // Already covered by getHomePageStatistics for staff
+                $data['recentClaims'] = Claim::where('user_id', $user->id)
+                                             ->orderByDesc('submitted_at')
+                                             ->take(5)
+                                             ->get();
+                break;
+
+            case 'HR':
+                $data['pendingHrApproval'] = Claim::where('status', Claim::STATUS_PENDING_HR)
+                                                   ->with('user')
+                                                   ->orderByDesc('submitted_at')
+                                                   ->take(10)
+                                                   ->get();
+                // Add other HR relevant stats/data if needed
+                break;
+
+            case 'Finance':
+                $data['pendingFinanceApproval'] = Claim::where('status', Claim::STATUS_APPROVED_DATUK) // Assuming this is the status before finance
+                                                      ->with('user')
+                                                      ->orderByDesc('submitted_at')
+                                                      ->take(10)
+                                                      ->get();
+                 // Add other Finance relevant stats/data if needed
+                break;
+
+            case 'Datuk':
+                 $data['pendingDatukApproval'] = Claim::where('status', Claim::STATUS_PENDING_DATUK)
+                                                      ->with('user')
+                                                      ->orderByDesc('submitted_at')
+                                                      ->take(10)
+                                                      ->get();
+                 // Add other Datuk relevant stats/data if needed
+                 break;
+            
+            case 'Admin':
+                 $data['allPendingClaims'] = Claim::whereNotIn('status', [Claim::STATUS_DONE, Claim::STATUS_REJECTED, Claim::STATUS_CANCELLED])
+                                                  ->with('user')
+                                                  ->orderByDesc('submitted_at')
+                                                  ->take(10)
+                                                  ->get();
+                 // Maybe add user count, system stats etc.
+                 $data['userCount'] = User::count(); 
+                 break;
         }
 
         return view('pages.home', $data);

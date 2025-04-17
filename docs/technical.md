@@ -99,8 +99,14 @@ public function rules()
     return [
         'title' => 'required|string|max:255',
         'description' => 'nullable|string',
-        'claim_type' => 'required|in:Petrol,Accommodation,Food',
-        // ...
+        'claim_type' => 'required|in:Petrol,Petty Cash',
+        'park_location' => 'required_if:claim_type,Petty Cash|string|max:255',
+        'advised_by' => 'required_if:claim_type,Petty Cash|string|max:255',
+        'items' => 'required_if:claim_type,Petty Cash|array|min:1',
+        'items.*.item_name' => 'required|string|max:255',
+        'items.*.quantity' => 'required|numeric|min:0.01',
+        'items.*.price_per_unit' => 'required|numeric|min:0.01',
+        'items.*.purpose' => 'nullable|string',
     ];
 }
 ```
@@ -174,11 +180,30 @@ Gate::define('approve-claim', function (User $user, Claim $claim) {
 ### Core Models
 
 - **User**: System users with various roles
-- **Claim**: The central entity representing expense claims
-- **ClaimLocation**: Travel points within a claim
+- **Claim**: The central entity representing expense claims. Includes a `claim_type` field (e.g., 'Petrol', 'Petty Cash') to differentiate claim types. Also includes a `total_amount` field, which is calculated based on claim type (e.g., sum of items for Petty Cash, sum of petrol/toll for Petrol).
+- **ClaimLocation**: Travel points within a claim (primarily for Petrol claims)
 - **ClaimDocument**: Supporting documents attached to claims
 - **ClaimReview**: Review entries from approvers
 - **ClaimHistory**: Historical record of claim changes
+
+### Petty Cash Claim Details
+
+When `claim_type` is 'Petty Cash', the following fields and relationships are relevant:
+
+- **Claim Model Fields:**
+    - `park_location` (string, nullable): The specific park where the expense occurred (MHS, ZT, TTI, PSKT, DESVO).
+    - `advised_by` (string, nullable): The name of the person who advised or approved the expenditure.
+    - `total_amount` (decimal): Stores the calculated sum of `quantity * price_per_unit` for all associated `PettyCashItem` records.
+- **`petty_cash_items` Table:** A dedicated table to store individual line items for a Petty Cash claim.
+    - `id` (PK)
+    - `claim_id` (FK to `claims.id`)
+    - `item_name` (string)
+    - `quantity` (decimal)
+    - `supplier` (string, nullable)
+    - `price_per_unit` (decimal)
+    - `purpose` (text, nullable): The reason for purchasing this specific item.
+    - `description` (text, nullable): Additional details about the item.
+    - `created_at`, `updated_at`
 
 ### Key Relationships
 
@@ -218,6 +243,18 @@ public function reviews()
 public function history()
 {
     return $this->hasMany(ClaimHistory::class);
+}
+
+// Claim model (additional relationship for Petty Cash)
+public function pettyCashItems()
+{
+    return $this->hasMany(PettyCashItem::class);
+}
+
+// PettyCashItem model
+public function claim()
+{
+    return $this->belongsTo(Claim::class);
 }
 ```
 
