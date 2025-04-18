@@ -133,7 +133,7 @@
             @endif
 
         {{-- === ROLE: Admin === --}}
-        @elseif($roleName === 'Admin')
+        @elseif($roleName === 'Admin' || $roleName === 'SU')
             <x-layout.page-header 
                 title="Admin Dashboard" 
                 subtitle="System overview and administration.">

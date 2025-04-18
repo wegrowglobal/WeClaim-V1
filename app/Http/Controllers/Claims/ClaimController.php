@@ -156,7 +156,7 @@ class ClaimController extends Controller
                  // Add other Datuk relevant stats/data if needed
                  break;
             
-            case 'Admin':
+            case 'SU':
                  $data['allPendingClaims'] = Claim::whereNotIn('status', [Claim::STATUS_DONE, Claim::STATUS_REJECTED, Claim::STATUS_CANCELLED])
                                                   ->with('user')
                                                   ->orderByDesc('submitted_at')
