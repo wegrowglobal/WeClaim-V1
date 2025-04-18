@@ -37,7 +37,14 @@ class AuthService
         }
 
         // User found, now attempt password verification
-        if (Auth::attempt($credentials, request()->filled('remember'))) {
+        // Only pass email and password to Auth::attempt for user lookup
+        $authCredentials = [
+            'email' => $credentials['email'],
+            'password' => $credentials['password']
+        ];
+        $rememberUser = request()->filled('remember') && $credentials['remember'] == '1';
+
+        if (Auth::attempt($authCredentials, $rememberUser)) {
             // Password correct
             request()->session()->regenerate();
             $this->clearLoginAttempts(request()); 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Mail;
+namespace App\Mail\Claim;
 
 use App\Models\Claim\Claim;
 use Illuminate\Bus\Queueable;

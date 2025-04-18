@@ -93,15 +93,6 @@
                                     Manage Users
                                 </a>
                             </li>
-                             <li>
-                                <a href="{{ route('admin.system.failed-logins') }}"
-                                   class="{{ request()->routeIs('admin.system.failed-logins') ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50' }} group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold">
-                                     <svg class="h-6 w-6 shrink-0 {{ request()->routeIs('admin.system.failed-logins') ? 'text-gray-900' : 'text-gray-400 group-hover:text-gray-600' }}" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                    </svg>
-                                    Failed Logins
-                                </a>
-                            </li>
                             {{-- Consider adding System Config link if needed --}}
                          @endif
                     @endauth

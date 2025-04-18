@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Claims;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreClaimRequest;
+use App\Http\Requests\Claim\StoreClaimRequest;
 use App\Models\Claim\Claim;
 use App\Models\User\User;
 use App\Services\ClaimService;
@@ -714,7 +714,7 @@ class ClaimController extends Controller
                 ]);
             }
 
-            return view("components.forms.claim.step-{$step}", [
+            return view("components.forms.claim.mileage.step-{$step}", [
                 'draftData' => $draftData,
                 'currentStep' => (int) $step
             ])->render();
@@ -1169,7 +1169,7 @@ class ClaimController extends Controller
                 'accommodations_count' => isset($draftData['accommodations']) ? count($draftData['accommodations']) : 0
             ]);
 
-            return view('components.forms.claim.step-' . $step, [
+            return view('components.forms.claim.mileage.step-' . $step, [
                 'draftData' => $draftData,
                 'currentStep' => (int) $step
             ])->render();

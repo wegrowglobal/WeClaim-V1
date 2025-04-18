@@ -84,11 +84,13 @@
 
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
+                    <input type="hidden" name="remember" value="0">
                     <input class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black focus:ring-1 focus:ring-offset-0"
-                        id="remember"
-                        name="remember" 
-                        type="checkbox">
-                    <label class="ml-2 text-sm text-black" for="remember">
+                        id="remember_checkbox"
+                        name="_remember_visual"
+                        type="checkbox"
+                        onchange="document.querySelector('input[name=remember]').value = this.checked ? '1' : '0'">
+                    <label class="ml-2 text-sm text-black" for="remember_checkbox">
                         Remember Me
                     </label>
                 </div>
@@ -128,6 +130,8 @@ function togglePasswordVisibility(inputId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById('password-toggle-icon');
     
+    if (!input || !icon) return;
+
     if (input.type === "password") {
         input.type = "text";
         icon.innerHTML = `

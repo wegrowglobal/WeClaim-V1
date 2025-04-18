@@ -50,7 +50,7 @@
                 @csrf
                 {{-- Use a container for the step content for potential transitions --}}
                 <div id="claim-step-container" class="transition-opacity duration-300">
-                    @include("components.forms.claim.step-{$currentStep}")
+                    @include("components.forms.claim.mileage.step-{$currentStep}")
                 </div>
 
                 <!-- Step Navigation Buttons -->

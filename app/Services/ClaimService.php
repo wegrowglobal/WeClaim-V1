@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Arr;
 use Exception;
-use App\Mail\ClaimActionMail;
+use App\Mail\Claim\ClaimActionMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\ClaimStatusNotification;

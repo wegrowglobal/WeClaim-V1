@@ -9,7 +9,7 @@ use App\Models\User\Department;
 use App\Models\Auth\Role;
 use Illuminate\Http\Request; // Keep Request for potential future use, though StoreRegistrationRequest handles validation
 use Illuminate\Support\Facades\Mail;
-use App\Mail\RegistrationApprovalRequest; // Assuming this mail exists for notifying admins
+use App\Mail\Auth\RegistrationApprovalRequest; // Assuming this mail exists for notifying admins
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Mail\RegistrationRequestApproved; // Assuming exists
 use App\Mail\RegistrationRequestRejected; // Assuming exists
-use App\Mail\PasswordSetupInvitation; // Assuming exists
+use App\Mail\Auth\PasswordSetupInvitation; // Assuming exists
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Requests\Auth\SetPasswordRequest; // Need to create this
 use Illuminate\Validation\ValidationException;
